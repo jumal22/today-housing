@@ -55,7 +55,6 @@ today housing/
 
 ## 수정 내역
 
-날짜는 커밋 기록 기준이에요.
 
 <details open>
 <summary><b>2026-10-04</b></summary>
