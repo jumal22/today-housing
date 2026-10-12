@@ -126,7 +126,7 @@
     '.oh-toast.show{opacity:1; transform:translate(-50%,0);}',
     '@media (prefers-reduced-motion:reduce){.oh-toast{transition:opacity .1s linear; transform:translate(-50%,0);}}',
     '@keyframes ohAuthShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-7px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(3px);}}',
-    '.oh-auth-view.oh-shake{animation:ohAuthShake .38s ease;}',
+    '.oh-auth-view.oh-shake,.oh-modal-card.oh-shake{animation:ohAuthShake .38s ease;}',
     '@media (prefers-reduced-motion:reduce){.oh-auth-viewport,.oh-auth-view,.oh-err,.oh-meter i{transition:none;}.oh-auth-view.oh-shake{animation:none;}}'
   ].join("\n");
   var styleEl = document.createElement("style");
@@ -266,6 +266,7 @@
     login:  { email: vEmail, password: vPwAny },
     signup: { email: vEmail, password: vPwNew, nickname: vNick, terms: function(v, el){ return el.checked ? "" : "동의가 필요해요."; } },
     verify: { current: vPwAny },
+    welcome:{ nickname: vNick, terms: function(v, el){ return el.checked ? "" : "동의가 필요해요."; } },
     profile:{ nickname: vNick, password: function(v){ return v ? vPwNew(v) : ""; } },
     forgot: { email: vEmail },
     reset:  { password: vPwNew }
@@ -457,6 +458,7 @@
     currentProfile = null;
     if (user){
       renderIdentity(); /* 우선 가입 때 쓴 닉네임으로 보여주고, 서버 프로필이 오면 다시 그린다 */
+      if (needsWelcome(user)) openWelcome(); else closeWelcome();
       if (verifiedPending){
         verifiedPending = false;
         openDropdown();
@@ -863,6 +865,122 @@
 
   var HANDLERS = { login: doLogin, signup: doSignup, forgot: doForgot, reset: doReset, profile: doProfile, verify: doVerify };
 
+  /* ===== 구글 등 소셜 로그인 첫 방문: 닉네임 정하고 약관 동의 ===== */
+  function needsWelcome(u){
+    if (!u || u.is_anonymous) return false;
+    var p = u.app_metadata && u.app_metadata.provider;
+    if (!p || p === "email") return false;                 /* 이메일 가입자는 가입할 때 이미 동의함 */
+    return !(u.user_metadata && u.user_metadata.terms_agreed_at);
+  }
+  var welcomeEl = null;
+  function buildWelcome(){
+    var m = document.createElement("div");
+    m.className = "oh-modal oh-welcome";
+    m.style.zIndex = "990";                                 /* 약관 전문 창(1000)이 위로 뜨게 */
+    m.setAttribute("role", "dialog");
+    m.setAttribute("aria-modal", "true");
+    m.setAttribute("aria-labelledby", "ohWelcomeTitle");
+    m.innerHTML =
+      '<div class="oh-modal-card" style="width:min(430px,100%)">' +
+        '<div class="oh-modal-head"><h3 class="oh-modal-title" id="ohWelcomeTitle">환영해요! 닉네임을 정해 주세요</h3></div>' +
+        '<form novalidate data-form="welcome" class="oh-modal-body" style="padding-top:10px"><p class="oh-note" role="status"></p>' +
+          '<p class="oh-auth-sub" style="margin:0 0 14px">갤러리와 댓글에 이 닉네임이 보여요. Google 이름은 공개되지 않아요.</p>' +
+          field("nickname", "닉네임", "text", "nickname", "2~12자, 한글·영문·숫자", { attrs: 'maxlength="12"' }) +
+          '<div class="oh-f oh-terms" data-f="terms"><div class="oh-terms-row"><label class="oh-check"><input type="checkbox" name="terms"><span>서비스 이용과 개인정보 수집에 동의해요 (필수)</span></label><button type="button" class="oh-terms-open" data-act="terms">전문 보기</button></div><em class="oh-err" role="alert"></em></div>' +
+          submitBtn("동의하고 시작") +
+          '<div class="login-links" style="margin-top:12px"><a href="#" data-act="welcome-cancel">취소하고 로그아웃</a></div>' +
+        '</form>' +
+      '</div>';
+    document.body.appendChild(m);
+    var form = m.querySelector("form");
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var bad = checkAll(form);
+      if (bad){ var el = fieldBox(form, bad).querySelector("input"); if (el) el.focus(); shake(m.querySelector(".oh-modal-card")); return; }
+      doWelcome(form);
+    });
+    form.addEventListener("input", function(e){
+      var box = e.target.closest && e.target.closest("[data-f]");
+      if (box && box.classList.contains("has-err")) checkField(form, box.getAttribute("data-f"));
+    });
+    form.addEventListener("change", function(e){
+      if (e.target.name === "terms") checkField(form, "terms");
+    });
+    form.addEventListener("focusout", function(e){
+      if (e.target.name !== "nickname" || checkField(form, "nickname")) return;
+      var typed = e.target.value.trim();
+      nicknameTaken(typed).then(function(t){
+        if (t && e.target.value.trim() === typed) setErr(form, "nickname", "이미 사용 중인 닉네임이에요.");
+      });
+    });
+    m.addEventListener("click", function(e){
+      var a = e.target.closest("[data-act]");
+      if (!a) return;
+      e.preventDefault();
+      var act = a.getAttribute("data-act");
+      if (act === "terms"){ termsTargetForm = form; openTerms(); }
+      else if (act === "welcome-cancel") cancelWelcome();
+    });
+    m.addEventListener("keydown", function(e){
+      if (e.key === "Escape"){ e.stopPropagation(); }       /* 닫기 대신 아무 일도 안 함 — 취소는 아래 링크로 */
+    });
+    welcomeEl = m;
+  }
+  function openWelcome(){
+    if (IS_POPUP) return;                                    /* 구글 팝업 창에서는 띄우지 않음 (곧 닫힘) */
+    if (!welcomeEl) buildWelcome();
+    if (welcomeEl.classList.contains("open")) return;
+    dd.classList.remove("open"); btn.setAttribute("aria-expanded", "false");
+    document.documentElement.style.overflow = "hidden";
+    requestAnimationFrame(function(){
+      welcomeEl.classList.add("open");
+      var i = welcomeEl.querySelector('input[name="nickname"]'); if (i) i.focus({ preventScroll: true });
+    });
+  }
+  function closeWelcome(){
+    if (!welcomeEl) return;
+    welcomeEl.classList.remove("open");
+    document.documentElement.style.overflow = "";
+  }
+  function cancelWelcome(){
+    closeWelcome();
+    toast("가입을 취소하고 로그아웃했어요.");
+    doLogout();
+  }
+  function doWelcome(form){
+    var nick = form.nickname.value.trim();
+    if (!currentUser) return;
+    var uid = currentUser.id;
+    busy(form, true);
+    var c = sb;
+    c.from("profiles").select("id").ilike("nickname", nick.replace(/[\\%_]/g, "\\$&")).neq("id", uid).limit(1)
+      .then(function(r){
+        if (r.error) throw r.error;
+        if (r.data && r.data.length){ setErr(form, "nickname", "이미 사용 중인 닉네임이에요."); shake(form.closest(".oh-modal-card")); return false; }
+        return c.from("profiles").update({ nickname: nick }).eq("id", uid).select("nickname, role").single().then(function(u){
+          if (u.error){
+            if (u.error.code === "23505"){ setErr(form, "nickname", "이미 사용 중인 닉네임이에요."); shake(form.closest(".oh-modal-card")); return false; }
+            throw u.error;
+          }
+          if (currentUser && currentUser.id === uid){ currentProfile = Object.assign({}, currentProfile || {}, u.data); }
+          return c.auth.updateUser({ data: { terms_agreed_at: new Date().toISOString(), nickname: nick } }).then(function(x){
+            if (x.error) throw x.error;
+            return true;
+          });
+        });
+      })
+      .then(function(ok){
+        if (!ok) return;
+        closeWelcome();
+        form.reset();
+        renderIdentity(); notifyChange();
+        toast("환영해요, " + nick + "님!");
+      })
+      .catch(function(err){ note(form, mapError(err), "err"); shake(form.closest(".oh-modal-card")); })
+      .then(function(){ busy(form, false); });
+  }
+
   /* ===== 약관 전문 팝업 ===== */
   var TERMS_HTML =
     '<p class="oh-meta">시행일: 2026년 10월 12일</p>' +
@@ -927,7 +1045,7 @@
     '<p>개인정보에 관한 문의는 운영자(오늘의 하우징 팀)에게 해 주세요. 문의 이메일: todayhousing.capstone@gmail.com</p>';
 
   var CLOSE_X = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-  var termsModal = null, termsReturnFocus = null;
+  var termsModal = null, termsReturnFocus = null, termsTargetForm = null;
 
   function buildTerms(){
     var m = document.createElement("div");
@@ -962,7 +1080,7 @@
       var act = e.target.closest("[data-m]");
       if (!act) return;
       if (act.getAttribute("data-m") === "agree"){
-        var form = vp.querySelector('[data-form="signup"]');
+        var form = termsTargetForm || vp.querySelector('[data-form="signup"]');
         var cb = form && form.querySelector('input[name="terms"]');
         if (cb){ cb.checked = true; setErr(form, "terms", ""); }
       }
@@ -1032,7 +1150,7 @@
       var a = act.getAttribute("data-act");
       if (a === "google") doGoogle();
       else if (a === "logout") doLogout();
-      else if (a === "terms") openTerms();
+      else if (a === "terms"){ termsTargetForm = null; openTerms(); }
       else if (a === "nick-edit") openProfile();
       else if (a === "resend-sent") resendMail(sentCtx.kind, sentCtx.email, act);
       else if (a === "resend-login") resendMail("signup", pendingEmail, act);

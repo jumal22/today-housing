@@ -110,12 +110,9 @@ begin
   values (
     new.id,
     public.make_unique_nickname(
-      coalesce(
-        nullif(trim(new.raw_user_meta_data ->> 'nickname'), ''),
-        nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''),
-        nullif(trim(new.raw_user_meta_data ->> 'name'), ''),
-        split_part(coalesce(new.email, ''), '@', 1)
-      ),
+      -- 가입할 때 직접 정한 닉네임만 쓴다. 구글 등 소셜 로그인은 본명(full_name)이나 이메일 앞부분이
+      -- 갤러리에 그대로 공개되지 않게 비워 두고 → 'user' + 임의 숫자 로 임시 지정, 첫 로그인 환영 창에서 직접 정한다
+      nullif(trim(new.raw_user_meta_data ->> 'nickname'), ''),
       new.id
     )
   );
@@ -755,3 +752,34 @@ end;
 $$;
 revoke execute on function public.delete_guest_item(text, uuid, text) from public;
 grant execute on function public.delete_guest_item(text, uuid, text) to anon, authenticated;
+
+
+-- ------------------------------------------------------------
+-- 11. 관리자 탈퇴 처리 — 회원 계정을 지운다 (글·댓글·좋아요·프로필은 연결돼서 함께 삭제)
+--     본인 계정과 관리자 계정은 못 지운다(관리자가 0명이 되는 사고 방지). 관리자는 먼저 일반 회원으로 내린 뒤에 지울 수 있다.
+--     올렸던 이미지 파일은 화면에서 먼저 지운다(admin.html).
+-- ------------------------------------------------------------
+create or replace function public.admin_delete_user(target uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'forbidden' using errcode = '42501';
+  end if;
+  if target = (select auth.uid()) then
+    raise exception 'cannot_delete_self' using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.profiles p where p.id = target and p.role = 'admin') then
+    raise exception 'cannot_delete_admin' using errcode = 'P0001';
+  end if;
+  delete from auth.users where id = target;
+  if not found then
+    raise exception 'user_not_found' using errcode = 'P0002';
+  end if;
+end;
+$$;
+revoke execute on function public.admin_delete_user(uuid) from public, anon;
+grant execute on function public.admin_delete_user(uuid) to authenticated;

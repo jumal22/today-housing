@@ -202,6 +202,14 @@
   .btn-ghost{background:var(--paper); color:var(--ink); border:1.5px solid var(--line); box-shadow:none;}
   .btn-ghost:hover{border-color:var(--ink-soft);}
   .btn-danger-soft{background:var(--blueprint); color:#fff;}
+  .btn-danger{background:#B3392F; color:#fff; box-shadow:0 1px 2px var(--shadow);}
+  .btn-danger:hover{background:#962E26; transform:translateY(-1px);}
+  .admin-table .th-act{text-align:right; width:1%; white-space:nowrap;}
+  .admin-table td.c-act{text-align:right; white-space:nowrap;}
+  .del-btn{font:inherit; font-size:.8rem; font-weight:600; padding:5px 12px; border-radius:8px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink-soft); cursor:pointer; transition:color .15s, border-color .15s, background .15s;}
+  .del-btn:hover:not(:disabled){color:#B3392F; border-color:#B3392F; background:color-mix(in srgb, #B3392F 8%, transparent);}
+  .del-btn:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .del-btn:disabled{opacity:.45; cursor:not-allowed;}
 
   .admin-panel{margin-top:30px;}
   .admin-toolbar{display:flex; align-items:center; justify-content:space-between; gap:14px 20px; flex-wrap:wrap; margin-bottom:16px;}
@@ -339,6 +347,7 @@
               <th data-th="nickname" aria-sort="none"><button type="button" class="th-sort" data-sort="nickname">닉네임 <span class="arrow" aria-hidden="true">▲</span></button></th>
               <th data-th="email" aria-sort="none"><button type="button" class="th-sort" data-sort="email">이메일 <span class="arrow" aria-hidden="true">▲</span></button></th>
               <th data-th="created_at" aria-sort="descending"><button type="button" class="th-sort" data-sort="created_at">가입일 <span class="arrow" aria-hidden="true">▼</span></button></th>
+              <th class="th-act">관리</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
@@ -578,18 +587,24 @@
     return '<select class="role-select" data-role="' + esc(u.role) + '" aria-label="' + esc(u.nickname) + '님의 구분"' +
       (self ? ' disabled title="내 계정의 구분은 바꿀 수 없어요"' : "") + ">" + opts + "</select>";
   }
+  function delButton(u){
+    if (u.id === myId) return '<button type="button" class="del-btn" disabled title="내 계정은 탈퇴시킬 수 없어요">탈퇴</button>';
+    if (u.role === "admin") return '<button type="button" class="del-btn" disabled title="관리자는 먼저 일반 유저로 내린 뒤에 탈퇴시킬 수 있어요">탈퇴</button>';
+    return '<button type="button" class="del-btn" data-del aria-label="' + esc(u.nickname) + '님 탈퇴시키기">탈퇴</button>';
+  }
   function render(focusId){
     renderChips();
     var list = visibleUsers();
     if (!list.length){
-      rowsEl.innerHTML = '<tr><td colspan="4" class="admin-empty">' + (users.length ? "조건에 맞는 회원이 없어요." : "아직 가입한 회원이 없어요.") + "</td></tr>";
+      rowsEl.innerHTML = '<tr><td colspan="5" class="admin-empty">' + (users.length ? "조건에 맞는 회원이 없어요." : "아직 가입한 회원이 없어요.") + "</td></tr>";
     } else {
       rowsEl.innerHTML = list.map(function(u){
         return '<tr data-id="' + esc(u.id) + '">' +
           '<td class="c-role">' + roleSelect(u) + "</td>" +
           '<td class="c-nick">' + esc(u.nickname) + (u.id === myId ? '<span class="me-tag">나</span>' : "") + "</td>" +
           '<td class="c-mail">' + esc(u.email) + "</td>" +
-          '<td class="c-date">' + fmtDate(u.created_at) + "</td></tr>";
+          '<td class="c-date">' + fmtDate(u.created_at) + "</td>" +
+          '<td class="c-act">' + delButton(u) + "</td></tr>";
       }).join("");
     }
     countEl.textContent = (list.length === users.length ? "회원 " + users.length + "명" : users.length + "명 중 " + list.length + "명");
@@ -607,7 +622,8 @@
   /* ---------- 역할 바꾸기: 확인 창 → 서버 호출 ---------- */
   var modal = $("confirm"), lastFocus = null, pending = null;
   function openConfirm(u, next){
-    pending = { id: u.id, nickname: u.nickname, from: u.role, to: next };
+    pending = { type: "role", id: u.id, nickname: u.nickname, from: u.role, to: next };
+    $("confirmYes").className = "btn btn-primary";
     lastFocus = document.activeElement;
     var title = next === "admin" ? "관리자로 올릴까요?" :
                 u.role === "admin" ? "관리자 권한을 내릴까요?" :
@@ -621,6 +637,20 @@
     $("confirmYes").textContent = "바꾸기";
     setTimeout(function(){ $("confirmYes").focus(); }, 30);
   }
+  function openConfirmDelete(u){
+    pending = { type: "delete", id: u.id, nickname: u.nickname };
+    lastFocus = document.activeElement;
+    $("confirmTitle").textContent = u.nickname + "님을 탈퇴시킬까요?";
+    $("confirmWho").textContent = u.nickname + " · " + u.email;
+    $("confirmChange").innerHTML = "회원 계정 삭제 <i>→</i> 되돌릴 수 없어요";
+    $("confirmDesc").textContent = "이 회원이 올린 게시물, 댓글, 좋아요, 이미지가 모두 함께 삭제돼요. 같은 이메일로 다시 가입은 할 수 있지만 지운 내용은 돌아오지 않아요.";
+    modal.classList.add("open");
+    var y = $("confirmYes");
+    y.className = "btn btn-danger";
+    y.disabled = false;
+    y.textContent = "탈퇴시키기";
+    setTimeout(function(){ $("confirmNo").focus(); }, 30);   /* 실수로 엔터를 쳐도 바로 지워지지 않게 '취소'에 포커스 */
+  }
   function closeConfirm(){
     modal.classList.remove("open");
     pending = null;
@@ -633,8 +663,49 @@
     if (/user_not_found/.test(m)) return "이미 탈퇴했거나 없는 회원이에요.";
     return "바꾸지 못했어요. 잠시 뒤에 다시 시도해 주세요.";
   }
+  /* 탈퇴시킬 회원이 올린 이미지 파일 정리: <회원 id>/<글 id>/파일 구조라서 폴더 안까지 내려가며 지운다 (실패해도 계정 삭제는 진행) */
+  function removeUserImages(sb, uid){
+    var bucket = sb.storage.from("post-images");
+    return bucket.list(uid, { limit: 1000 }).then(function(l){
+      var items = (l && l.data) || [], files = [], folders = [];
+      items.forEach(function(it){ if (it.id) files.push(uid + "/" + it.name); else folders.push(uid + "/" + it.name); });
+      return Promise.all(folders.map(function(f){
+        return bucket.list(f, { limit: 1000 }).then(function(x){
+          ((x && x.data) || []).forEach(function(it){ if (it.id) files.push(f + "/" + it.name); });
+        });
+      })).then(function(){ return files.length ? bucket.remove(files) : null; });
+    }).catch(function(){});
+  }
+  function applyDelete(){
+    var p = pending, yes = $("confirmYes");
+    yes.disabled = true; yes.textContent = "탈퇴시키는 중…";
+    var sb = OHAuth.getClient();
+    removeUserImages(sb, p.id).then(function(){
+      return sb.rpc("admin_delete_user", { target: p.id });
+    }).then(function(r){
+      if (r.error){
+        closeConfirm();
+        var m = (r.error.message || "") + "";
+        toast(/cannot_delete_self/.test(m) ? "내 계정은 탈퇴시킬 수 없어요." :
+              /cannot_delete_admin/.test(m) ? "관리자는 먼저 일반 유저로 내려야 탈퇴시킬 수 있어요." :
+              /user_not_found/.test(m) ? "이미 탈퇴했거나 없는 회원이에요." :
+              /forbidden/.test(m) || r.error.code === "42501" ? "관리자 권한이 없어서 처리하지 못했어요." :
+              "탈퇴시키지 못했어요. 잠시 뒤에 다시 시도해 주세요.");
+        if (/user_not_found/.test(m)){ loaded = false; loadUsers(); }
+        return;
+      }
+      users = users.filter(function(u){ return u.id !== p.id; });
+      closeConfirm();
+      render();
+      toast(p.nickname + "님을 탈퇴시켰어요.");
+    }, function(){
+      closeConfirm();
+      toast("네트워크가 불안정해서 처리하지 못했어요.");
+    });
+  }
   function applyChange(){
     if (!pending) return;
+    if (pending.type === "delete") return applyDelete();
     var p = pending, yes = $("confirmYes");
     yes.disabled = true; yes.textContent = "바꾸는 중…";
     var sb = OHAuth.getClient();
@@ -665,6 +736,13 @@
     var next = sel.value;
     sel.value = u.role; /* 확인하기 전까지는 원래 값 유지 */
     if (next !== u.role) openConfirm(u, next);
+  });
+  rowsEl.addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest("[data-del]") : null;
+    if (!b) return;
+    var tr = b.closest("tr"), id = tr && tr.getAttribute("data-id"), u = null;
+    for (var i = 0; i < users.length; i++){ if (users[i].id === id) u = users[i]; }
+    if (u) openConfirmDelete(u);
   });
   chipsEl.addEventListener("click", function(e){
     var b = e.target.closest("[data-filter]");
