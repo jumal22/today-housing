@@ -12,6 +12,9 @@ const nextConfig = {
         // 쿼리스트링(?id=...)은 rewrite와 별개로 그대로 유지되므로 post.html의 JS에서
         // location.search로 그대로 읽을 수 있음.
         { source: "/post", destination: "/post.html" },
+        // 이용약관·개인정보처리방침 (구글 로그인 동의 화면에 넣는 공개 주소)
+        { source: "/terms", destination: "/terms.html" },
+        { source: "/privacy", destination: "/privacy.html" },
       ],
     };
   },

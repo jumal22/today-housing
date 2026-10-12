@@ -1,0 +1,713 @@
+<title>회원 관리 · 오늘의 하우징</title>
+<meta name="robots" content="noindex, nofollow">
+<script>
+// 다크/라이트 모드를 새로고침해도 기억하도록, 화면이 그려지기 전에 최대한 빨리 적용
+(function(){
+  try{
+    var saved = localStorage.getItem("oh-theme");
+    // 처음 방문한 유저는 시스템 설정과 상관없이 라이트 모드를 기본값으로 시작
+    document.documentElement.setAttribute("data-theme", (saved === "light" || saved === "dark") ? saved : "light");
+  } catch(e){}
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --paper:#FAF7F1;
+    --paper-raised:#FFFFFF;
+    --ink:#23262B;
+    --ink-soft:#5B6169;
+    --blueprint:#C4703F;
+    --blueprint-deep:#8F4A22;
+    --blueprint-soft:#F6E6DA;
+    --terra:#C4703F;
+    --terra-soft:#F3E3D6;
+    --line:#DAD3C3;
+    --shadow:rgba(35,38,43,.10);
+    --focus:#C4703F;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14181D;
+      --paper-raised:#1B2027;
+      --ink:#ECE8DF;
+      --ink-soft:#A9AFB8;
+      --blueprint:#75ACDB;
+      --blueprint-deep:#A7CFEF;
+      --blueprint-soft:#20303F;
+      --terra:#E5936A;
+      --terra-soft:#3A2A22;
+      --line:#2B3138;
+      --shadow:rgba(0,0,0,.45);
+      --focus:#75ACDB;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14181D;
+    --paper-raised:#1B2027;
+    --ink:#ECE8DF;
+    --ink-soft:#A9AFB8;
+    --blueprint:#75ACDB;
+    --blueprint-deep:#A7CFEF;
+    --blueprint-soft:#20303F;
+    --terra:#E5936A;
+    --terra-soft:#3A2A22;
+    --line:#2B3138;
+    --shadow:rgba(0,0,0,.45);
+    --focus:#75ACDB;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans KR','Apple SD Gothic Neo',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    /* plan3d.html과 동일한 이유로 추가 — 한글 줄바꿈이 음절 아무데서나 일어나지 않고 스페이스
+       기준으로만 자연스럽게 되도록 함. */
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+  h1,h2,h3{
+    font-family:'Do Hyeon','Apple SD Gothic Neo',sans-serif;
+    font-weight:400;
+    color:var(--ink);
+    text-wrap:balance;
+    margin:0;
+  }
+  p{margin:0;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  .wrap{max-width:none; margin:0; padding:0 clamp(20px,4vw,64px);}
+  section{padding:clamp(40px,6vw,72px) 0;}
+
+  /* ---------- header ---------- */
+  header.site{
+    position:sticky; top:0; z-index:40;
+    background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{
+    max-width:none; margin:0; padding:14px clamp(20px,4vw,64px);
+    display:flex; align-items:center; justify-content:space-between; gap:24px;
+  }
+  .logo{
+    font-family:'Do Hyeon',sans-serif; font-size:1.3rem; letter-spacing:.02em;
+    color:var(--blueprint-deep); display:flex; align-items:center; gap:8px; text-decoration:none;
+  }
+  .logo svg{flex:none;}
+  .nav-links{display:flex; gap:28px; list-style:none; margin:0; padding:0;}
+  .nav-links a{
+    font-size:.92rem; color:var(--ink-soft); text-decoration:none;
+    border-bottom:1px solid transparent; padding-bottom:2px;
+  }
+  .nav-links a:hover{color:var(--ink); border-color:var(--line);}
+  .nav-links a.is-active{color:var(--ink); border-color:var(--blueprint);}
+  @media (max-width:720px){ .nav-links{display:none;} }
+
+  .theme-toggle{
+    appearance:none; cursor:pointer; width:38px; height:38px; border-radius:50%;
+    border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .theme-toggle:hover{color:var(--ink); border-color:var(--ink-soft);}
+  .theme-toggle:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .nav-right{display:flex; align-items:center; gap:12px;}
+
+  /* ---------- 로그인 드롭다운 ---------- */
+  .nav-auth{position:relative;}
+  .login-dropdown{
+    position:absolute; top:calc(100% + 12px); right:0; z-index:60; width:430px;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 14px 36px -14px var(--shadow); padding:28px;
+  }
+  @media (max-width:500px){ .login-dropdown{width:calc(100vw - 40px);} }
+  /* 열고 닫을 때 다른 팝업들처럼 오른쪽 위(로그인 버튼)에서 뿅 튀어나왔다가 쏙 들어가는 효과.
+     display:none 토글은 애니메이션이 안 먹으니 opacity/visibility/transform으로 처리 */
+  .login-dropdown{
+    transform-origin:top right; opacity:0; visibility:hidden; pointer-events:none;
+    transform:translateY(-8px) scale(.9);
+    transition:opacity .16s ease, transform .18s ease, visibility 0s linear .18s;
+  }
+  .login-dropdown.open{
+    opacity:1; visibility:visible; pointer-events:auto; transform:none;
+    transition:opacity .18s ease, transform .38s cubic-bezier(.34,1.56,.64,1), visibility 0s;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .login-dropdown, .login-dropdown.open{ transform:none; transition:opacity .12s linear, visibility 0s linear .12s; }
+    .login-dropdown.open{ transition:opacity .12s linear, visibility 0s; }
+  }
+  .login-field{display:block; margin-bottom:16px;}
+  .login-field span{display:block; font-size:.85rem; color:var(--ink-soft); margin-bottom:7px;}
+  .login-field input{
+    width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--paper); color:var(--ink); font-size:1rem;
+  }
+  .login-field input:focus-visible{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus);}
+  .login-submit{width:100%; justify-content:center; margin-top:6px; padding:13px 20px; font-size:1rem;}
+  .login-links{
+    display:flex; align-items:center; justify-content:center; gap:10px; margin-top:20px;
+    padding-top:18px; border-top:1px solid var(--line);
+    font-size:.86rem; color:var(--ink-soft);
+  }
+  .login-links a{color:var(--ink-soft); text-decoration:underline; text-underline-offset:2px;}
+  .login-links a:hover{color:var(--ink);}
+
+  .btn{
+    appearance:none; border:none; cursor:pointer; border-radius:10px;
+    font-size:.95rem; font-weight:600; padding:12px 20px;
+    display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .btn:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .btn-primary{background:var(--blueprint); color:#fff; box-shadow:0 1px 2px var(--shadow);}
+  .btn-primary:hover{background:var(--blueprint-deep); transform:translateY(-1px);}
+  .btn-sm{padding:9px 14px; font-size:.85rem; border-radius:8px;}
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:.8rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--blueprint); border-bottom:1px dashed var(--blueprint);
+    padding-bottom:4px; margin-bottom:18px;
+  }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px; font-size:.86rem; color:var(--ink-soft);
+    text-decoration:none; margin-bottom:22px;
+  }
+  .back-link:hover{color:var(--ink);}
+
+  /* ---------- 관리자(회원 관리) ---------- */
+  :root{--ok:#3C7A5B;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--ok:#7BC79E;} }
+  :root[data-theme="dark"]{--ok:#7BC79E;}
+
+  .admin-main{min-height:62vh; padding:clamp(40px,6vw,72px) 0;}
+  .admin-head h1{font-size:clamp(1.8rem,3.4vw,2.4rem); margin-bottom:10px;}
+  .admin-head p{color:var(--ink-soft); font-size:1.02rem; max-width:60ch;}
+
+  .admin-gate{
+    margin-top:36px; padding:44px 24px; border:1px dashed var(--line); border-radius:14px;
+    display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
+  }
+  .admin-gate[hidden], .admin-panel[hidden]{display:none;}
+  .admin-gate strong{font-size:1.05rem;}
+  .admin-gate p{color:var(--ink-soft); font-size:.92rem; max-width:44ch;}
+  .admin-gate .btn{margin-top:8px;}
+  .btn-ghost{background:var(--paper); color:var(--ink); border:1.5px solid var(--line); box-shadow:none;}
+  .btn-ghost:hover{border-color:var(--ink-soft);}
+  .btn-danger-soft{background:var(--blueprint); color:#fff;}
+
+  .admin-panel{margin-top:30px;}
+  .admin-toolbar{display:flex; align-items:center; justify-content:space-between; gap:14px 20px; flex-wrap:wrap; margin-bottom:16px;}
+  .admin-search{position:relative; flex:1 1 260px; max-width:360px;}
+  .admin-search input{
+    width:100%; padding:11px 14px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--paper-raised); color:var(--ink); font:inherit; font-size:.92rem;
+  }
+  .admin-search input:focus-visible{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus);}
+  .admin-chips{display:flex; gap:8px; flex-wrap:wrap;}
+  .admin-chips .filter-chip{
+    appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--paper-raised);
+    color:var(--ink-soft); border-radius:100px; padding:7px 14px; font-size:.84rem; font-weight:600;
+  }
+  .admin-chips .filter-chip:hover{color:var(--ink); border-color:var(--ink-soft);}
+  .admin-chips .filter-chip.is-active{background:var(--blueprint); color:#fff; border-color:var(--blueprint);}
+  .admin-chips .filter-chip:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .admin-chips .n{font-variant-numeric:tabular-nums; opacity:.8; margin-left:4px; font-weight:500;}
+
+  .admin-table-wrap{border:1px solid var(--line); border-radius:14px; background:var(--paper-raised); overflow-x:auto;}
+  table.admin-table{width:100%; min-width:680px; border-collapse:collapse; font-size:.92rem;}
+  .admin-table th{
+    text-align:left; font-size:.78rem; font-weight:600; color:var(--ink-soft); letter-spacing:.04em;
+    padding:0; border-bottom:1px solid var(--line); background:var(--paper); white-space:nowrap;
+  }
+  .admin-table th:first-child{border-top-left-radius:13px;}
+  .admin-table th:last-child{border-top-right-radius:13px;}
+  .th-sort{
+    appearance:none; border:0; background:none; cursor:pointer; font:inherit; color:inherit; letter-spacing:inherit;
+    display:flex; align-items:center; gap:6px; width:100%; padding:12px 16px; text-align:left;
+  }
+  .th-sort:hover{color:var(--ink);}
+  .th-sort:focus-visible{outline:2px solid var(--focus); outline-offset:-2px;}
+  .th-sort .arrow{font-size:.7rem; opacity:0;}
+  th[aria-sort="ascending"] .arrow, th[aria-sort="descending"] .arrow{opacity:1; color:var(--blueprint);}
+  .admin-table td{padding:10px 16px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  .admin-table tbody tr:last-child td{border-bottom:0;}
+  .admin-table tbody tr:hover td{background:color-mix(in srgb, var(--blueprint-soft) 45%, transparent);}
+  .c-nick{font-weight:600; white-space:nowrap;}
+  .c-mail{color:var(--ink-soft); word-break:break-all;}
+  .c-date{color:var(--ink-soft); white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .me-tag{margin-left:8px; font-size:.72rem; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--paper); border:1px solid var(--line); color:var(--ink-soft);}
+
+  .role-select{
+    appearance:none; -webkit-appearance:none; cursor:pointer; font:inherit; font-size:.84rem; font-weight:600;
+    padding:6px 30px 6px 12px; border-radius:999px; border:1px solid var(--line); color:var(--ink);
+    background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8f96' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;
+    min-width:132px;
+  }
+  .role-select:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .role-select:hover:not(:disabled){border-color:var(--ink-soft);}
+  .role-select[data-role="admin"]{background-color:var(--blueprint-soft); color:var(--blueprint-deep); border-color:color-mix(in srgb, var(--blueprint) 35%, transparent);}
+  .role-select[data-role="contractor"]{background-color:color-mix(in srgb, var(--ok) 13%, var(--paper-raised)); color:var(--ok); border-color:color-mix(in srgb, var(--ok) 38%, transparent);}
+  .role-select:disabled{cursor:not-allowed; opacity:.85;}
+  .role-select option{color:var(--ink); background:var(--paper-raised);}
+
+  .admin-empty{padding:36px 16px; text-align:center; color:var(--ink-soft); font-size:.92rem;}
+  .admin-foot{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:12px; font-size:.82rem; color:var(--ink-soft);}
+  .admin-foot button{appearance:none; border:0; background:none; font:inherit; color:var(--blueprint); text-decoration:underline; text-underline-offset:2px; cursor:pointer; padding:0;}
+
+  .admin-confirm .oh-modal-card{width:min(440px,100%);}
+  .admin-confirm .oh-modal-body{padding:14px 24px 20px; display:flex; flex-direction:column; gap:10px;}
+  .admin-confirm .who{font-size:.86rem; color:var(--ink-soft);}
+  .admin-confirm .change{display:flex; align-items:center; gap:10px; font-weight:600; font-size:.95rem;}
+  .admin-confirm .change i{font-style:normal; color:var(--ink-soft);}
+  .admin-confirm .desc{font-size:.9rem; color:var(--ink-soft); line-height:1.6;}
+  .admin-confirm .oh-modal-foot .btn{font-size:.9rem;}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line); padding:32px 0;}
+  .footer-row{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  footer .logo{font-size:1rem;}
+  footer p{color:var(--ink-soft); font-size:.82rem;}
+  /* ---------- 다크/라이트 전환 애니메이션 ---------- */
+  /* 지원하는 브라우저(View Transitions): 테마 버튼 자리에서 새 테마가 원으로 퍼져나감(JS가 clip-path를 움직임) */
+  ::view-transition-old(root), ::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
+  ::view-transition-old(root){ z-index:1; }
+  ::view-transition-new(root){ z-index:2; }
+  /* 지원 안 하는 브라우저: 전환하는 0.4초 동안만 색이 서서히 바뀌게 함 */
+  html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
+    transition:background-color .55s ease, color .55s ease, border-color .55s ease, fill .55s ease, stroke .55s ease, box-shadow .55s ease !important;
+  }
+</style>
+
+<header class="site">
+  <nav class="nav">
+    <a class="logo" href="/">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21V9.5L12 3l9 6.5V21" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 21v-7h6v7" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      오늘의 하우징
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">홈</a></li>
+      <li><a href="/#steps">사용법</a></li>
+      <li><a href="/gallery" >갤러리</a></li>
+    </ul>
+    <div class="nav-right">
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="다크·라이트 모드 전환"></button>
+      <div class="nav-auth">
+        <button type="button" class="btn btn-primary btn-sm" id="loginBtn" aria-haspopup="true" aria-expanded="false">로그인</button>
+        <div class="login-dropdown" id="loginDropdown">
+          <!-- 내용은 /auth.js 가 그린다 (로그인·회원가입 공용) -->
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="admin-main">
+  <div class="wrap">
+    <a class="back-link" href="/">← 홈으로</a>
+
+    <div class="admin-head">
+      <span class="eyebrow">관리자</span>
+      <h1>회원 관리</h1>
+      <p>가입한 회원의 구분을 바꿀 수 있어요. 인테리어 업자는 일반 유저와 쓰는 기능이 같고, 갤러리에서 닉네임 옆에 딱지만 붙어요.</p>
+    </div>
+
+    <div class="admin-gate" id="gate" role="status" aria-live="polite">
+      <strong>확인하는 중이에요…</strong>
+    </div>
+
+    <div class="admin-panel" id="panel" hidden>
+      <div class="admin-toolbar">
+        <div class="admin-search">
+          <input type="search" id="q" placeholder="닉네임이나 이메일로 찾기" aria-label="회원 검색" autocomplete="off">
+        </div>
+        <div class="admin-chips" id="chips" role="group" aria-label="구분별 보기"></div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th data-th="role" aria-sort="none"><button type="button" class="th-sort" data-sort="role">구분 <span class="arrow" aria-hidden="true">▲</span></button></th>
+              <th data-th="nickname" aria-sort="none"><button type="button" class="th-sort" data-sort="nickname">닉네임 <span class="arrow" aria-hidden="true">▲</span></button></th>
+              <th data-th="email" aria-sort="none"><button type="button" class="th-sort" data-sort="email">이메일 <span class="arrow" aria-hidden="true">▲</span></button></th>
+              <th data-th="created_at" aria-sort="descending"><button type="button" class="th-sort" data-sort="created_at">가입일 <span class="arrow" aria-hidden="true">▼</span></button></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-foot">
+        <span id="count" aria-live="polite"></span>
+        <button type="button" id="reload">목록 새로고침</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="oh-modal admin-confirm" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="oh-modal-card">
+    <div class="oh-modal-head"><h3 class="oh-modal-title" id="confirmTitle"></h3></div>
+    <div class="oh-modal-body">
+      <div class="who" id="confirmWho"></div>
+      <div class="change" id="confirmChange"></div>
+      <p class="desc" id="confirmDesc"></p>
+    </div>
+    <div class="oh-modal-foot">
+      <button type="button" class="btn btn-ghost" id="confirmNo">취소</button>
+      <button type="button" class="btn btn-primary" id="confirmYes">바꾸기</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap footer-row">
+    <a class="logo" href="/">오늘의 하우징</a>
+    <p>도면으로 세운 3D 집, 가구 배치, 커뮤니티 조언 · 캡스톤 프로젝트 프로토타입 · 2026</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 다크/라이트 토글 (다른 페이지와 같은 "oh-theme" 키 공유) ---------- */
+  var SUN_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+  var MOON_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 1110.2 4a6.8 6.8 0 009.8 10.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+  var themeToggle = document.getElementById("themeToggle");
+  var mql = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+
+  function currentTheme(){
+    var explicit = document.documentElement.getAttribute("data-theme");
+    if (explicit === "light" || explicit === "dark") return explicit;
+    return (mql && mql.matches) ? "dark" : "light";
+  }
+  function applyIcon(){
+    themeToggle.innerHTML = currentTheme() === "dark" ? SUN_ICON : MOON_ICON;
+  }
+  function switchTheme(next, fromEl){
+    var apply = function(){
+      document.documentElement.setAttribute("data-theme", next);
+      try{ localStorage.setItem("oh-theme", next); } catch(e){}
+      applyIcon();
+    };
+    var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce){ apply(); return; }
+    if (document.startViewTransition){
+      // 1순위: 버튼 위치에서 원이 퍼져나가며 새 테마로 바뀜
+      var rect = fromEl.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      var endR = Math.hypot(Math.max(cx, window.innerWidth - cx), Math.max(cy, window.innerHeight - cy));
+      var vt = document.startViewTransition(apply);
+      vt.ready.then(function(){
+        document.documentElement.animate(
+          { clipPath: ["circle(0px at " + cx + "px " + cy + "px)", "circle(" + endR + "px at " + cx + "px " + cy + "px)"] },
+          { duration: 900, easing: "cubic-bezier(.4,.05,.3,1)", pseudoElement: "::view-transition-new(root)" }
+        );
+      }).catch(function(){});
+      return;
+    }
+    // 2순위: 지원 안 하면 색이 서서히 바뀌는 전환
+    var root = document.documentElement;
+    root.classList.add("theme-fade");
+    apply();
+    setTimeout(function(){ root.classList.remove("theme-fade"); }, 700);
+  }
+  themeToggle.addEventListener("click", function(){
+    switchTheme(currentTheme() === "dark" ? "light" : "dark", themeToggle);
+  });
+  applyIcon();
+
+  /* ---------- 로그인 드롭다운 열고 닫기 (내용은 /auth.js 가 그림) ---------- */
+  (function(){
+    var loginBtn = document.getElementById("loginBtn");
+    var loginDropdown = document.getElementById("loginDropdown");
+    if (!loginBtn || !loginDropdown) return;
+    function isOpen(){ return loginDropdown.classList.contains("open"); }
+    function setOpen(open){
+      loginDropdown.classList.toggle("open", open);
+      loginBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    loginBtn.addEventListener("click", function(e){ e.stopPropagation(); setOpen(!isOpen()); });
+    document.addEventListener("click", function(e){
+      if (isOpen() && !loginDropdown.contains(e.target) && e.target !== loginBtn) setOpen(false);
+    });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape" && isOpen()) setOpen(false); });
+  })();
+
+  /* ============ 회원 관리 ============
+     화면에서 관리자만 보이게 하는 건 편의일 뿐이고, 진짜 막는 건 서버(DB 함수)예요.
+     admin_list_users / admin_set_role 은 관리자가 아니면 forbidden 으로 거절해요. */
+  var ROLE_LABEL = { admin: "관리자", contractor: "인테리어 업자", user: "일반 유저" };
+  var ROLE_ORDER = { admin: 0, contractor: 1, user: 2 };
+  var ROLE_DESC = {
+    admin: "모든 회원의 글을 지울 수 있고, 다른 회원의 구분도 바꿀 수 있어요.",
+    contractor: "쓰는 기능은 일반 유저와 같아요. 갤러리에서 닉네임 옆에 ‘인테리어 업자’ 딱지가 붙어요.",
+    user: "닉네임 옆 딱지가 사라지고, 일반 유저 기능만 써요."
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var gate = $("gate"), panel = $("panel"), rowsEl = $("rows"), chipsEl = $("chips");
+  var qEl = $("q"), countEl = $("count");
+
+  var users = [], filter = "all", query = "", sortKey = "created_at", sortDir = -1;
+  var loaded = false, loading = false, myId = null, profileTimer = null;
+
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+  function fmtDate(iso){
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    function p(n){ return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate());
+  }
+  function toast(msg){ if (window.OHAuth && OHAuth.toast) OHAuth.toast(msg); }
+
+  /* ---------- 안내 박스 (로딩 / 로그인 필요 / 권한 없음 / 오류) ---------- */
+  function showGate(title, text, btnLabel, onClick){
+    panel.hidden = true;
+    gate.hidden = false;
+    gate.innerHTML = "<strong>" + esc(title) + "</strong>" + (text ? "<p>" + esc(text) + "</p>" : "") +
+      (btnLabel ? '<button type="button" class="btn btn-primary btn-sm" id="gateBtn">' + esc(btnLabel) + "</button>" : "");
+    var b = $("gateBtn");
+    if (b && onClick) b.addEventListener("click", onClick);
+  }
+  function showPanel(){ gate.hidden = true; panel.hidden = false; }
+
+  function evaluate(){
+    clearTimeout(profileTimer);
+    if (!window.OHAuth || !OHAuth.configured){
+      showGate("로그인 기능이 아직 연결되지 않았어요", "auth.js 의 Supabase 설정을 확인해 주세요."); return;
+    }
+    var user = OHAuth.getUser(), profile = OHAuth.getProfile();
+    if (!user){
+      myId = null; users = []; loaded = false;
+      showGate("로그인이 필요해요", "관리자 계정으로 로그인하면 회원 목록을 볼 수 있어요.", "로그인하기", function(){
+        var lb = $("loginBtn"); if (lb) lb.click();
+      });
+      return;
+    }
+    myId = user.id;
+    if (!profile){
+      showGate("권한을 확인하는 중이에요…");
+      profileTimer = setTimeout(function(){
+        if (!OHAuth.getProfile()) showGate("권한을 확인하지 못했어요", "네트워크를 확인하고 다시 시도해 주세요.", "새로고침", function(){ location.reload(); });
+      }, 6000);
+      return;
+    }
+    if (profile.role !== "admin"){
+      showGate("관리자만 들어올 수 있는 페이지예요", "지금 계정(" + (profile.nickname || "") + ")에는 관리자 권한이 없어요.", "갤러리로 가기", function(){ location.href = "/gallery"; });
+      return;
+    }
+    showPanel();
+    if (!loaded && !loading) loadUsers();
+  }
+
+  /* ---------- 목록 불러오기 ---------- */
+  function loadUsers(){
+    var sb = OHAuth.getClient();
+    if (!sb) return;
+    loading = true;
+    countEl.textContent = "불러오는 중…";
+    sb.rpc("admin_list_users").then(function(r){
+      loading = false;
+      if (r.error){
+        if (r.error.code === "42501" || /forbidden/i.test(r.error.message || "")){
+          showGate("관리자만 들어올 수 있는 페이지예요", "서버에서 권한을 확인하지 못했어요.");
+        } else {
+          showGate("회원 목록을 불러오지 못했어요", "잠시 뒤에 다시 시도해 주세요.", "다시 시도", function(){ showPanel(); loadUsers(); });
+        }
+        return;
+      }
+      users = r.data || [];
+      loaded = true;
+      render();
+    }, function(){
+      loading = false;
+      showGate("회원 목록을 불러오지 못했어요", "네트워크를 확인하고 다시 시도해 주세요.", "다시 시도", function(){ showPanel(); loadUsers(); });
+    });
+  }
+
+  /* ---------- 그리기 ---------- */
+  function counts(){
+    var c = { all: users.length, admin: 0, contractor: 0, user: 0 };
+    users.forEach(function(u){ if (c[u.role] != null) c[u.role]++; });
+    return c;
+  }
+  function renderChips(){
+    var c = counts();
+    var defs = [["all", "전체"], ["admin", ROLE_LABEL.admin], ["contractor", ROLE_LABEL.contractor], ["user", ROLE_LABEL.user]];
+    chipsEl.innerHTML = defs.map(function(d){
+      return '<button type="button" class="filter-chip' + (filter === d[0] ? " is-active" : "") + '" data-filter="' + d[0] + '" aria-pressed="' + (filter === d[0]) + '">' +
+        esc(d[1]) + '<span class="n">' + c[d[0]] + "</span></button>";
+    }).join("");
+  }
+  function visibleUsers(){
+    var q = query.trim().toLowerCase();
+    var list = users.filter(function(u){
+      if (filter !== "all" && u.role !== filter) return false;
+      if (!q) return true;
+      return (u.nickname || "").toLowerCase().indexOf(q) !== -1 || (u.email || "").toLowerCase().indexOf(q) !== -1;
+    });
+    list.sort(function(a, b){
+      var r;
+      if (sortKey === "role") r = (ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
+      else if (sortKey === "created_at") r = (new Date(a.created_at) - new Date(b.created_at));
+      else r = String(a[sortKey] || "").localeCompare(String(b[sortKey] || ""), "ko");
+      if (r === 0) r = String(a.nickname || "").localeCompare(String(b.nickname || ""), "ko");
+      return r * sortDir;
+    });
+    return list;
+  }
+  function roleSelect(u){
+    var self = u.id === myId;
+    var opts = ["admin", "contractor", "user"].map(function(r){
+      return '<option value="' + r + '"' + (u.role === r ? " selected" : "") + ">" + ROLE_LABEL[r] + "</option>";
+    }).join("");
+    return '<select class="role-select" data-role="' + esc(u.role) + '" aria-label="' + esc(u.nickname) + '님의 구분"' +
+      (self ? ' disabled title="내 계정의 구분은 바꿀 수 없어요"' : "") + ">" + opts + "</select>";
+  }
+  function render(focusId){
+    renderChips();
+    var list = visibleUsers();
+    if (!list.length){
+      rowsEl.innerHTML = '<tr><td colspan="4" class="admin-empty">' + (users.length ? "조건에 맞는 회원이 없어요." : "아직 가입한 회원이 없어요.") + "</td></tr>";
+    } else {
+      rowsEl.innerHTML = list.map(function(u){
+        return '<tr data-id="' + esc(u.id) + '">' +
+          '<td class="c-role">' + roleSelect(u) + "</td>" +
+          '<td class="c-nick">' + esc(u.nickname) + (u.id === myId ? '<span class="me-tag">나</span>' : "") + "</td>" +
+          '<td class="c-mail">' + esc(u.email) + "</td>" +
+          '<td class="c-date">' + fmtDate(u.created_at) + "</td></tr>";
+      }).join("");
+    }
+    countEl.textContent = (list.length === users.length ? "회원 " + users.length + "명" : users.length + "명 중 " + list.length + "명");
+    document.querySelectorAll(".admin-table th[data-th]").forEach(function(th){
+      var on = th.getAttribute("data-th") === sortKey;
+      th.setAttribute("aria-sort", on ? (sortDir === 1 ? "ascending" : "descending") : "none");
+      th.querySelector(".arrow").textContent = on && sortDir === 1 ? "▲" : "▼";
+    });
+    if (focusId){
+      var tr = rowsEl.querySelector('tr[data-id="' + focusId + '"] select');
+      if (tr) tr.focus();
+    }
+  }
+
+  /* ---------- 역할 바꾸기: 확인 창 → 서버 호출 ---------- */
+  var modal = $("confirm"), lastFocus = null, pending = null;
+  function openConfirm(u, next){
+    pending = { id: u.id, nickname: u.nickname, from: u.role, to: next };
+    lastFocus = document.activeElement;
+    var title = next === "admin" ? "관리자로 올릴까요?" :
+                u.role === "admin" ? "관리자 권한을 내릴까요?" :
+                next === "contractor" ? "인테리어 업자로 바꿀까요?" : "일반 유저로 바꿀까요?";
+    $("confirmTitle").textContent = title;
+    $("confirmWho").textContent = u.nickname + " · " + u.email;
+    $("confirmChange").innerHTML = esc(ROLE_LABEL[u.role]) + " <i>→</i> " + esc(ROLE_LABEL[next]);
+    $("confirmDesc").textContent = (u.role === "admin" && next !== "admin" ? "관리자 페이지와 모든 회원 글 삭제 권한이 없어져요. " : "") + ROLE_DESC[next];
+    modal.classList.add("open");
+    $("confirmYes").disabled = false;
+    $("confirmYes").textContent = "바꾸기";
+    setTimeout(function(){ $("confirmYes").focus(); }, 30);
+  }
+  function closeConfirm(){
+    modal.classList.remove("open");
+    pending = null;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function errText(err){
+    var m = (err && (err.message || "")) + "";
+    if (/cannot_change_self/.test(m)) return "내 계정의 구분은 바꿀 수 없어요.";
+    if (/forbidden/.test(m) || (err && err.code === "42501")) return "관리자 권한이 없어서 바꾸지 못했어요.";
+    if (/user_not_found/.test(m)) return "이미 탈퇴했거나 없는 회원이에요.";
+    return "바꾸지 못했어요. 잠시 뒤에 다시 시도해 주세요.";
+  }
+  function applyChange(){
+    if (!pending) return;
+    var p = pending, yes = $("confirmYes");
+    yes.disabled = true; yes.textContent = "바꾸는 중…";
+    var sb = OHAuth.getClient();
+    sb.rpc("admin_set_role", { target: p.id, new_role: p.to }).then(function(r){
+      if (r.error){
+        closeConfirm();
+        toast(errText(r.error));
+        if (/user_not_found/.test(r.error.message || "")){ loaded = false; loadUsers(); }
+        return;
+      }
+      for (var i = 0; i < users.length; i++){ if (users[i].id === p.id){ users[i].role = p.to; break; } }
+      closeConfirm();
+      render(p.id);
+      toast(p.nickname + "님을 ‘" + ROLE_LABEL[p.to] + "’(으)로 바꿨어요.");
+    }, function(){
+      closeConfirm();
+      toast("네트워크가 불안정해서 바꾸지 못했어요.");
+    });
+  }
+
+  /* ---------- 이벤트 ---------- */
+  rowsEl.addEventListener("change", function(e){
+    var sel = e.target.closest ? e.target.closest("select.role-select") : null;
+    if (!sel) return;
+    var tr = sel.closest("tr"), id = tr && tr.getAttribute("data-id"), u = null;
+    for (var i = 0; i < users.length; i++){ if (users[i].id === id) u = users[i]; }
+    if (!u) return;
+    var next = sel.value;
+    sel.value = u.role; /* 확인하기 전까지는 원래 값 유지 */
+    if (next !== u.role) openConfirm(u, next);
+  });
+  chipsEl.addEventListener("click", function(e){
+    var b = e.target.closest("[data-filter]");
+    if (!b) return;
+    filter = b.getAttribute("data-filter");
+    render();
+  });
+  qEl.addEventListener("input", function(){ query = qEl.value; render(); });
+  document.querySelector(".admin-table thead").addEventListener("click", function(e){
+    var b = e.target.closest("[data-sort]");
+    if (!b) return;
+    var k = b.getAttribute("data-sort");
+    if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = (k === "created_at") ? -1 : 1; }
+    render();
+  });
+  $("reload").addEventListener("click", function(){ if (!loading){ loaded = false; loadUsers(); } });
+  $("confirmNo").addEventListener("click", closeConfirm);
+  $("confirmYes").addEventListener("click", applyChange);
+  modal.addEventListener("mousedown", function(e){ if (e.target === modal) closeConfirm(); });
+  document.addEventListener("keydown", function(e){
+    if (!modal.classList.contains("open")) return;
+    if (e.key === "Escape"){ e.preventDefault(); closeConfirm(); }
+    if (e.key === "Tab"){ /* 포커스가 창 밖으로 나가지 않게 */
+      var f = [$("confirmNo"), $("confirmYes")].filter(function(b){ return !b.disabled; });
+      if (!f.length) return;
+      var i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && (i === f.length - 1 || i === -1)){ e.preventDefault(); f[0].focus(); }
+    }
+  });
+
+  /* ---------- 시작 (auth.js 는 이 스크립트 뒤에 불러와서, 페이지가 다 읽힌 뒤에 시작) ---------- */
+  showGate("확인하는 중이에요…");
+  function start(){
+    if (window.OHAuth){
+      OHAuth.onChange(function(){ evaluate(); });
+      var r = OHAuth.ready();
+      if (r && r.then) r.then(evaluate, evaluate); else evaluate();
+    } else {
+      showGate("로그인 기능을 불러오지 못했어요", "새로고침해 보세요.", "새로고침", function(){ location.reload(); });
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();
+</script>
+<script src="/auth.js"></script>

@@ -429,6 +429,61 @@
   html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
     transition:background-color .55s ease, color .55s ease, border-color .55s ease, fill .55s ease, stroke .55s ease, box-shadow .55s ease !important;
   }
+
+  /* ---------- 서버 연동용 추가 스타일 ---------- */
+  .btn-ghost{background:var(--paper); color:var(--ink); border:1.5px solid var(--line); box-shadow:none;}
+  .btn-ghost:hover{border-color:var(--ink-soft);}
+  .role-tag{flex:none; font-size:.68rem; font-weight:600; line-height:1.5; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--ink-soft); background:var(--paper);}
+  .role-tag.pro{color:#3C7A5B; background:color-mix(in srgb, #3C7A5B 13%, var(--paper-raised)); border-color:color-mix(in srgb, #3C7A5B 38%, transparent);}
+  :root[data-theme="dark"] .role-tag.pro{color:#7BC79E; background:color-mix(in srgb, #7BC79E 14%, var(--paper-raised)); border-color:color-mix(in srgb, #7BC79E 38%, transparent);}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .role-tag.pro{color:#7BC79E; background:color-mix(in srgb, #7BC79E 14%, var(--paper-raised)); border-color:color-mix(in srgb, #7BC79E 38%, transparent);} }
+  .post-meta{align-items:center;}
+  .post-del,.comment-del{appearance:none; border:0; background:none; cursor:pointer; font:inherit; font-size:.8rem; color:var(--ink-soft); padding:2px 4px; text-decoration:underline; text-underline-offset:2px;}
+  .post-del{margin-left:8px;}
+  .post-del[hidden]{display:none;}
+  .post-del:hover,.comment-del:hover{color:#B3392F;}
+  .post-del:focus-visible,.comment-del:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .comment-head{align-items:center; justify-content:flex-start; flex-wrap:wrap;}
+  .comment-head .ct{margin-left:auto;}
+  .comment-login{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:18px 20px; border:1px dashed var(--line); border-radius:12px;}
+  .comment-login p{color:var(--ink-soft); font-size:.92rem;}
+  .ip-tag{font-size:.74rem; font-weight:400; color:var(--ink-soft);}
+  .guest-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .guest-row input{flex:0 0 auto; width:160px; padding:9px 12px; border-radius:9px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font:inherit; font-size:.9rem;}
+  .guest-row input[type="password"]{width:230px;}
+  .guest-row input:focus-visible{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus);}
+  .guest-ip{font-size:.82rem; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+  .guest-hint{font-size:.8rem; color:var(--ink-soft);}
+  .link-btn{appearance:none; border:0; background:none; padding:0; font:inherit; font-size:.8rem; font-weight:600; color:var(--blueprint); text-decoration:underline; text-underline-offset:2px; cursor:pointer;}
+  .link-btn:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:3px;}
+  /* 답글: 원댓글 아래 회색 상자 안에서 한 줄씩 쭉 이어진다 */
+  .comment-actions{display:flex; align-items:center; gap:10px; margin-top:8px;}
+  .comment-reply-btn{appearance:none; border:0; background:none; cursor:pointer; font:inherit; font-size:.8rem; font-weight:600; color:var(--blueprint); padding:2px 0;}
+  .comment-reply-btn:hover{text-decoration:underline; text-underline-offset:2px;}
+  .comment-reply-btn:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:4px;}
+  .reply-box{margin-top:12px; margin-inline:-16px; margin-bottom:-14px; padding:4px 16px 10px; background:color-mix(in srgb, var(--ink) 4%, var(--paper-raised)); border-top:1px solid var(--line); border-radius:0 0 12px 12px;}
+  .reply-item{display:flex; flex-direction:column; padding:10px 0; border-bottom:1px dashed var(--line);}
+  .reply-item:last-of-type{border-bottom:0;}
+  .reply-item .comment-head{margin-bottom:4px;}
+  .reply-item p{font-size:.9rem; padding-left:18px;}
+  .reply-item .comment-actions{padding-left:18px;}
+  .reply-mark{flex:none; width:14px; color:var(--ink-soft); font-size:.78rem; line-height:1;}
+  .mention{color:var(--blueprint); font-weight:600;}
+  .reply-form{display:flex; flex-direction:column; gap:8px; padding-top:10px;}
+  .reply-form textarea{width:100%; min-height:64px; max-height:160px; padding:10px 12px; border-radius:9px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font:inherit; font-size:.9rem; line-height:1.5; resize:vertical;}
+  .reply-form textarea:focus-visible{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus);}
+  .reply-form-actions{display:flex; justify-content:flex-end; gap:8px;}
+  /* 삭제 확인 작은 창 (누른 버튼 바로 밑) */
+  .oh-pop{position:absolute; z-index:1500; box-sizing:border-box; padding:18px 18px 16px; background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; box-shadow:0 14px 36px -14px var(--shadow); opacity:0; transform:translateY(-6px) scale(.96); transition:opacity .14s ease, transform .16s ease;}
+  .oh-pop.open{opacity:1; transform:none;}
+  .oh-pop-title{font-size:.95rem; margin:0 0 6px; color:var(--ink);}
+  .oh-pop-text{margin:0 0 12px; font-size:.86rem; line-height:1.55; color:var(--ink-soft);}
+  .oh-pop-input{width:100%; box-sizing:border-box; padding:10px 12px; border-radius:9px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font:inherit; font-size:.92rem;}
+  .oh-pop-input:focus-visible{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus);}
+  .oh-pop-err{margin:7px 0 0; font-size:.8rem; line-height:1.4; color:#B3392F;}
+  .oh-pop-err:empty{display:none;}
+  .oh-pop-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:12px;}
+  @media (prefers-reduced-motion:reduce){ .oh-pop{transition:none;} }
 </style>
 
 <header class="site">
@@ -447,22 +502,7 @@
       <div class="nav-auth">
         <button type="button" class="btn btn-primary btn-sm" id="loginBtn" aria-haspopup="true" aria-expanded="false">로그인</button>
         <div class="login-dropdown" id="loginDropdown">
-          <form id="loginForm">
-            <label class="login-field">
-              <span>아이디</span>
-              <input type="text" name="username" autocomplete="username" placeholder="아이디를 입력하세요">
-            </label>
-            <label class="login-field">
-              <span>비밀번호</span>
-              <input type="password" name="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요">
-            </label>
-            <button type="submit" class="btn btn-primary btn-sm login-submit">로그인</button>
-          </form>
-          <div class="login-links">
-            <a href="#">회원가입</a>
-            <span aria-hidden="true">·</span>
-            <a href="#">비밀번호 찾기</a>
-          </div>
+          <!-- 내용은 /auth.js 가 그린다 (로그인·회원가입 공용) -->
         </div>
       </div>
     </div>
@@ -698,6 +738,9 @@
   }
   var OH_FURN_COLORS_NUM = { sofa:0xc98f72, table:0x9a704d, bed:0x90a8bb, plant:0x5c8d61, door:0x8a5a34, window:0xdfeff5, outlet:0xf1efe9 };
 
+  // 서버(Storage)에서 오는 이미지는 다른 주소라 CORS 허용으로 불러와야 3D 텍스처로 쓸 수 있음(data: 주소엔 영향 없음)
+  function ohTexLoader(){ var l = new THREE.TextureLoader(); l.setCrossOrigin("anonymous"); return l; }
+
   function ohBoundsFromWallData(wallData){
     var w = wallData.width || 0, d = wallData.depth || 0;
     (wallData.outer || []).concat(wallData.inner || []).forEach(function(s){
@@ -776,7 +819,7 @@
     // 게시할 때 "도면 이미지도 함께 게시"를 체크했으면 벽 영역만 잘라 저장해둔 도면 사진을 바닥에 깔아줌
     // (체크 해제했거나 옛날 게시물이면 wallData.floorPhoto가 없어서 그대로 단색 바닥).
     if (wallData.floorPhoto){
-      new THREE.TextureLoader().load(wallData.floorPhoto, function(tex){
+      ohTexLoader().load(wallData.floorPhoto, function(tex){
         tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
         tex.needsUpdate = true;
         var photoFloor = new THREE.Mesh(
@@ -962,7 +1005,7 @@
       // 넘어가야 plan3d.html의 getWallColors(논리적 벽 기준)와 순서가 어긋나지 않음.
       if (wallImgData && wallPieces.length){
         var imgKey = wallColorIdx;
-        new THREE.TextureLoader().load(wallImgData, function(tex){
+        ohTexLoader().load(wallImgData, function(tex){
           tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
           tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
           tex.needsUpdate = true;
@@ -1811,44 +1854,218 @@
     };
   }
 
-  /* ---------- 게시물 상세 렌더링 ---------- */
-  function renderNotFound(){
+  /* ---------- 게시물 상세 렌더링 (Supabase) ---------- */
+  var sb = null;
+  var me = { user: null, uid: null, admin: false };   // user: 정식 회원, uid: 비회원 임시 세션 포함
+  function refreshMe(){
+    me.user = (window.OHAuth && OHAuth.getUser && OHAuth.getUser()) || null;
+    var su = window.OHAuth && OHAuth.getSessionUser && OHAuth.getSessionUser();
+    me.uid = su ? su.id : null;
+    me.admin = !!(window.OHAuth && OHAuth.isAdmin && OHAuth.isAdmin());
+  }
+  function imageUrl(path){
+    if (!path || !sb) return "";
+    return sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+  }
+  function roleTag(role, guest){
+    if (guest) return '<span class="role-tag guest">비회원</span>';
+    return role === "contractor" ? '<span class="role-tag pro">인테리어 업자</span>' : "";
+  }
+  function toastMsg(m){ if (window.OHAuth && OHAuth.toast) OHAuth.toast(m); }
+
+  /* ----- 비회원(유동) 글쓰기 도우미: 닉네임 + IP 앞 두 자리 ----- */
+  function ipTag(ip){ return ip ? '<span class="ip-tag">(' + ohEscapeHtml(ip) + ')</span>' : ""; }
+  var NICK_RE = /^[0-9A-Za-z_가-힣]{2,12}$/;
+  var NICK_RULE_MSG = "닉네임은 2~12자, 한글·영문·숫자·_ 만 쓸 수 있어요.";
+  var PW_RE = /^[0-9]{4,6}$/;
+  var PW_RULE_MSG = "삭제용 비밀번호는 숫자 4~6자리로 정해주세요.";
+  var GUEST_NICK_KEY = "oh-guest-nick";
+  function getGuestNick(){ try { return localStorage.getItem(GUEST_NICK_KEY) || ""; } catch (e) { return ""; } }
+  function setGuestNick(v){ try { localStorage.setItem(GUEST_NICK_KEY, v); } catch (e) {} }
+  /* 글쓰기 전에 세션이 없으면 비회원 임시 세션을 만든다 */
+  function ensureSession(){
+    refreshMe();
+    if (me.uid) return Promise.resolve(true);
+    return OHAuth.ensureGuest().then(function(u){ refreshMe(); return !!(u && me.uid); });
+  }
+  /* DB 트리거가 돌려주는 말(쿨타임·이름 사칭)을 사람 말로 */
+  function writeError(err){
+    var m = (err && err.message) || "";
+    if (/cooldown/.test(m)){
+      var s = parseInt(err.details, 10);
+      return "너무 빨라요. " + (s > 0 ? s + "초 뒤에" : "잠시 뒤에") + " 다시 남겨주세요.";
+    }
+    if (/nickname_taken/.test(m)) return "이미 쓰는 이름이에요. 다른 닉네임을 써주세요.";
+    if (/invalid_pw/.test(m)) return PW_RULE_MSG;
+    return null;
+  }
+  /* 비회원 글·의견 삭제: 비밀번호가 맞으면 지워진다. 성공하면 null, 실패하면 보여줄 말을 돌려줌 */
+  function deleteGuestItem(kind, id, pw){
+    return sb.rpc("delete_guest_item", { p_kind: kind, p_id: id, p_pw: pw }).then(function(r){
+      if (r.error){
+        var m = r.error.message || "";
+        if (/too_many/.test(m)) return "비밀번호를 너무 많이 틀렸어요. 잠시 뒤에 다시 시도해 주세요.";
+        if (/invalid_pw/.test(m)) return PW_RULE_MSG.replace("정해주세요", "입력해 주세요");
+        return "삭제하지 못했어요. 잠시 뒤에 다시 시도해 주세요.";
+      }
+      return r.data ? null : "비밀번호가 맞지 않아요.";
+    }, function(){ return "네트워크가 불안정해요."; });
+  }
+  /* ----- 삭제 확인: 로그인 창처럼 누른 버튼 바로 밑에 작은 창으로 뜬다 -----
+     o: { title, text, pw(비밀번호 칸 여부), yesLabel, run(pw) → Promise<null(성공) | 오류 문구> } → Promise<성공 여부> */
+  var ohPopEl = null, ohPopClose = null;
+  function ohPop(anchor, o){
+    if (ohPopClose){
+      var same = ohPopEl && ohPopEl._anchor === anchor;
+      ohPopClose(false);
+      if (same) return Promise.resolve(false);   /* 같은 버튼을 다시 누르면 닫기 */
+    }
+    return new Promise(function(resolve){
+      var pop = document.createElement("div");
+      pop.className = "oh-pop";
+      pop.setAttribute("role", "dialog");
+      pop.setAttribute("aria-label", o.title);
+      pop.innerHTML = '<h4 class="oh-pop-title">' + ohEscapeHtml(o.title) + '</h4>' +
+        (o.text ? '<p class="oh-pop-text">' + ohEscapeHtml(o.text) + '</p>' : "") +
+        (o.pw ? '<input class="oh-pop-input" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="비밀번호 (숫자 4~6자리)" aria-label="삭제용 비밀번호">' : "") +
+        '<p class="oh-pop-err" role="alert"></p>' +
+        '<div class="oh-pop-actions"><button type="button" class="btn btn-ghost btn-sm" data-no>취소</button><button type="button" class="btn btn-primary btn-sm" data-yes>' + ohEscapeHtml(o.yesLabel || "삭제하기") + '</button></div>';
+      pop._anchor = anchor;
+      document.body.appendChild(pop);
+      var input = pop.querySelector("input"), err = pop.querySelector(".oh-pop-err"), yes = pop.querySelector("[data-yes]");
+      var closed = false, tick = null;
+
+      function place(){
+        var r = anchor.getBoundingClientRect();
+        var w = Math.min(340, window.innerWidth - 24);
+        pop.style.width = w + "px";
+        var left = r.left; if (left + w > window.innerWidth - 12) left = r.right - w; left = Math.max(12, Math.min(left, window.innerWidth - w - 12));   /* 버튼 왼쪽에 맞춰 바로 밑에, 넘치면 오른쪽 맞춤 */
+        var h = pop.offsetHeight;
+        var below = (r.bottom + 10 + h <= window.innerHeight - 8) || (r.top < h + 18);
+        var top = below ? r.bottom + 10 : r.top - h - 10;
+        pop.style.left = (left + window.scrollX) + "px";
+        pop.style.top = (top + window.scrollY) + "px";
+        pop.style.transformOrigin = (below ? "top" : "bottom") + " " + Math.max(0, Math.min(w, (r.left + r.right) / 2 - left)) + "px";
+      }
+      function close(ok){
+        if (closed) return;
+        closed = true;
+        clearInterval(tick);
+        document.removeEventListener("mousedown", onOutside, true);
+        document.removeEventListener("keydown", onKey, true);
+        window.removeEventListener("resize", place);
+        if (ohPopEl === pop){ ohPopEl = null; ohPopClose = null; }
+        pop.classList.remove("open");
+        setTimeout(function(){ pop.remove(); }, 160);
+        if (!ok && anchor.isConnected){ try { anchor.focus({ preventScroll: true }); } catch (e) {} }
+        resolve(!!ok);
+      }
+      function onOutside(e){ if (!pop.contains(e.target) && !anchor.contains(e.target)) close(false); }
+      function onKey(e){ if (e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); close(false); } }
+      document.addEventListener("mousedown", onOutside, true);
+      document.addEventListener("keydown", onKey, true);
+      window.addEventListener("resize", place);
+      ohPopEl = pop; ohPopClose = close;
+
+      pop.querySelector("[data-no]").addEventListener("click", function(){ close(false); });
+      if (input) input.addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); yes.click(); } });
+      yes.addEventListener("click", function(){
+        var pw = "";
+        if (o.pw){
+          pw = input.value.trim();
+          if (!/^[0-9]{4,6}$/.test(pw)){ err.textContent = "숫자 4~6자리 비밀번호를 입력해 주세요."; place(); input.focus(); return; }
+        }
+        err.textContent = ""; yes.disabled = true;
+        var label = yes.textContent; yes.textContent = "삭제하는 중…";
+        o.run(pw).then(function(msg){
+          if (!msg){ close(true); return; }
+          err.textContent = msg; yes.disabled = false; yes.textContent = label; place();
+          if (input) input.select();
+        });
+      });
+
+      place();
+      requestAnimationFrame(function(){
+        pop.classList.add("open");
+        var pr = pop.getBoundingClientRect();
+        if (pr.bottom > window.innerHeight || pr.top < 0) pop.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        (input || pop.querySelector("[data-no]")).focus({ preventScroll: true });
+      });
+      /* 글이 다시 그려져서 누른 버튼이 사라지면 창도 닫고, 그 사이 레이아웃이 움직이면 따라간다 */
+      tick = setInterval(function(){ if (!anchor.isConnected) close(false); else place(); }, 250);
+    });
+  }
+
+  var myIpPromise = null;
+  function loadMyIp(){
+    if (!myIpPromise) myIpPromise = sb.rpc("my_ip_prefix").then(function(r){ return (r && !r.error && r.data) || ""; }, function(){ return ""; });
+    return myIpPromise;
+  }
+  function fillGuestIps(root){
+    var els = root.querySelectorAll("[data-guest-ip]");
+    if (!els.length) return;
+    loadMyIp().then(function(ip){ els.forEach(function(el){ el.textContent = ip ? "(" + ip + ")" : ""; }); });
+  }
+
+  function renderNotFound(msg){
     document.getElementById("postContent").innerHTML =
       '<div class="post-not-found">' +
         '<h1>게시물을 찾을 수 없어요</h1>' +
-        '<p>삭제되었거나 잘못된 링크예요. 이 브라우저에 저장된 게시물이 아닐 수도 있어요.</p>' +
+        '<p>' + ohEscapeHtml(msg || "삭제되었거나 잘못된 링크예요.") + '</p>' +
         '<a class="btn btn-primary" href="/gallery" style="margin-top:18px;">갤러리로 돌아가기</a>' +
       '</div>';
+  }
+
+  /* 서버 행(row) → 화면에서 쓰는 모양으로 */
+  function shapePost(row){
+    var wd = Object.assign({}, row.wall_data || {});
+    if (row.floor_photo_path) wd.floorPhoto = imageUrl(row.floor_photo_path);
+    if (row.wall_image_paths && row.wall_image_paths.length){
+      wd.wallImages = row.wall_image_paths.map(function(p){ return p ? imageUrl(p) : null; });
+    }
+    var prof = row.profiles || {};
+    var guest = !!row.author_name;
+    return {
+      id: row.id, userId: row.user_id, title: row.title,
+      author: guest ? row.author_name : (prof.nickname || "회원"), role: guest ? "user" : (prof.role || "user"), guest: guest,
+      createdAt: row.created_at, roomSize: { w: Number(row.room_w) || 0, d: Number(row.room_d) || 0 },
+      wallData: wd, furniture: row.furniture || [], thumbUrl: imageUrl(row.thumb_path),
+      likes: row.like_count || 0, ip: row.ip_prefix || ""
+    };
   }
 
   function renderPost(){
     var params = new URLSearchParams(location.search);
     var postId = params.get("id");
-    var post = postId ? ohGetPost(postId) : null;
-    if (!post){ renderNotFound(); return; }
+    if (!postId){ renderNotFound(); return; }
+    if (!sb){ renderNotFound("서버에 연결하지 못했어요. 새로고침해 보세요."); return; }
+    document.getElementById("postContent").innerHTML = '<p class="comment-empty" style="padding:40px 0;">불러오는 중…</p>';
+    refreshMe();
+    sb.from("posts").select("id, user_id, author_name, ip_prefix, title, room_w, room_d, wall_data, furniture, thumb_path, floor_photo_path, wall_image_paths, like_count, comment_count, created_at, profiles(nickname, role)")
+      .eq("id", postId).maybeSingle().then(function(r){
+        if (r.error){ console.error(r.error); renderNotFound("게시물을 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+        if (!r.data){ renderNotFound(); return; }
+        drawPost(shapePost(r.data));
+      }, function(){ renderNotFound("네트워크를 확인하고 다시 시도해 주세요."); });
+  }
 
+  function drawPost(post){
     document.title = post.title + " · 오늘의 하우징";
 
     var hasWallData = !!(post.wallData && post.wallData.outer && post.wallData.outer.length);
-    var hasImg = !!(post.thumb && post.thumb.dataUrl);
-    var variant = (post.thumb && post.thumb.variant) || 1;
+    var hasImg = !!post.thumbUrl;
     var thumbInner = hasImg
-      ? '<img src="' + post.thumb.dataUrl + '" alt="' + ohEscapeHtml(post.title) + ' 3D 배치 미리보기">'
-      : (OH_ICONS[(post.thumb && post.thumb.icon) || "house"] || OH_ICONS.house);
-    var badge = post.badge ? '<span class="badge">' + ohEscapeHtml(post.badge) + '</span>' : "";
+      ? '<img src="' + ohEscapeHtml(post.thumbUrl) + '" alt="' + ohEscapeHtml(post.title) + ' 3D 배치 미리보기">'
+      : OH_ICONS.house;
 
     var roomBits = [];
-    if (post.roomSize && post.roomSize.w && post.roomSize.d){
+    if (post.roomSize.w && post.roomSize.d){
       roomBits.push("가로 " + post.roomSize.w.toFixed(1) + "m");
       roomBits.push("세로 " + post.roomSize.d.toFixed(1) + "m");
     }
-    if (post.furniture && post.furniture.length){
-      roomBits.push("가구 " + post.furniture.length + "개");
-    }
+    if (post.furniture.length) roomBits.push("가구 " + post.furniture.length + "개");
     var roomLine = roomBits.length ? roomBits.join(" · ") : "방 정보가 없어요";
 
-    // 실제 배치 데이터(wallData)가 있으면 왼쪽 2D 탑뷰 + 오른쪽 인터랙티브 3D로 보여주고,
-    // 옛 샘플 게시물처럼 데이터가 없으면 캡처 썸네일/아이콘 하나만 보여주는 예전 방식으로 대체함.
     var viewHtml = hasWallData
       ? '<div class="post-view-split">' +
           '<div class="post-view-2d">' +
@@ -1862,13 +2079,13 @@
           '</div>' +
           '<div class="post-view-3d" id="postView3d"><span class="post-view-label">3D</span></div>' +
         '</div>'
-      : '<div class="post-thumb' + (hasImg ? ' has-image' : '') + '" data-variant="' + variant + '">' + thumbInner + '</div>';
+      : '<div class="post-thumb' + (hasImg ? ' has-image' : '') + '" data-variant="1">' + thumbInner + '</div>';
 
     document.getElementById("postContent").innerHTML =
       '<div class="post-head">' +
-        badge +
         '<h1>' + ohEscapeHtml(post.title) + '</h1>' +
-        '<div class="post-meta"><span>' + ohEscapeHtml(post.author) + '</span><span>·</span><span>' + ohTimeAgo(post.createdAt) + '</span></div>' +
+        '<div class="post-meta"><span>' + ohEscapeHtml(post.author) + '</span>' + roleTag(post.role, post.guest) + (post.guest ? ipTag(post.ip) : "") + '<span>·</span><span>' + ohTimeAgo(post.createdAt) + '</span>' +
+          '<button type="button" class="post-del" id="postDelBtn" hidden>삭제</button></div>' +
       '</div>' +
       viewHtml +
       '<div class="post-stats-row">' +
@@ -1878,13 +2095,7 @@
       '<div class="comments-section">' +
         '<h2>의견 <span id="commentCount"></span></h2>' +
         '<div class="comment-list" id="commentList"></div>' +
-        '<form class="comment-form" id="commentForm">' +
-          '<div class="comment-row">' +
-            '<input type="text" id="commentAuthor" placeholder="닉네임" maxlength="20">' +
-            '<textarea id="commentText" placeholder="이 배치에 대한 의견을 남겨주세요" maxlength="500" required></textarea>' +
-          '</div>' +
-          '<button type="submit" class="btn btn-primary">의견 남기기</button>' +
-        '</form>' +
+        '<div id="commentFormHost"></div>' +
       '</div>';
 
     if (hasWallData){
@@ -1911,54 +2122,312 @@
       }
     }
 
-    var authorField = document.getElementById("commentAuthor");
-    authorField.value = ohGetName();
-
+    /* ----- 좋아요 (회원은 계정당 1번, 비회원은 같은 IP에서 글 하나에 1번) ----- */
+    var liked = false, likeBusy = false;
     function refreshLikeBtn(){
-      var liked = ohIsLiked(post.id);
       var btn = document.getElementById("likeBtn");
       btn.className = "like-btn" + (liked ? " is-liked" : "");
       btn.innerHTML = (liked ? OH_LIKE_ICON_FILLED : OH_LIKE_ICON) + " <span>" + (post.likes || 0) + "</span>";
     }
     refreshLikeBtn();
+    function loadLiked(){
+      liked = false;
+      refreshMe();
+      if (!me.uid){ refreshLikeBtn(); return; }
+      sb.from("likes").select("post_id").eq("post_id", post.id).eq("user_id", me.uid).maybeSingle().then(function(r){
+        liked = !!(r && r.data); refreshLikeBtn();
+      });
+    }
+    loadLiked();
+    function toggleLike(){
+      if (likeBusy) return;
+      likeBusy = true;
+      var q = liked
+        ? sb.from("likes").delete().eq("post_id", post.id).eq("user_id", me.uid)
+        : sb.from("likes").insert({ post_id: post.id, user_id: me.uid });
+      q.then(function(r){
+        likeBusy = false;
+        if (r.error){
+          toastMsg(/ip_already_liked/.test(r.error.message || "")
+            ? "같은 IP에서 이미 하트를 눌렀어요. 로그인하면 내 계정으로 누를 수 있어요."
+            : "좋아요를 바꾸지 못했어요. 잠시 뒤에 다시 시도해 주세요.");
+          return;
+        }
+        liked = !liked;
+        post.likes = Math.max(0, (post.likes || 0) + (liked ? 1 : -1));
+        refreshLikeBtn();
+      }, function(){ likeBusy = false; toastMsg("네트워크가 불안정해요."); });
+    }
     document.getElementById("likeBtn").addEventListener("click", function(){
-      var nowLiked = ohToggleLiked(post.id);
-      post.likes = Math.max(0, (post.likes || 0) + (nowLiked ? 1 : -1));
-      ohUpdatePost(post.id, function(p){ p.likes = post.likes; });
-      refreshLikeBtn();
+      ensureSession().then(function(ok){
+        if (!ok){ toastMsg("지금은 하트를 누를 수 없어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+        toggleLike();
+      });
     });
 
+    /* ----- 댓글 · 답글 ----- */
+    var comments = [];
+    var replyOpen = null;   /* { root: 원댓글 id, text: 입력 중인 내용 } — 답글 입력칸이 열려 있는 원댓글 */
+    var COMMENT_COLS = "id, user_id, parent_id, author_name, ip_prefix, body, created_at, profiles(nickname, role)";
+
+    function bodyHtml(text){
+      /* 맨 앞 "@닉네임" 은 누구에게 단 답글인지 보이게 강조 */
+      return ohEscapeHtml(text).replace(/^@(\S+)/, '<span class="mention">@$1</span>');
+    }
+    function commentHtml(c, rootId, isReply){
+      var prof = c.profiles || {};
+      var guest = !!c.author_name;
+      var nick = guest ? c.author_name : (prof.nickname || "회원");
+      var canDel = guest || (!!me.uid && (me.admin || c.user_id === me.uid));   /* 비회원 의견은 비밀번호로 누구나 지우기를 시도할 수 있다 */
+      return '<div class="' + (isReply ? "reply-item" : "comment-main") + '" data-cid="' + ohEscapeHtml(c.id) + '">' +
+        '<div class="comment-head">' + (isReply ? '<span class="reply-mark" aria-hidden="true">ㄴ</span>' : "") +
+          '<span class="comment-author">' + ohEscapeHtml(nick) + '</span>' + (guest ? ipTag(c.ip_prefix) : roleTag(prof.role, false)) + '<span class="ct">' + ohTimeAgo(c.created_at) + '</span>' +
+          (canDel ? '<button type="button" class="comment-del" data-cdel="' + ohEscapeHtml(c.id) + '">삭제</button>' : "") + '</div>' +
+        '<p>' + bodyHtml(c.body) + '</p>' +
+        '<div class="comment-actions"><button type="button" class="comment-reply-btn" data-creply="' + ohEscapeHtml(rootId) + '"' +
+          (isReply ? ' data-cnick="' + ohEscapeHtml(nick) + '"' : "") + '>답글</button></div>' +
+      '</div>';
+    }
+    function guestRowHtml(nickAttr, pwAttr, nick, pw){
+      return '<div class="guest-row"><input type="text" ' + nickAttr + ' maxlength="12" autocomplete="off" placeholder="닉네임 (2~12자)" aria-label="닉네임" value="' + ohEscapeHtml(nick || "") + '">' +
+        '<span class="guest-ip" data-guest-ip></span>' +
+        '<input type="password" inputmode="numeric" ' + pwAttr + ' maxlength="6" autocomplete="new-password" placeholder="삭제용 비밀번호 (숫자 4~6자리)" aria-label="삭제용 비밀번호" value="' + ohEscapeHtml(pw || "") + '">' +
+        '</div>';
+    }
+    function replyFormHtml(text, nick, pw){
+      return '<form class="reply-form" data-rform>' + (me.user ? "" : guestRowHtml("data-rnick", "data-rpw", nick, pw)) + '<textarea maxlength="500" required placeholder="답글을 남겨주세요" aria-label="답글">' + ohEscapeHtml(text || "") + '</textarea>' +
+        '<div class="reply-form-actions"><button type="button" class="btn btn-ghost btn-sm" data-rcancel>취소</button><button type="submit" class="btn btn-primary btn-sm">답글 등록</button></div></form>';
+    }
     function renderComments(){
       var list = document.getElementById("commentList");
-      var comments = post.comments || [];
+      var oldTa = list.querySelector(".reply-form textarea");
+      if (oldTa && replyOpen) replyOpen.text = oldTa.value;   /* 다시 그려도 쓰던 내용은 그대로 */
+      var oldNick = list.querySelector("[data-rnick]");
+      if (oldNick && replyOpen) replyOpen.nick = oldNick.value;
+      var oldPw = list.querySelector("[data-rpw]");
+      if (oldPw && replyOpen) replyOpen.pw = oldPw.value;
       document.getElementById("commentCount").textContent = comments.length ? "(" + comments.length + ")" : "";
-      list.innerHTML = comments.length
-        ? comments.map(function(c){
-            return '<div class="comment-item">' +
-              '<div class="comment-head"><span class="comment-author">' + ohEscapeHtml(c.author) + '</span><span>' + ohTimeAgo(c.createdAt) + '</span></div>' +
-              '<p>' + ohEscapeHtml(c.text) + '</p>' +
+      refreshMe();
+      var tops = comments.filter(function(c){ return !c.parent_id; });
+      var byParent = {};
+      comments.forEach(function(c){ if (c.parent_id){ (byParent[c.parent_id] = byParent[c.parent_id] || []).push(c); } });
+      list.innerHTML = tops.length
+        ? tops.map(function(c){
+            var reps = byParent[c.id] || [];
+            var open = replyOpen && replyOpen.root === c.id;
+            return '<div class="comment-item" data-root="' + ohEscapeHtml(c.id) + '">' + commentHtml(c, c.id, false) +
+              ((reps.length || open)
+                ? '<div class="reply-box">' + reps.map(function(r){ return commentHtml(r, c.id, true); }).join("") + (open ? replyFormHtml(replyOpen.text, replyOpen.nick != null ? replyOpen.nick : getGuestNick(), replyOpen.pw || "") : "") + '</div>'
+                : "") +
             '</div>';
           }).join("")
         : '<p class="comment-empty">아직 의견이 없어요. 첫 의견을 남겨보세요!</p>';
+      fillGuestIps(list);
     }
-    renderComments();
+    function loadComments(){
+      sb.from("comments").select(COMMENT_COLS).eq("post_id", post.id)
+        .order("created_at", { ascending: true }).limit(500).then(function(r){
+          if (r.error){ document.getElementById("commentList").innerHTML = '<p class="comment-empty">의견을 불러오지 못했어요.</p>'; return; }
+          comments = r.data || [];
+          renderComments();
+        });
+    }
+    loadComments();
 
-    document.getElementById("commentForm").addEventListener("submit", function(e){
-      e.preventDefault();
-      var textInput = document.getElementById("commentText");
-      var text = textInput.value.trim();
-      if (!text) return;
-      var author = authorField.value.trim() || "익명";
-      ohSetName(author);
-      var comment = { id: "c_" + Date.now() + "_" + Math.random().toString(36).slice(2,6), author: author, text: text, createdAt: new Date().toISOString() };
-      post.comments = post.comments || [];
-      post.comments.push(comment);
-      ohUpdatePost(post.id, function(p){ p.comments = p.comments || []; p.comments.push(comment); });
-      textInput.value = "";
+    function renderCommentForm(){
+      refreshMe();
+      var host = document.getElementById("commentFormHost");
+      if (!host) return;
+      host.innerHTML = '<form class="comment-form" id="commentForm">' + (me.user ? "" : guestRowHtml('id="commentNick"', 'id="commentPw"', getGuestNick(), "")) +
+        '<div class="comment-row"><textarea id="commentText" placeholder="이 배치에 대한 의견을 남겨주세요" maxlength="500" required></textarea></div>' +
+        '<button type="submit" class="btn btn-primary">의견 남기기</button></form>';
+      document.getElementById("commentForm").addEventListener("submit", function(e){
+        e.preventDefault();
+        var textInput = document.getElementById("commentText");
+        var text = textInput.value.trim();
+        if (!text) return;
+        refreshMe();
+        var nick = "", pw = "";
+        if (!me.user){
+          var ni = document.getElementById("commentNick");
+          nick = ni.value.trim();
+          if (!NICK_RE.test(nick)){ toastMsg(NICK_RULE_MSG); ni.focus(); return; }
+          var pi = document.getElementById("commentPw");
+          pw = pi.value.trim();
+          if (!PW_RE.test(pw)){ toastMsg(PW_RULE_MSG); pi.focus(); return; }
+        }
+        var submit = e.target.querySelector("button[type=submit]");
+        submit.disabled = true;
+        sendComment(text, null, nick, pw).then(function(r){
+          submit.disabled = false;
+          if (r.error || !r.data){ toastMsg(writeError(r.error) || "의견을 남기지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+          if (nick) setGuestNick(nick);
+          comments.push(r.data);
+          textInput.value = "";
+          renderComments();
+        }, sendFail(submit));
+      });
+      fillGuestIps(host);
+    }
+    /* 의견·답글 저장: 회원은 프로필 닉네임, 비회원은 입력한 닉네임(+임시 세션)으로 */
+    function sendComment(body, parentId, nick, pw){
+      return ensureSession().then(function(ok){
+        if (!ok) throw { message: "no_session" };
+        var row = { post_id: post.id, user_id: me.uid, body: body };
+        if (parentId) row.parent_id = parentId;
+        if (!me.user){ row.author_name = nick; row.guest_pw = pw; }
+        return sb.from("comments").insert(row).select(COMMENT_COLS).single();
+      });
+    }
+    function sendFail(submitBtn){
+      return function(err){
+        submitBtn.disabled = false;
+        toastMsg(err && err.message === "no_session" ? "지금은 의견을 남길 수 없어요. 잠시 뒤에 다시 시도해 주세요." : "네트워크가 불안정해요.");
+      };
+    }
+    function openLogin(){
+      OHAuth.requestLogin().then(function(ok){ if (ok){ refreshMe(); lastMember = !!me.user; renderCommentForm(); loadLiked(); loadComments(); refreshOwner(); } });
+    }
+    var lastMember = !!me.user;
+    document.getElementById("commentFormHost").addEventListener("click", function(e){
+      if (e.target.closest && e.target.closest("[data-login]")) openLogin();
+    });
+    renderCommentForm();
+
+    function afterCommentDeleted(id){
+      /* 원댓글을 지우면 달린 답글도 함께 사라진다 */
+      comments = comments.filter(function(c){ return c.id !== id && c.parent_id !== id; });
+      if (replyOpen && replyOpen.root === id) replyOpen = null;
       renderComments();
+    }
+    function deleteCommentRun(id){
+      return sb.from("comments").delete().eq("id", id).select("id").then(function(r){
+        if (r.error || !r.data || !r.data.length) return r.error ? "삭제하지 못했어요. 잠시 뒤에 다시 시도해 주세요." : "삭제 권한이 없어요.";
+        afterCommentDeleted(id);
+        return null;
+      }, function(){ return "네트워크가 불안정해요."; });
+    }
+    function deleteComment(id, btn){
+      if (btn) btn.disabled = true;
+      sb.from("comments").delete().eq("id", id).select("id").then(function(r){
+        if (r.error || !r.data || !r.data.length){ if (btn) btn.disabled = false; toastMsg(r.error ? "삭제하지 못했어요." : "삭제 권한이 없어요."); return; }
+        /* 원댓글을 지우면 달린 답글도 함께 사라진다 */
+        comments = comments.filter(function(c){ return c.id !== id && c.parent_id !== id; });
+        if (replyOpen && replyOpen.root === id) replyOpen = null;
+        renderComments();
+      }, function(){ if (btn) btn.disabled = false; toastMsg("네트워크가 불안정해요."); });
+    }
+
+    var cList = document.getElementById("commentList");
+    cList.addEventListener("click", function(e){
+      var t = e.target.closest ? e.target : e.target.parentNode;
+      var del = t.closest("[data-cdel]");
+      if (del){
+        var id = del.getAttribute("data-cdel");
+        var replies = comments.filter(function(c){ return c.parent_id === id; }).length;
+        var target = comments.filter(function(c){ return c.id === id; })[0];
+        refreshMe();
+        if (target && target.author_name && !me.admin){
+          /* 비회원 의견: 쓸 때 정한 숫자 비밀번호로 지운다 */
+          ohPop(del, { title: "이 의견을 삭제할까요?", pw: true,
+            text: replies ? "달린 답글 " + replies + "개도 함께 지워지고, 되돌릴 수 없어요. 쓸 때 정한 숫자 비밀번호를 입력해 주세요." : "쓸 때 정한 숫자 비밀번호를 입력해 주세요.",
+            run: function(pw){
+              return deleteGuestItem("comment", id, pw).then(function(msg){ if (!msg){ afterCommentDeleted(id); toastMsg("의견을 삭제했어요."); } return msg; });
+            } });
+          return;
+        }
+        if (replies) ohPop(del, { title: "이 댓글을 삭제할까요?", text: "달린 답글 " + replies + "개도 함께 지워지고, 되돌릴 수 없어요.", run: function(){ return deleteCommentRun(id); } });
+        else deleteComment(id, del);
+        return;
+      }
+      var rb = t.closest("[data-creply]");
+      if (rb){
+        refreshMe();
+        var root = rb.getAttribute("data-creply"), nick = rb.getAttribute("data-cnick");
+        var prefill = nick ? "@" + nick + " " : "";
+        if (replyOpen && replyOpen.root === root && !nick){ replyOpen = null; renderComments(); return; }   /* 원댓글의 "답글"을 다시 누르면 접기 */
+        replyOpen = { root: root, text: prefill };
+        renderComments();
+        var ta = cList.querySelector('[data-root="' + root + '"] .reply-form textarea');
+        if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+        return;
+      }
+      if (t.closest("[data-login]")){ openLogin(); return; }
+      if (t.closest("[data-rcancel]")){ replyOpen = null; renderComments(); }
+    });
+    cList.addEventListener("keydown", function(e){
+      if (e.key === "Escape" && e.target.closest && e.target.closest(".reply-form")){ replyOpen = null; renderComments(); }
+    });
+    cList.addEventListener("submit", function(e){
+      var f = e.target.closest ? e.target.closest("[data-rform]") : null;
+      if (!f) return;
+      e.preventDefault();
+      refreshMe();
+      if (!replyOpen) return;
+      var ta = f.querySelector("textarea");
+      var text = ta.value.trim();
+      /* "@닉네임 " 만 남은 빈 답글은 막는다 */
+      if (!text || /^@\S+$/.test(text)) return;
+      var nick = "", pw = "";
+      if (!me.user){
+        var ni = f.querySelector("[data-rnick]");
+        nick = ni ? ni.value.trim() : "";
+        if (!NICK_RE.test(nick)){ toastMsg(NICK_RULE_MSG); if (ni) ni.focus(); return; }
+        var pi = f.querySelector("[data-rpw]");
+        pw = pi ? pi.value.trim() : "";
+        if (!PW_RE.test(pw)){ toastMsg(PW_RULE_MSG); if (pi) pi.focus(); return; }
+      }
+      var root = replyOpen.root;
+      var submit = f.querySelector("button[type=submit]");
+      submit.disabled = true;
+      sendComment(text, root, nick, pw).then(function(r){
+        submit.disabled = false;
+        if (r.error || !r.data){ toastMsg(writeError(r.error) || "답글을 남기지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+        if (nick) setGuestNick(nick);
+        comments.push(r.data);
+        replyOpen = null;
+        renderComments();
+      }, sendFail(submit));
+    });
+
+    /* ----- 글 삭제 (내 글 또는 관리자) ----- */
+    function refreshOwner(){
+      refreshMe();
+      var b = document.getElementById("postDelBtn");
+      if (b) b.hidden = !(post.guest || (me.uid && (me.admin || post.userId === me.uid)));   /* 비회원 글은 비밀번호로 누구나 지우기 시도 */
+    }
+    refreshOwner();
+    if (window.OHAuth) OHAuth.onChange(function(){
+      refreshOwner(); refreshMe();
+      if (!!me.user !== lastMember){ lastMember = !!me.user; renderCommentForm(); loadLiked(); }
+      renderComments();
+    });
+    document.getElementById("postDelBtn").addEventListener("click", function(e){
+      var btn = e.currentTarget;
+      refreshMe();
+      var guestDel = post.guest && !me.admin;
+      ohPop(btn, { title: "이 게시물을 삭제할까요?", pw: guestDel,
+        text: "댓글과 좋아요가 함께 지워지고, 되돌릴 수 없어요." + (guestDel ? " 글을 올릴 때 정한 숫자 비밀번호를 입력해 주세요." : ""),
+        run: function(pw){
+          if (guestDel) return deleteGuestItem("post", post.id, pw);
+          return sb.from("posts").delete().eq("id", post.id).select("id").then(function(r){
+            if (r.error || !r.data || !r.data.length) return r.error ? "삭제하지 못했어요. 잠시 뒤에 다시 시도해 주세요." : "삭제 권한이 없어요.";
+            var folder = post.userId + "/" + post.id;
+            return sb.storage.from("post-images").list(folder).then(function(l){
+              var names = ((l && l.data) || []).map(function(f){ return folder + "/" + f.name; });
+              return names.length ? sb.storage.from("post-images").remove(names) : null;
+            }).catch(function(){}).then(function(){ return null; });
+          }, function(){ return "네트워크가 불안정해서 삭제하지 못했어요."; });
+        } }).then(function(done){ if (done) location.href = "/gallery"; });
     });
   }
 
-  renderPost();
+  /* auth.js 는 이 스크립트 뒤에 불러오므로, 페이지가 다 읽힌 뒤에 시작 */
+  function start(){
+    if (!window.OHAuth || !OHAuth.configured){ renderNotFound("서버 연결 설정이 아직 없어요."); return; }
+    OHAuth.ready().then(function(c){ sb = c; renderPost(); });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();
 </script>
+<script src="/auth.js"></script>

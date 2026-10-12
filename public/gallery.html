@@ -264,6 +264,34 @@
   html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
     transition:background-color .55s ease, color .55s ease, border-color .55s ease, fill .55s ease, stroke .55s ease, box-shadow .55s ease !important;
   }
+
+  /* ---------- 서버 연동용 추가 스타일 ---------- */
+  .btn-ghost{background:var(--paper); color:var(--ink); border:1.5px solid var(--line); box-shadow:none;}
+  .btn-ghost:hover{border-color:var(--ink-soft);}
+  .gallery-thumb.has-plan{background:linear-gradient(155deg, var(--blueprint-soft), var(--paper) 78%); padding:12px;}
+  .gallery-thumb.has-plan svg{position:relative;}
+  .gallery-user{display:flex; align-items:center; flex-wrap:wrap; gap:0 6px;}
+  .gallery-user .dot{color:var(--ink-soft);}
+  .ip-tag{font-size:.74rem; color:var(--ink-soft);}
+  .role-tag{flex:none; font-size:.68rem; font-weight:600; line-height:1.5; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--ink-soft); background:var(--paper);}
+  .role-tag.pro{color:#3C7A5B; background:color-mix(in srgb, #3C7A5B 13%, var(--paper-raised)); border-color:color-mix(in srgb, #3C7A5B 38%, transparent);}
+  :root[data-theme="dark"] .role-tag.pro{color:#7BC79E; background:color-mix(in srgb, #7BC79E 14%, var(--paper-raised)); border-color:color-mix(in srgb, #7BC79E 38%, transparent);}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .role-tag.pro{color:#7BC79E; background:color-mix(in srgb, #7BC79E 14%, var(--paper-raised)); border-color:color-mix(in srgb, #7BC79E 38%, transparent);} }
+  .gallery-stats{align-items:center;}
+  .card-del{margin-left:auto; appearance:none; border:0; background:none; cursor:pointer; font:inherit; font-size:.8rem; color:var(--ink-soft); padding:2px 4px; text-decoration:underline; text-underline-offset:2px;}
+  .card-del:hover{color:#B3392F;}
+  .card-del:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  /* 삭제 확인 작은 창 (누른 버튼 바로 밑) */
+  .oh-pop{position:absolute; z-index:1500; box-sizing:border-box; padding:18px 18px 16px; background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; box-shadow:0 14px 36px -14px var(--shadow); opacity:0; transform:translateY(-6px) scale(.96); transition:opacity .14s ease, transform .16s ease;}
+  .oh-pop.open{opacity:1; transform:none;}
+  .oh-pop-title{font-size:.95rem; margin:0 0 6px; color:var(--ink);}
+  .oh-pop-text{margin:0 0 12px; font-size:.86rem; line-height:1.55; color:var(--ink-soft);}
+  .oh-pop-input{width:100%; box-sizing:border-box; padding:10px 12px; border-radius:9px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font:inherit; font-size:.92rem;}
+  .oh-pop-input:focus-visible{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus);}
+  .oh-pop-err{margin:7px 0 0; font-size:.8rem; line-height:1.4; color:#B3392F;}
+  .oh-pop-err:empty{display:none;}
+  .oh-pop-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:12px;}
+  @media (prefers-reduced-motion:reduce){ .oh-pop{transition:none;} }
 </style>
 
 <header class="site">
@@ -282,22 +310,7 @@
       <div class="nav-auth">
         <button type="button" class="btn btn-primary btn-sm" id="loginBtn" aria-haspopup="true" aria-expanded="false">로그인</button>
         <div class="login-dropdown" id="loginDropdown">
-          <form id="loginForm">
-            <label class="login-field">
-              <span>아이디</span>
-              <input type="text" name="username" autocomplete="username" placeholder="아이디를 입력하세요">
-            </label>
-            <label class="login-field">
-              <span>비밀번호</span>
-              <input type="password" name="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요">
-            </label>
-            <button type="submit" class="btn btn-primary btn-sm login-submit">로그인</button>
-          </form>
-          <div class="login-links">
-            <a href="#">회원가입</a>
-            <span aria-hidden="true">·</span>
-            <a href="#">비밀번호 찾기</a>
-          </div>
+          <!-- 내용은 /auth.js 가 그린다 (로그인·회원가입 공용) -->
         </div>
       </div>
     </div>
@@ -327,7 +340,7 @@
 
       <div class="gallery-grid" id="galleryGrid"></div>
 
-      <p class="gallery-note">* 게시물은 지금 이 브라우저에만 저장돼요 — 다른 기기·브라우저와는 아직 공유되지 않아요.</p>
+      <p class="gallery-note">* 로그인하면 도면·벽지 이미지도 함께 올릴 수 있어요. 비회원은 이미지 없이 배치만 올라가요.</p>
     </div>
   </section>
 </main>
@@ -342,98 +355,13 @@
 <script>
 (function(){
   "use strict";
+  /* ============ 갤러리 — 글은 Supabase(DB)에서 가져온다 ============
+     목록은 누구나(비회원 포함) 볼 수 있고, 삭제 버튼은 내 글(비회원 임시 세션으로 쓴 글 포함)이거나
+     내가 관리자일 때만 보인다. 진짜 권한 검사는 서버(DB 규칙)가 하고, 버튼은 편의일 뿐이다. */
+  var OH_COMMENT_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 01-8.5 8.5 8.4 8.4 0 01-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 1116.1-3.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  var OH_LIKE_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2.2 4.5 5.8 4.5c2 0 3.4 1.1 4.2 2.4.8-1.3 2.2-2.4 4.2-2.4 3.6 0 5 3.5 3.3 7C19 15.65 12 20 12 20z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  var OH_FURN_FILL = { sofa:"#c98f72", table:"#9a704d", bed:"#90a8bb", plant:"#5c8d61", door:"#8a5a34", window:"#9cc7d8", outlet:"#d8d3c6" };
 
-  /* ============ 게시판(갤러리) 공용 데이터 유틸 — plan3d.html/post.html과 동일한 블록을
-     그대로 복제 (이 프로젝트는 페이지마다 독립된 정적 HTML이라 공용 로직도 파일마다 복사해야
-     함). 자세한 설명은 plan3d.html 쪽 주석 참고. ============ */
-  var OH_POSTS_KEY = "oh-posts";
-  var OH_LIKED_KEY = "oh-liked-posts";
-  var OH_NAME_KEY = "oh-username";
-  var OH_HOUR = 3600000, OH_DAY = 86400000;
-
-  var OH_ICONS = {
-    house: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21V9.5L12 3l9 6.5V21" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 21v-7h6v7" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
-    grid4: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>',
-    hexagon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
-    check: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    hash: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9h18M3 15h18M9 3v18M15 3v18" stroke="currentColor" stroke-width="1.5"/></svg>',
-    chat: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
-  };
-  var OH_COMMENT_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 01-8.5 8.5 8.4 8.4 0 01-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 01-.9-3.8A8.5 8.5 0 0112.5 3 8.5 8.5 0 0121 11.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
-  var OH_LIKE_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2.2 4.5 5.8 4.5c2 0 3.4 1.1 4.2 2.4.8-1.3 2.2-2.4 4.2-2.4 3.6 0 5 3.5 3.3 7-2.5 4.15-9.5 8.5-9.5 8.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
-  var OH_LIKE_ICON_FILLED = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2.2 4.5 5.8 4.5c2 0 3.4 1.1 4.2 2.4.8-1.3 2.2-2.4 4.2-2.4 3.6 0 5 3.5 3.3 7-2.5 4.15-9.5 8.5-9.5 8.5z"/></svg>';
-
-  function ohNowMinus(ms){ return new Date(Date.now() - ms).toISOString(); }
-
-  function ohSeedPosts(){
-    return [
-      { id:"sample-1", title:"래미안 강남 포레스트 · 24평형 거실", author:"jumal2", createdAt:ohNowMinus(3*OH_DAY), badge:"전문가 답변 2", roomSize:{w:9.6,d:7.2}, furniture:[], thumb:{variant:1, icon:"house"}, likes:34,
-        comments:[
-          { id:"c1", author:"디자이너_은서", text:"소파를 창가 쪽으로 붙이면 채광이 더 살 것 같아요!", createdAt:ohNowMinus(2*OH_DAY) },
-          { id:"c2", author:"jumal2", text:"오 좋은 생각이네요, 한번 옮겨볼게요", createdAt:ohNowMinus(2*OH_DAY - 3*OH_HOUR) }
-        ] },
-      { id:"sample-2", title:"힐스테이트 데시앙 · 17평 원룸 배치", author:"wooin_92", createdAt:ohNowMinus(8*OH_HOUR), badge:"새 글", roomSize:{w:6.4,d:5.2}, furniture:[], thumb:{variant:2, icon:"grid4"}, likes:5,
-        comments:[
-          { id:"c1", author:"minji_h", text:"원룸인데도 동선이 넓어 보이네요", createdAt:ohNowMinus(3*OH_HOUR) }
-        ] },
-      { id:"sample-3", title:"부송동 신축 오피스텔 · 침실 배치 고민이에요", author:"sooyeon.k", createdAt:ohNowMinus(1*OH_DAY), badge:"전문가 답변 1", roomSize:{w:5.8,d:4.6}, furniture:[], thumb:{variant:3, icon:"hexagon"}, likes:19,
-        comments:[
-          { id:"c1", author:"디자이너_은서", text:"침대 헤드를 벽 쪽으로 붙이고 협탁을 양쪽에 두면 더 안정적일 것 같아요.", createdAt:ohNowMinus(20*OH_HOUR) }
-        ] },
-      { id:"sample-4", title:"동탄 파크자이 · 33평 안방 침실", author:"minji_h", createdAt:ohNowMinus(4*OH_DAY), badge:"전문가 답변 4", roomSize:{w:5.2,d:4.8}, furniture:[], thumb:{variant:1, icon:"check"}, likes:40, comments:[] },
-      { id:"sample-5", title:"다방에서 본 투룸 · 벽만 세워봤어요", author:"kimjoon", createdAt:ohNowMinus(6*OH_HOUR), badge:"새 글", roomSize:{w:8.1,d:6.0}, furniture:[], thumb:{variant:2, icon:"hash"}, likes:2, comments:[] },
-      { id:"sample-6", title:"마포 오피스텔 12평 · 소파 방향 고민", author:"seulki.p", createdAt:ohNowMinus(5*OH_DAY), badge:"전문가 답변 6", roomSize:{w:5.0,d:4.2}, furniture:[], thumb:{variant:3, icon:"chat"}, likes:58,
-        comments:[
-          { id:"c1", author:"디자이너_은서", text:"소파는 창을 등지지 않는 방향으로 두는 걸 추천해요.", createdAt:ohNowMinus(4*OH_DAY) },
-          { id:"c2", author:"seulki.p", text:"감사합니다! 반영해서 다시 올려볼게요", createdAt:ohNowMinus(4*OH_DAY + 2*OH_HOUR) }
-        ] }
-    ];
-  }
-
-  function ohLoadPosts(){
-    try{
-      var raw = localStorage.getItem(OH_POSTS_KEY);
-      if (raw){
-        var parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch(e){}
-    var seeded = ohSeedPosts();
-    ohSavePosts(seeded);
-    return seeded;
-  }
-  function ohSavePosts(posts){
-    try{ localStorage.setItem(OH_POSTS_KEY, JSON.stringify(posts)); } catch(e){}
-  }
-  function ohGetPost(id){
-    var posts = ohLoadPosts();
-    for (var i=0;i<posts.length;i++){ if (posts[i].id === id) return posts[i]; }
-    return null;
-  }
-  function ohUpdatePost(id, mutator){
-    var posts = ohLoadPosts();
-    for (var i=0;i<posts.length;i++){
-      if (posts[i].id === id){ mutator(posts[i]); break; }
-    }
-    ohSavePosts(posts);
-    return posts;
-  }
-  function ohLikedSet(){
-    try{
-      var raw = JSON.parse(localStorage.getItem(OH_LIKED_KEY) || "[]");
-      return Array.isArray(raw) ? raw : [];
-    } catch(e){ return []; }
-  }
-  function ohIsLiked(id){ return ohLikedSet().indexOf(id) !== -1; }
-  function ohToggleLiked(id){
-    var liked = ohLikedSet();
-    var idx = liked.indexOf(id);
-    var nowLiked;
-    if (idx === -1){ liked.push(id); nowLiked = true; }
-    else { liked.splice(idx,1); nowLiked = false; }
-    try{ localStorage.setItem(OH_LIKED_KEY, JSON.stringify(liked)); } catch(e){}
-    return nowLiked;
-  }
   function ohTimeAgo(iso){
     var diff = Date.now() - new Date(iso).getTime();
     var min = Math.floor(diff/60000);
@@ -450,59 +378,244 @@
       return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
     });
   }
-  function ohGetName(){
-    try{ return (localStorage.getItem(OH_NAME_KEY) || "").trim(); } catch(e){ return ""; }
-  }
-  function ohSetName(name){
-    try{ localStorage.setItem(OH_NAME_KEY, name); } catch(e){}
-  }
 
-  /* ---------- 갤러리 카드 렌더링 + 정렬/필터 ---------- */
+  var POSTS = [];                 // 서버에서 가져온 글
+  var EXPERT_COUNT = {};          // 글 id → 인테리어 업자가 남긴 댓글 수
   var CURRENT_FILTER = "all";
   var FILTER_ORDER = ["all", "expert", "recent", "popular"]; // .filter-bar 안의 칩 순서와 동일
+  var sb = null;
 
-  function ohMatchesFilter(post, filter){
-    if (filter === "expert") return /전문가/.test(post.badge || "");
+  function authorOf(p){
+    var prof = p.profiles || {};
+    var guest = !!p.author_name;
+    return { name: guest ? p.author_name : (prof.nickname || "회원"), guest: guest, role: guest ? "user" : (prof.role || "user"), ip: guest ? (p.ip_prefix || "") : "" };
+  }
+  function imageUrl(path){
+    if (!path || !sb) return "";
+    return sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+  }
+  /* 사진 없이도 배치가 보이게: 벽 좌표와 가구로 위에서 본 도면을 그린다(비회원 글은 이미지를 못 올리니 항상 이 방식) */
+  function topViewSvg(p){
+    var wd = p.wall_data || {};
+    var segs = (wd.outer || []).concat(wd.inner || []);
+    var w = Number(p.room_w) || wd.width || 0, d = Number(p.room_d) || wd.depth || 0;
+    segs.forEach(function(s){ w = Math.max(w, s[0], s[2]); d = Math.max(d, s[1], s[3]); });
+    if (!w || !d) return "";
+    var m = Math.max(w, d) * 0.08 + 0.3;
+    var sw = Math.max(w, d) * 0.028;
+    var out = '<svg viewBox="' + (-m) + ' ' + (-m) + ' ' + (w + 2*m) + ' ' + (d + 2*m) + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="위에서 본 배치도" style="width:100%;height:100%;display:block;">';
+    out += '<rect x="0" y="0" width="' + w + '" height="' + d + '" fill="var(--paper-raised)" opacity=".7"/>';
+    (p.furniture || []).forEach(function(f){
+      var fw = f.w || 0.6, fd = f.d || 0.6;
+      var fill = typeof f.color === "string" && /^#[0-9a-f]{3,8}$/i.test(f.color) ? f.color : (typeof f.color === "number" ? "#" + ("000000" + f.color.toString(16)).slice(-6) : (OH_FURN_FILL[f.type] || "#b9b4a8"));
+      out += '<rect x="' + (-fw/2) + '" y="' + (-fd/2) + '" width="' + fw + '" height="' + fd + '" rx="' + Math.min(fw, fd) * 0.12 + '" fill="' + fill + '" stroke="rgba(0,0,0,.25)" stroke-width="' + sw * 0.25 + '" transform="translate(' + (f.x || 0) + ' ' + (f.z || 0) + ') rotate(' + (-(f.rotY || 0) * 180 / Math.PI) + ')"/>';
+    });
+    segs.forEach(function(s){
+      out += '<line x1="' + s[0] + '" y1="' + s[1] + '" x2="' + s[2] + '" y2="' + s[3] + '" stroke="var(--blueprint-deep)" stroke-width="' + sw + '" stroke-linecap="square"/>';
+    });
+    return out + '</svg>';
+  }
+
+  var me = { uid: null, admin: false };
+  function refreshMe(){
+    var su = window.OHAuth && OHAuth.getSessionUser && OHAuth.getSessionUser();
+    me.uid = su ? su.id : null;
+    me.admin = !!(window.OHAuth && OHAuth.isAdmin && OHAuth.isAdmin());
+  }
+  function canDelete(p){ return !!p.author_name || (!!me.uid && (me.admin || p.user_id === me.uid)); }   /* 비회원 글은 비밀번호로 누구나 지우기 시도 */
+
+  function ohMatchesFilter(p, filter){
+    if (filter === "expert") return (EXPERT_COUNT[p.id] || 0) > 0;
     return true;
   }
   function ohSortPosts(posts, filter){
     var arr = posts.slice();
-    if (filter === "popular") arr.sort(function(a,b){ return (b.likes||0) - (a.likes||0); });
-    else arr.sort(function(a,b){ return new Date(b.createdAt) - new Date(a.createdAt); });
+    if (filter === "popular") arr.sort(function(a, b){ return (b.like_count || 0) - (a.like_count || 0) || (new Date(b.created_at) - new Date(a.created_at)); });
+    else arr.sort(function(a, b){ return new Date(b.created_at) - new Date(a.created_at); });
     return arr;
   }
-  function ohRenderCard(post){
-    var hasImg = !!(post.thumb && post.thumb.dataUrl);
-    var thumbInner = hasImg
-      ? '<img src="' + post.thumb.dataUrl + '" alt="">'
-      : (OH_ICONS[(post.thumb && post.thumb.icon) || "house"] || OH_ICONS.house);
-    var variant = (post.thumb && post.thumb.variant) || 1;
-    var badge = post.badge ? '<span class="badge gallery-badge">' + ohEscapeHtml(post.badge) + '</span>' : "";
-    var href = "/post?id=" + encodeURIComponent(post.id);
+  function ohRenderCard(p){
+    var url = imageUrl(p.thumb_path);
+    var inner = url ? '<img src="' + ohEscapeHtml(url) + '" alt="" loading="lazy">' : topViewSvg(p);
+    var hasImg = !!url;
+    var ex = EXPERT_COUNT[p.id] || 0;
+    var badge = ex ? '<span class="badge gallery-badge">전문가 답변 ' + ex + '</span>' : "";
+    var a = authorOf(p);
+    var tag = a.role === "contractor" ? '<span class="role-tag pro">인테리어 업자</span>' : (a.guest ? '<span class="role-tag guest">비회원</span>' + (a.ip ? '<span class="ip-tag">(' + ohEscapeHtml(a.ip) + ')</span>' : "") : "");
+    var href = "/post?id=" + encodeURIComponent(p.id);
+    var del = canDelete(p) ? '<button type="button" class="card-del" data-del="' + ohEscapeHtml(p.id) + '" aria-label="' + ohEscapeHtml(p.title) + ' 삭제">삭제</button>' : "";
     return '' +
       '<article class="gallery-card">' +
-        '<a class="gallery-thumb-link" href="' + href + '" aria-label="' + ohEscapeHtml(post.title) + ' 상세보기">' +
-          '<div class="gallery-thumb' + (hasImg ? ' has-image' : '') + '" data-variant="' + variant + '">' + thumbInner + badge + '</div>' +
+        '<a class="gallery-thumb-link" href="' + href + '" aria-label="' + ohEscapeHtml(p.title) + ' 상세보기">' +
+          '<div class="gallery-thumb' + (hasImg ? ' has-image' : ' has-plan') + '" data-variant="1">' + inner + badge + '</div>' +
         '</a>' +
         '<div class="gallery-body">' +
-          '<h3><a href="' + href + '">' + ohEscapeHtml(post.title) + '</a></h3>' +
-          '<p class="gallery-user">' + ohEscapeHtml(post.author) + ' · ' + ohTimeAgo(post.createdAt) + '</p>' +
+          '<h3><a href="' + href + '">' + ohEscapeHtml(p.title) + '</a></h3>' +
+          '<p class="gallery-user"><span class="gallery-name">' + ohEscapeHtml(a.name) + '</span>' + tag + '<span class="dot">·</span>' + ohTimeAgo(p.created_at) + '</p>' +
           '<div class="gallery-stats">' +
-            '<span>' + OH_COMMENT_ICON + ' ' + ((post.comments && post.comments.length) || 0) + '</span>' +
-            '<span>' + OH_LIKE_ICON + ' ' + (post.likes || 0) + '</span>' +
+            '<span>' + OH_COMMENT_ICON + ' ' + (p.comment_count || 0) + '</span>' +
+            '<span>' + OH_LIKE_ICON + ' ' + (p.like_count || 0) + '</span>' + del +
           '</div>' +
         '</div>' +
       '</article>';
   }
+  function setGridMessage(html){
+    var grid = document.getElementById("galleryGrid");
+    if (grid) grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;">' + html + '</p>';
+  }
   function ohRenderGrid(){
     var grid = document.getElementById("galleryGrid");
     if (!grid) return;
-    var posts = ohLoadPosts().filter(function(p){ return ohMatchesFilter(p, CURRENT_FILTER); });
+    refreshMe();
+    var posts = POSTS.filter(function(p){ return ohMatchesFilter(p, CURRENT_FILTER); });
     posts = ohSortPosts(posts, CURRENT_FILTER);
-    grid.innerHTML = posts.length
-      ? posts.map(ohRenderCard).join("")
-      : '<p class="empty-msg" style="grid-column:1/-1;">해당하는 게시물이 아직 없어요.</p>';
+    if (!posts.length){
+      setGridMessage(POSTS.length ? "해당하는 게시물이 아직 없어요." : "아직 올라온 배치가 없어요. 첫 배치를 올려보세요!");
+      return;
+    }
+    grid.innerHTML = posts.map(ohRenderCard).join("");
   }
+
+  function loadPosts(){
+    if (!sb){ setGridMessage("서버에 연결하지 못했어요. 새로고침해 보세요."); return; }
+    setGridMessage("불러오는 중…");
+    var q1 = sb.from("posts")
+      .select("id, user_id, author_name, ip_prefix, title, room_w, room_d, wall_data, furniture, thumb_path, like_count, comment_count, created_at, profiles(nickname, role)")
+      .order("created_at", { ascending: false }).limit(60);
+    var q2 = sb.from("comments").select("post_id, profiles!inner(role)").eq("profiles.role", "contractor").limit(1000);
+    Promise.all([q1, q2]).then(function(rs){
+      if (rs[0].error){ console.error(rs[0].error); setGridMessage("게시물을 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+      POSTS = rs[0].data || [];
+      EXPERT_COUNT = {};
+      ((rs[1] && rs[1].data) || []).forEach(function(c){ EXPERT_COUNT[c.post_id] = (EXPERT_COUNT[c.post_id] || 0) + 1; });
+      ohRenderGrid();
+    }, function(){ setGridMessage("네트워크를 확인하고 다시 시도해 주세요."); });
+  }
+
+  /* ----- 삭제 확인: 로그인 창처럼 누른 버튼 바로 밑에 작은 창으로 뜬다 -----
+     o: { title, text, pw(비밀번호 칸 여부), yesLabel, run(pw) → Promise<null(성공) | 오류 문구> } → Promise<성공 여부> */
+  var ohPopEl = null, ohPopClose = null;
+  function ohPop(anchor, o){
+    if (ohPopClose){
+      var same = ohPopEl && ohPopEl._anchor === anchor;
+      ohPopClose(false);
+      if (same) return Promise.resolve(false);   /* 같은 버튼을 다시 누르면 닫기 */
+    }
+    return new Promise(function(resolve){
+      var pop = document.createElement("div");
+      pop.className = "oh-pop";
+      pop.setAttribute("role", "dialog");
+      pop.setAttribute("aria-label", o.title);
+      pop.innerHTML = '<h4 class="oh-pop-title">' + ohEscapeHtml(o.title) + '</h4>' +
+        (o.text ? '<p class="oh-pop-text">' + ohEscapeHtml(o.text) + '</p>' : "") +
+        (o.pw ? '<input class="oh-pop-input" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="비밀번호 (숫자 4~6자리)" aria-label="삭제용 비밀번호">' : "") +
+        '<p class="oh-pop-err" role="alert"></p>' +
+        '<div class="oh-pop-actions"><button type="button" class="btn btn-ghost btn-sm" data-no>취소</button><button type="button" class="btn btn-primary btn-sm" data-yes>' + ohEscapeHtml(o.yesLabel || "삭제하기") + '</button></div>';
+      pop._anchor = anchor;
+      document.body.appendChild(pop);
+      var input = pop.querySelector("input"), err = pop.querySelector(".oh-pop-err"), yes = pop.querySelector("[data-yes]");
+      var closed = false, tick = null;
+
+      function place(){
+        var r = anchor.getBoundingClientRect();
+        var w = Math.min(340, window.innerWidth - 24);
+        pop.style.width = w + "px";
+        var left = r.left; if (left + w > window.innerWidth - 12) left = r.right - w; left = Math.max(12, Math.min(left, window.innerWidth - w - 12));   /* 버튼 왼쪽에 맞춰 바로 밑에, 넘치면 오른쪽 맞춤 */
+        var h = pop.offsetHeight;
+        var below = (r.bottom + 10 + h <= window.innerHeight - 8) || (r.top < h + 18);
+        var top = below ? r.bottom + 10 : r.top - h - 10;
+        pop.style.left = (left + window.scrollX) + "px";
+        pop.style.top = (top + window.scrollY) + "px";
+        pop.style.transformOrigin = (below ? "top" : "bottom") + " " + Math.max(0, Math.min(w, (r.left + r.right) / 2 - left)) + "px";
+      }
+      function close(ok){
+        if (closed) return;
+        closed = true;
+        clearInterval(tick);
+        document.removeEventListener("mousedown", onOutside, true);
+        document.removeEventListener("keydown", onKey, true);
+        window.removeEventListener("resize", place);
+        if (ohPopEl === pop){ ohPopEl = null; ohPopClose = null; }
+        pop.classList.remove("open");
+        setTimeout(function(){ pop.remove(); }, 160);
+        if (!ok && anchor.isConnected){ try { anchor.focus({ preventScroll: true }); } catch (e) {} }
+        resolve(!!ok);
+      }
+      function onOutside(e){ if (!pop.contains(e.target) && !anchor.contains(e.target)) close(false); }
+      function onKey(e){ if (e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); close(false); } }
+      document.addEventListener("mousedown", onOutside, true);
+      document.addEventListener("keydown", onKey, true);
+      window.addEventListener("resize", place);
+      ohPopEl = pop; ohPopClose = close;
+
+      pop.querySelector("[data-no]").addEventListener("click", function(){ close(false); });
+      if (input) input.addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); yes.click(); } });
+      yes.addEventListener("click", function(){
+        var pw = "";
+        if (o.pw){
+          pw = input.value.trim();
+          if (!/^[0-9]{4,6}$/.test(pw)){ err.textContent = "숫자 4~6자리 비밀번호를 입력해 주세요."; place(); input.focus(); return; }
+        }
+        err.textContent = ""; yes.disabled = true;
+        var label = yes.textContent; yes.textContent = "삭제하는 중…";
+        o.run(pw).then(function(msg){
+          if (!msg){ close(true); return; }
+          err.textContent = msg; yes.disabled = false; yes.textContent = label; place();
+          if (input) input.select();
+        });
+      });
+
+      place();
+      requestAnimationFrame(function(){
+        pop.classList.add("open");
+        var pr = pop.getBoundingClientRect();
+        if (pr.bottom > window.innerHeight || pr.top < 0) pop.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        (input || pop.querySelector("[data-no]")).focus({ preventScroll: true });
+      });
+      /* 글이 다시 그려져서 누른 버튼이 사라지면 창도 닫고, 그 사이 레이아웃이 움직이면 따라간다 */
+      tick = setInterval(function(){ if (!anchor.isConnected) close(false); else place(); }, 250);
+    });
+  }
+
+  /* ---------- 삭제 (누른 버튼 밑에 작은 창 → 글 삭제 → 올렸던 이미지 정리) ---------- */
+  function deleteOwnPost(p){
+    return sb.from("posts").delete().eq("id", p.id).select("id").then(function(r){
+      if (r.error || !r.data || !r.data.length) return r.error ? "삭제하지 못했어요. 잠시 뒤에 다시 시도해 주세요." : "삭제 권한이 없어요.";
+      /* 올렸던 이미지(썸네일·도면·벽지)도 정리 — 실패해도 글은 이미 지워졌으니 조용히 넘어간다 */
+      var folder = p.user_id + "/" + p.id;
+      sb.storage.from("post-images").list(folder).then(function(l){
+        var names = ((l && l.data) || []).map(function(f){ return folder + "/" + f.name; });
+        if (names.length) return sb.storage.from("post-images").remove(names);
+      }).catch(function(){});
+      return null;
+    }, function(){ return "네트워크가 불안정해서 삭제하지 못했어요."; });
+  }
+  function deleteGuestPost(p, pw){
+    return sb.rpc("delete_guest_item", { p_kind: "post", p_id: p.id, p_pw: pw }).then(function(r){
+      if (r.error) return /too_many/.test(r.error.message || "") ? "비밀번호를 너무 많이 틀렸어요. 잠시 뒤에 다시 시도해 주세요." : "삭제하지 못했어요. 잠시 뒤에 다시 시도해 주세요.";
+      return r.data ? null : "비밀번호가 맞지 않아요.";
+    }, function(){ return "네트워크가 불안정해요."; });
+  }
+  document.getElementById("galleryGrid").addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest("[data-del]") : null;
+    if (!b) return;
+    e.preventDefault();
+    var id = b.getAttribute("data-del"), p = null;
+    for (var i = 0; i < POSTS.length; i++){ if (POSTS[i].id === id){ p = POSTS[i]; break; } }
+    if (!p || !sb) return;
+    refreshMe();
+    var guestDel = !!p.author_name && !me.admin;
+    var mine = p.user_id === me.uid;
+    ohPop(b, { title: "이 게시물을 삭제할까요?", pw: guestDel,
+      text: '‘' + p.title + '’ ' + (mine ? "" : "(" + authorOf(p).name + "님의 글) ") + '와 댓글·좋아요가 함께 지워지고, 되돌릴 수 없어요.' + (guestDel ? " 글을 올릴 때 정한 숫자 비밀번호를 입력해 주세요." : ""),
+      run: function(pw){ return guestDel ? deleteGuestPost(p, pw) : deleteOwnPost(p); } }).then(function(done){
+        if (!done) return;
+        POSTS = POSTS.filter(function(x){ return x.id !== p.id; });
+        ohRenderGrid();
+        if (window.OHAuth) OHAuth.toast("게시물을 삭제했어요.");
+      });
+  });
+
 
   /* 다크/라이트 모드 토글 — plan3d.html과 동일한 localStorage 키("oh-theme")를 공유해서
      두 페이지를 오가도 모드가 유지됨 */
@@ -584,7 +697,7 @@
     }
   })();
 
-  /* 정렬 칩 — 전체/전문가 답변/최신순/인기순 실제로 갤러리 목록을 필터·정렬함 */
+  /* 정렬 칩 — 전체/전문가 답변/최신순/인기순 */
   var filterChips = document.querySelectorAll(".filter-bar .filter-chip");
   filterChips.forEach(function(chip, idx){
     chip.addEventListener("click", function(){
@@ -595,7 +708,17 @@
     });
   });
 
-  ohRenderGrid();
+  /* auth.js 는 이 스크립트 뒤에 불러오므로, 페이지가 다 읽힌 뒤에 시작 */
+  function start(){
+    if (!window.OHAuth || !OHAuth.configured){ setGridMessage("서버 연결 설정이 아직 없어요."); return; }
+    OHAuth.ready().then(function(c){
+      sb = c;
+      loadPosts();
+      /* 로그인/로그아웃·프로필(관리자 여부)이 정해지면 삭제 버튼을 다시 계산 */
+      OHAuth.onChange(function(){ if (POSTS.length) ohRenderGrid(); });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();
 </script>
-
+<script src="/auth.js"></script>

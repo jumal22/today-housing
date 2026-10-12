@@ -375,9 +375,19 @@
     font-size:.94rem; line-height:1.55; color:var(--ink); white-space:pre-line; margin:0 0 16px;
   }
   .oh-dialog-box .oh-dialog-input{ margin-bottom:14px; }
+  .oh-dialog-box .oh-dialog-input.has-second{ margin-bottom:8px; }
+  .oh-dialog-err{ margin:-6px 0 12px; font-size:.82rem; color:#B3392F; }
+  .oh-dialog-err:empty{ display:none; }
   .oh-dialog-check{ display:flex; align-items:center; gap:9px; margin:0 2px 18px; font-size:.92rem; color:var(--ink); cursor:pointer; user-select:none; -webkit-user-select:none; }
   .oh-dialog-check input{ width:17px; height:17px; margin:0; accent-color:var(--blueprint); cursor:pointer; flex:none; }
   .oh-dialog-actions{ display:flex; justify-content:flex-end; gap:8px; }
+  /* 게시 흐름 팝업: 되돌아가는 버튼(취소)은 맨 왼쪽에 따로, 앞으로 가는 버튼들은 오른쪽에 모아서
+     눈이 왼쪽 위 → 오른쪽 아래로 흐르다 주 버튼(맨 오른쪽)에서 끝나게 함 */
+  .oh-dialog-actions.split{ justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .oh-dialog-actions .oh-dialog-main{ display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; justify-content:flex-end; }
+  .oh-dialog-actions .oh-dialog-back{ background:none; border:none; box-shadow:none; color:var(--ink-soft); padding-left:6px; padding-right:10px; }
+  .oh-dialog-actions .oh-dialog-back:hover{ color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
+  .oh-dialog-sub{ margin:-8px 0 16px; font-size:.84rem; line-height:1.5; color:var(--ink-soft); white-space:pre-line; }
   .modal-close{
     position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%;
     border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft);
@@ -1226,22 +1236,7 @@
       <div class="nav-auth">
         <button type="button" class="btn btn-primary btn-sm" id="loginBtn" aria-haspopup="true" aria-expanded="false">로그인</button>
         <div class="login-dropdown" id="loginDropdown">
-          <form id="loginForm">
-            <label class="login-field">
-              <span>아이디</span>
-              <input type="text" name="username" autocomplete="username" placeholder="아이디를 입력하세요">
-            </label>
-            <label class="login-field">
-              <span>비밀번호</span>
-              <input type="password" name="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요">
-            </label>
-            <button type="submit" class="btn btn-primary btn-sm login-submit">로그인</button>
-          </form>
-          <div class="login-links">
-            <a href="#">회원가입</a>
-            <span aria-hidden="true">·</span>
-            <a href="#">비밀번호 찾기</a>
-          </div>
+          <!-- 내용은 /auth.js 가 그린다 (로그인·회원가입 공용) -->
         </div>
       </div>
     </div>
@@ -1623,6 +1618,12 @@
       msg.className = "oh-dialog-message";
       msg.textContent = opts.message || "";
       box.appendChild(msg);
+      if (opts.sub){
+        var subEl = document.createElement("p");
+        subEl.className = "oh-dialog-sub";
+        subEl.textContent = opts.sub;
+        box.appendChild(subEl);
+      }
 
       var input = null;
       if (opts.showInput){
@@ -1630,7 +1631,25 @@
         input.type = "text";
         input.className = "search-input oh-dialog-input";
         input.value = opts.inputValue || "";
+        if (opts.placeholder) input.placeholder = opts.placeholder;
+        if (opts.secondInput) input.classList.add("has-second");
         box.appendChild(input);
+      }
+      // 입력칸 두 개(예: 닉네임 + 비밀번호): 결과는 { value, second }. validate(res)가 문자열을 돌려주면 닫지 않고 그 말을 보여줌
+      var input2 = null, errEl = null;
+      if (opts.secondInput){
+        input2 = document.createElement("input");
+        input2.type = opts.secondInput.type || "text";
+        input2.className = "search-input oh-dialog-input";
+        input2.placeholder = opts.secondInput.placeholder || "";
+        input2.autocomplete = "off";
+        if (opts.secondInput.maxlength) input2.maxLength = opts.secondInput.maxlength;
+        if (opts.secondInput.inputmode) input2.setAttribute("inputmode", opts.secondInput.inputmode);
+        box.appendChild(input2);
+        errEl = document.createElement("p");
+        errEl.className = "oh-dialog-err";
+        errEl.setAttribute("role", "alert");
+        box.appendChild(errEl);
       }
 
       var checkEl = null;
@@ -1673,25 +1692,56 @@
         }, 170);
       }
 
-      var cancelBtn = null;
-      if (opts.showCancel){
-        cancelBtn = document.createElement("button");
-        cancelBtn.type = "button";
-        cancelBtn.className = "btn btn-ghost";
-        cancelBtn.textContent = opts.cancelText || "취소";
-        cancelBtn.addEventListener("click", function(){ close(opts.showInput ? null : false); });
-        actions.appendChild(cancelBtn);
+      var cancelBtn = null, okBtn = null;
+      if (opts.buttons){
+        // 버튼을 직접 지정: {label, value, primary, back}. back=true 는 맨 왼쪽(되돌아가기), primary 는 맨 오른쪽
+        actions.classList.add("split");
+        var mainGrp = document.createElement("div");
+        mainGrp.className = "oh-dialog-main";
+        opts.buttons.forEach(function(b){
+          var el = document.createElement("button");
+          el.type = "button";
+          el.className = "btn " + (b.primary ? "btn-primary" : "btn-ghost") + (b.back ? " oh-dialog-back" : "");
+          el.textContent = b.label;
+          el.addEventListener("click", function(){ close(b.value); });
+          (b.back ? actions : mainGrp).appendChild(el);
+          if (b.primary) okBtn = el;
+        });
+        actions.appendChild(mainGrp);
+      } else {
+        if (opts.split) actions.classList.add("split");
+        if (opts.showCancel){
+          cancelBtn = document.createElement("button");
+          cancelBtn.type = "button";
+          cancelBtn.className = "btn btn-ghost" + (opts.split ? " oh-dialog-back" : "");
+          cancelBtn.textContent = opts.cancelText || "취소";
+          cancelBtn.addEventListener("click", function(){ close(opts.showInput ? null : false); });
+          actions.appendChild(cancelBtn);
+        }
+        okBtn = document.createElement("button");
+        okBtn.type = "button";
+        okBtn.className = "btn btn-primary";
+        okBtn.textContent = opts.okText || "확인";
+        okBtn.addEventListener("click", function(){
+          if (input2){
+            var res2 = { value: input ? input.value : "", second: input2.value };
+            var bad2 = opts.validate ? opts.validate(res2) : "";
+            if (bad2){ errEl.textContent = bad2; return; }
+            close(res2);
+            return;
+          }
+          if (opts.showInput && checkEl){ close({ value: input ? input.value : "", checked: checkEl.checked }); return; }
+          close(opts.showInput ? (input ? input.value : "") : true);
+        });
+        if (opts.split){
+          var mainGrp2 = document.createElement("div");
+          mainGrp2.className = "oh-dialog-main";
+          mainGrp2.appendChild(okBtn);
+          actions.appendChild(mainGrp2);
+        } else {
+          actions.appendChild(okBtn);
+        }
       }
-
-      var okBtn = document.createElement("button");
-      okBtn.type = "button";
-      okBtn.className = "btn btn-primary";
-      okBtn.textContent = opts.okText || "확인";
-      okBtn.addEventListener("click", function(){
-        if (opts.showInput && checkEl){ close({ value: input ? input.value : "", checked: checkEl.checked }); return; }
-        close(opts.showInput ? (input ? input.value : "") : true);
-      });
-      actions.appendChild(okBtn);
 
       box.appendChild(actions);
       overlay.appendChild(box);
@@ -1703,8 +1753,8 @@
       if (prevDlg && prevDlg.parentNode) prevDlg.parentNode.removeChild(prevDlg);
 
       function onKeydown(e){
-        if (e.key === "Escape"){ close(opts.showInput ? null : (opts.showCancel ? false : true)); }
-        else if (e.key === "Enter" && (!input || document.activeElement === input)){ okBtn.click(); }
+        if (e.key === "Escape"){ close(opts.buttons ? opts.escValue : (opts.showInput ? null : (opts.showCancel ? false : true))); }
+        else if (e.key === "Enter" && (!input || document.activeElement === input || (input2 && document.activeElement === input2))){ okBtn.click(); }
       }
       document.addEventListener("keydown", onKeydown);
 
@@ -1729,6 +1779,73 @@
   function ohPromptWithCheck(message, defaultValue, checkLabel, checked){
     return ohDialog({ message: message, showCancel: true, showInput: true, inputValue: defaultValue || "", okText: "확인", cancelText: "취소",
       checkbox: { label: checkLabel, checked: checked !== false } });
+  }
+  // dataURL("data:image/jpeg;base64,...") → Blob
+  async function ohDataUrlToBlob(dataUrl){
+    var res = await fetch(dataUrl);
+    return await res.blob();
+  }
+  var OH_IMG_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+  // 글 한 개를 서버에 저장하고 새 글 id 를 돌려줌. 실패하면 err.userMessage(사용자에게 보여줄 말)와 함께 throw.
+  //  · 회원: 이미지(썸네일/도면/벽지)를 Storage 에 올리고 글에는 경로만 저장
+  //  · 비회원: 이미지 없이 글만 저장(비회원 임시 세션으로, 표시 이름은 author_name)
+  async function ohSavePostToServer(o){
+    var sb = OHAuth.getClient();
+    if (!sb) throw { userMessage: "서버에 연결하지 못했어요. 새로고침하고 다시 시도해주세요." };
+    var member = !!OHAuth.getUser();
+    var uid;
+    if (member){ uid = OHAuth.getUser().id; }
+    else {
+      var g = await OHAuth.ensureGuest();
+      if (!g) throw { code: "guest_unavailable" };
+      uid = g.id;
+    }
+    var postId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){ var r = Math.random()*16|0; return (c === "x" ? r : (r&3|8)).toString(16); });
+    var uploaded = [];
+    var row = {
+      id: postId, user_id: uid, title: o.title.slice(0, 80),
+      room_w: o.bounds.w || 0, room_d: o.bounds.d || 0,
+      wall_data: o.wallData, furniture: o.furniture
+    };
+    async function upload(name, dataUrl){
+      var blob = await ohDataUrlToBlob(dataUrl);
+      var ext = OH_IMG_EXT[blob.type];
+      if (!ext) return null; // 허용 형식(jpeg/png/webp)이 아니면 건너뜀
+      var path = uid + "/" + postId + "/" + name + "." + ext;
+      var r = await sb.storage.from("post-images").upload(path, blob, { contentType: blob.type, upsert: false });
+      if (r.error) throw r.error;
+      uploaded.push(path);
+      return path;
+    }
+    try{
+      if (member){
+        if (o.thumb) row.thumb_path = await upload("thumb", o.thumb);
+        if (o.floorPhoto) row.floor_photo_path = await upload("floor", o.floorPhoto);
+        if (o.wallImages){
+          var paths = [];
+          for (var i = 0; i < o.wallImages.length; i++){
+            paths.push(o.wallImages[i] ? await upload("wall-" + i, o.wallImages[i]) : null);
+          }
+          row.wall_image_paths = paths;
+        }
+      } else {
+        row.author_name = (o.author || "익명").slice(0, 12);
+        row.guest_pw = o.guestPw || null;
+      }
+      var ins = await sb.from("posts").insert(row);
+      if (ins.error) throw ins.error;
+      return postId;
+    } catch(err){
+      if (uploaded.length) { try{ await sb.storage.from("post-images").remove(uploaded); }catch(e){} }
+      var msg = (err && err.message) || "";
+      var e2 = { raw: err, userMessage: "게시하지 못했어요. 잠시 뒤에 다시 시도해주세요." };
+      if (/size|too large|exceeded|payload/i.test(msg)) e2.userMessage = "이미지나 배치 데이터가 너무 커서 게시하지 못했어요. 도면·벽 이미지를 빼고 다시 시도해보세요.";
+      else if (/cooldown/i.test(msg)){ var cs = parseInt(err && err.details, 10); e2.userMessage = "너무 빨라요. " + (cs > 0 ? cs + "초 뒤에" : "잠시 뒤에") + " 다시 게시해주세요."; }
+      else if (/invalid_pw/i.test(msg)) e2.userMessage = "삭제용 비밀번호는 숫자 4~6자리로 정해주세요.";
+      else if (/nickname_taken/i.test(msg)) e2.userMessage = "이미 쓰는 이름이에요. 다른 닉네임으로 다시 게시해주세요.";
+      else if (/row-level security|policy|42501|jwt/i.test(msg)) e2.userMessage = "게시 권한이 없어요. 로그인 상태를 확인하고 다시 시도해주세요.";
+      throw e2;
+    }
   }
   function ohGetName(){
     try{ return (localStorage.getItem(OH_NAME_KEY) || "").trim(); } catch(e){ return ""; }
@@ -5669,20 +5786,70 @@
       var hasPhoto = !!(resultScene.hasFloorPhoto && resultScene.hasFloorPhoto()) ||
         !!(resultScene.getWallImages && resultScene.getWallImages().some(function(x){ return !!x; }));
       var title, includePlan = false;
-      if (hasPhoto){
+      var authOn = !!(window.OHAuth && OHAuth.configured);
+
+      // 로그인 안 한 채로 사진이 있는 배치를 올리려는 경우: 제목·닉네임 단계 전에 먼저 갈림길을 보여줌.
+      // (아무나 마음대로 이미지를 올리면 이상한 사진이 올라올 수 있어서, 이미지는 로그인한 사람만)
+      // 로그인 창은 페이지 이동 없이 그 자리에서 뜨기 때문에 지금까지 배치한 가구는 그대로 남음.
+      if (hasPhoto && authOn){
+        while (!OHAuth.getUser()){
+          var gate = await ohDialog({
+            message: "비로그인 상태에서는 도면 이미지와 벽지 이미지가 올라가지 않아요!",
+            sub: "로그인하면 이미지도 함께 게시할 수 있어요. 지금 배치한 가구는 그대로 유지돼요.",
+            buttons: [
+              { label: "취소", value: "cancel", back: true },
+              { label: "비로그인으로 하기", value: "guest" },
+              { label: "로그인하기", value: "login", primary: true }
+            ],
+            escValue: "cancel"
+          });
+          if (gate === "cancel" || gate == null) return; // 계속 편집
+          if (gate === "guest") break;
+          await OHAuth.requestLogin(); // 로그인하면 반복문이 끝나고, 창을 그냥 닫으면 갈림길이 다시 뜸
+        }
+      }
+      var loggedIn = !!(authOn && OHAuth.getUser());
+      var guestFlow = authOn && !loggedIn;   // 비회원 게시: 닉네임 + 삭제용 숫자 비밀번호를 정해야 함
+      var needNick = guestFlow || (!loggedIn && !ohGetName());
+      var nextLabel = needNick ? "다음" : "게시하기";
+
+      if (hasPhoto && (loggedIn || !authOn)){
         // 프라이버시: 도면 사진과 벽에 붙인 이미지는 기본은 같이 게시하지만, 체크를 풀면 둘 다 갤러리에 안 올림
-        var titleRes = await ohPromptWithCheck("게시물 제목을 입력해주세요.", defaultTitle, "도면과 벽 이미지도 함께 게시할까요?", true);
+        var titleRes = await ohDialog({ message: "게시물 제목을 입력해주세요.", showCancel: true, showInput: true, inputValue: defaultTitle,
+          okText: nextLabel, cancelText: "취소", split: true,
+          checkbox: { label: "도면과 벽 이미지도 함께 게시할까요?", checked: true } });
         if (titleRes === null) return; // 취소하면 아무 것도 안 하고 계속 편집 가능
         title = titleRes.value; includePlan = titleRes.checked;
       } else {
-        title = await ohPrompt("게시물 제목을 입력해주세요.", defaultTitle);
+        // 사진이 없거나(체크박스 불필요), 비로그인으로 진행(도면·벽 이미지는 빼고 게시)
+        var guestNote = (hasPhoto && authOn && !loggedIn) ? "도면 이미지와 벽지 이미지는 빼고 게시돼요." : "";
+        title = await ohDialog({ message: "게시물 제목을 입력해주세요.", sub: guestNote, showCancel: true, showInput: true, inputValue: defaultTitle,
+          okText: nextLabel, cancelText: "취소", split: true });
         if (title === null) return;
       }
       title = title.trim() || defaultTitle;
 
-      var author = ohGetName();
-      if (!author){
-        var typed = await ohPrompt("갤러리에 표시될 닉네임을 입력해주세요. (한 번만 입력하면 이 브라우저에 기억해둬요)", "익명");
+      var author = loggedIn ? OHAuth.getNickname() : ohGetName();
+      var guestPw = "";
+      if (guestFlow){
+        var gi = await ohDialog({
+          message: "갤러리에 표시될 닉네임과 삭제용 비밀번호를 정해주세요.",
+          sub: "비밀번호는 숫자 4~6자리예요. 나중에 이 글을 지울 때 필요하니 꼭 기억해 주세요. 닉네임 옆에는 IP 앞 두 자리가 함께 표시돼요.",
+          showInput: true, inputValue: author || "익명", placeholder: "닉네임 (2~12자)",
+          secondInput: { type: "password", placeholder: "삭제용 비밀번호 (숫자 4~6자리)", maxlength: 6, inputmode: "numeric" },
+          validate: function(r){
+            if (!/^[0-9A-Za-z_가-힣]{2,12}$/.test((r.value || "").trim())) return "닉네임은 2~12자, 한글·영문·숫자·_ 만 쓸 수 있어요.";
+            if (!/^[0-9]{4,6}$/.test((r.second || "").trim())) return "삭제용 비밀번호는 숫자 4~6자리로 정해주세요.";
+            return "";
+          },
+          showCancel: true, okText: "게시하기", cancelText: "이전으로", split: true
+        });
+        if (gi === null) return; // 이전으로
+        author = gi.value.trim(); guestPw = gi.second.trim();
+        ohSetName(author);
+      } else if (!author){
+        var typed = await ohDialog({ message: "갤러리에 표시될 닉네임을 입력해주세요.", sub: "한 번만 입력하면 이 브라우저에 기억해둬요.", showCancel: true, showInput: true,
+          inputValue: "익명", okText: "게시하기", cancelText: "이전으로", split: true });
         if (typed === null) return; // 취소
         author = typed.trim() || "익명";
         ohSetName(author);
@@ -5695,54 +5862,78 @@
       var wallImagesData = resultScene.getWallImages ? resultScene.getWallImages() : [];
       var hasWallImages = includePlan && wallImagesData.some(function(x){ return !!x; });
 
-      var post = {
-        id: "post_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-        title: title,
-        author: author,
-        createdAt: new Date().toISOString(),
-        badge: "새 글",
-        roomSize: { w: bounds.w, d: bounds.d },
-        // 벽 좌표(outer/inner)까지 같이 저장해둬서, 게시물 상세 페이지(post.html)에서 2D 탑뷰
-        // 도면 + 인터랙티브 3D를 다시 그릴 수 있게 함. 도면 사진(floorplanImageUrl)은 용량이 커서
-        // 일부러 빼고 벽 좌표만 남김 — 어차피 썸네일(thumb)로 미리보기는 이미 캡처해둠.
-        wallData: {
-          outer: (furniturePlan && furniturePlan.outer) || [],
-          inner: (furniturePlan && furniturePlan.inner) || [],
-          width: bounds.w,
-          depth: bounds.d,
-          // outer 벽들 색 다음 inner 벽들 색 순서로 이어진 배열(getWallColors 참고) — 사용자가
-          // 가구 배치 화면에서 바꾼 벽 색을 게시물 상세 페이지에서도 그대로 재현하기 위함.
-          wallColors: resultScene.getWallColors ? resultScene.getWallColors() : [],
-          // 도면 이미지(벽 영역만 잘라서 줄인 것)는 "도면 이미지도 함께 게시" 체크했을 때만 저장,
-          // 벽지로 붙인 이미지는 벽 순서대로(없는 벽은 null) 저장 — 게시물 상세에서 그대로 재현.
-          floorPhoto: floorPhotoUrl || null,
-          wallImages: hasWallImages ? wallImagesData : null
-        },
-        furniture: furnitureData,
-        thumb: thumbDataUrl ? { dataUrl: thumbDataUrl } : { variant: 1, icon: "house" },
-        likes: 0,
-        comments: []
+      // 벽 좌표(outer/inner)까지 같이 저장해둬서, 게시물 상세 페이지(post.html)에서 인터랙티브 3D를 다시 그림.
+      // wallColors 는 가구 배치 화면에서 바꾼 벽 색(outer 먼저, inner 순서)을 그대로 재현하기 위함.
+      var wallDataBase = {
+        outer: (furniturePlan && furniturePlan.outer) || [],
+        inner: (furniturePlan && furniturePlan.inner) || [],
+        width: bounds.w,
+        depth: bounds.d,
+        wallColors: resultScene.getWallColors ? resultScene.getWallColors() : []
       };
 
-      var posts = ohLoadPosts();
-      posts.unshift(post);
-      var saved = ohSavePosts(posts);
-      if (!saved && (post.wallData.floorPhoto || post.wallData.wallImages)){
-        // 브라우저 저장 공간이 모자라면 용량이 큰 이미지(도면/벽지)만 빼고 다시 저장
-        post.wallData.floorPhoto = null; post.wallData.wallImages = null;
-        saved = ohSavePosts(posts);
-        if (saved) ohAlert("저장 공간이 부족해서 도면/벽 이미지는 빼고 게시했어요.");
-      }
-      if (!saved){
-        posts.shift();
-        await ohAlert("저장 공간이 부족해서 게시하지 못했어요. 갤러리에서 예전 게시물을 지우고 다시 시도해주세요.");
-        return;
+      if (authOn){
+        // ── 서버(Supabase)에 저장 ──
+        // 이미지(썸네일/도면/벽지)는 DB 가 아니라 Storage 에 올리고, 글에는 파일 경로만 남김.
+        // 비회원은 이미지를 못 올리므로(서버 규칙으로도 막힘) 이미지 없는 글만 저장됨.
+        var savedId = null;
+        while (!savedId){
+          try{
+            savedId = await ohSavePostToServer({
+              title: title, author: author, guestPw: guestPw, bounds: bounds, wallData: wallDataBase, furniture: furnitureData,
+              thumb: thumbDataUrl, floorPhoto: floorPhotoUrl, wallImages: hasWallImages ? wallImagesData : null
+            });
+          } catch(err){
+            if (err && err.code === "guest_unavailable"){
+              var retry = await ohDialog({
+                message: "지금은 비회원으로는 게시할 수 없어요.",
+                sub: "로그인하면 바로 게시할 수 있어요. 지금 배치한 가구는 그대로 유지돼요.",
+                buttons: [ { label: "취소", value: "cancel", back: true }, { label: "로그인하고 게시하기", value: "login", primary: true } ],
+                escValue: "cancel"
+              });
+              if (retry !== "login") return;
+              var okLogin = await OHAuth.requestLogin();
+              if (!okLogin) continue; // 창을 닫았으면 안내를 다시 보여줌
+              author = OHAuth.getNickname();
+              continue;
+            }
+            console.error("[publish]", err);
+            await ohAlert((err && err.userMessage) || "게시하지 못했어요. 잠시 뒤에 다시 시도해주세요.");
+            return;
+          }
+        }
+      } else {
+        // ── (auth 미설정 때만) 예전 방식: 이 브라우저(localStorage)에만 저장 ──
+        var post = {
+          id: "post_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+          title: title, author: author, createdAt: new Date().toISOString(), badge: "새 글",
+          roomSize: { w: bounds.w, d: bounds.d },
+          wallData: Object.assign({}, wallDataBase, { floorPhoto: floorPhotoUrl || null, wallImages: hasWallImages ? wallImagesData : null }),
+          furniture: furnitureData,
+          thumb: thumbDataUrl ? { dataUrl: thumbDataUrl } : { variant: 1, icon: "house" },
+          likes: 0, comments: []
+        };
+        var posts = ohLoadPosts();
+        posts.unshift(post);
+        var saved = ohSavePosts(posts);
+        if (!saved && (post.wallData.floorPhoto || post.wallData.wallImages)){
+          post.wallData.floorPhoto = null; post.wallData.wallImages = null;
+          saved = ohSavePosts(posts);
+          if (saved) ohAlert("저장 공간이 부족해서 도면/벽 이미지는 빼고 게시했어요.");
+        }
+        if (!saved){
+          posts.shift();
+          await ohAlert("저장 공간이 부족해서 게시하지 못했어요. 갤러리에서 예전 게시물을 지우고 다시 시도해주세요.");
+          return;
+        }
       }
       furniturePublished = true;
       btn.textContent = "게시 완료 ✓ · 갤러리로 이동";
       if (resultScene && resultScene.setDoneLabel) resultScene.setDoneLabel("✓ 게시 완료 · 갤러리로");
 
-      if (await ohConfirm("게시가 완료됐어요! 갤러리로 이동해서 확인해볼까요?")){
+      var goGallery = await ohDialog({ message: "게시가 완료됐어요! 갤러리로 이동해서 확인해볼까요?",
+        buttons: [ { label: "나중에", value: false, back: true }, { label: "갤러리로 가기", value: true, primary: true } ], escValue: false });
+      if (goGallery){
         location.href = "/gallery";
       }
     }
@@ -6332,3 +6523,4 @@
   });
 })();
 </script>
+<script src="/auth.js"></script>
