@@ -861,6 +861,10 @@
   html.oh-embed, html.oh-embed body{ margin:0; height:100%; overflow:hidden; background:var(--paper); }
   html.oh-embed body > *:not(#ohEmbedRoot):not(.oh-dialog-overlay){ display:none !important; }
   #ohEmbedRoot{ position:fixed; inset:0; background:var(--paper); overflow:hidden; }
+
+  /* 보기 전용: 가구를 눌러 선택은 되지만 편집 UI(회전·삭제 팝업, 크기 패널, 이동 화살표)는 숨김 */
+  .is-rev-view .furniture-rotate-panel, .is-rev-view .furniture-size-panel, .is-rev-view .furniture-move-arrows,
+  .is-rev-view .wall-color-panel, .is-rev-view .furniture-color-panel{ display:none !important; }
   /* 문 가구를 선택했을 때만 나타나는 열기/닫기 토글 — 평소엔 숨겨두고(door-mode일 때만 보이게)
      삭제 버튼 옆에 나란히 둠. */
   .door-toggle-btn{
@@ -4251,7 +4255,7 @@
       // 가구를 드래그로 옮기는 시작점이면 여기서 끝 — 카메라 각도(phi/theta)나 탑뷰 고정 상태는
       // 전혀 안 건드림. 예전엔 이 체크 없이 모든 pointerdown에서 탑뷰 고정을 풀어버려서, 탑뷰
       // 상태에서 가구만 옮겨도 화면이 뚝 하고 삐딱한 각도로 튀어버리는 버그가 있었음.
-      if (furnitureEditor && !readOnly && !revLock && beginFurnitureDrag(e)) return;
+      if (furnitureEditor && readOnly) revPick(e); else if (furnitureEditor && !revLock && beginFurnitureDrag(e)) return;
       // 노클립 중에는 캔버스 드래그가 "시선 돌리기"(궤도 회전 아님)
       if (noclipMode){ lookDragging = true; lastX = e.clientX; lastY = e.clientY; return; }
       // 여기부터는 진짜로 캔버스를 드래그해서 "카메라" 각도를 바꾸려는 경우 — 이때만 탑뷰 고정을 해제함.
@@ -4452,7 +4456,7 @@
       helpBtn.className = "view-btn";
       helpBtn.title = "튜토리얼 (조작법을 직접 해보며 배우기)";
       helpBtn.innerHTML = HELP_ICON;
-      helpBtn.addEventListener("click", function(){ if (readOnly) revTutStart(); else toggleTutorial(); helpBtn.blur(); });
+      helpBtn.addEventListener("click", function(){ toggleTutorial(); helpBtn.blur(); });
       viewControls.appendChild(wrapWithLabel(helpBtn, "튜토리얼"));
     }
     // 도면 보이기/숨기기 — 노클립 버튼 바로 아래. 평소(꺼짐)엔 바닥에 원본 도면 사진이 항상 보이고,
@@ -4881,6 +4885,7 @@
       else if (kind === 'noclip' && noclipBtn) target = noclipBtn.parentNode;
       else if (kind === 'revTab' && revTabWrap) target = revTabWrap;
       else if (kind === 'revPanel' && revPanelEl) target = revPanelEl;
+      else if (kind === 'revBar' && revViewBarEl) target = revViewBarEl;
       if (target) target.classList.add('tut-pulse');
     }
     // 단계가 바뀌어 내용이 달라질 때 카드가 뚝 바뀌지 않고, 이전 높이에서 새 높이로 부드럽게 늘었다 줄어들며
@@ -5060,6 +5065,7 @@
       }
       if (selectedWall) return revise ? '💡 💬를 눌러 벽 색을 바꾼 이유를 남겨보세요' : '💡 액자(🖼️)를 눌러 이미지로 벽을 꾸며보세요';
       if (selectedFurniture){
+        if (readOnly) return '💡 F를 누르면 선택한 가구로 카메라가 다가가요';
         var ht = selectedFurniture.userData.type;
         if (ht === 'door') return '💡 "🚪 열기" 버튼으로 문을 열고 닫아보세요';
         if (ht === 'window') return '💡 창문은 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
@@ -5236,7 +5242,7 @@
         // 방향키 = 선택한 가구를 화면 기준으로 5cm씩 이동(Shift: 20cm). 꾹 누르면 일정 간격으로 반복.
         // 벽 아이템(창문/문/콘센트)은 기존 팝업 패드와 같은 규칙(↑↓ 높이, ←→ 벽 따라 이동).
         var arrowDir = e.code === 'ArrowUp' ? 'up' : e.code === 'ArrowDown' ? 'down' : e.code === 'ArrowLeft' ? 'left' : e.code === 'ArrowRight' ? 'right' : null;
-        if (arrowDir && selectedFurniture){
+        if (arrowDir && selectedFurniture && !readOnly && !revLock){
           e.preventDefault();
           var nowA = performance.now();
           if (e.repeat && nowA - lastArrowKeyT < 80) return;
@@ -5276,7 +5282,7 @@
     var revNewCounter = 1, revChanges = null, revItemState = {}, revGlobal = 'after', revSig = '', revSigT = 0;
     var revPanelEl = null, revListEl = null, revCountEl = null, revViewBarEl = null, revPanelSegEl = null, revBannerEl = null, revLoadingEl = null;
     var revReasonEl = null, revReasonTA = null, revReasonTitle = null, revReasonTarget = null, revReasonAnchor = null;
-    var revArrowMesh = null, revArrowInfo = null, revPanelOpen = false;
+    var revArrowMesh = null, revArrowInfo = null, revArrowItemId = null, revPanelOpen = false;
     var revTutEl = null, revTutIdx = 0, revTutPulse = null, revTutOpenedPanel = false;
     var REV_ICONS = { sofa:'🛋️', table:'🪑', bed:'🛏️', plant:'🪴', door:'🚪', window:'🪟', outlet:'🔌' };
     var REV_TUT_KEY = 'oh_rev_view_tut_v1';
@@ -5478,6 +5484,8 @@
       revItems().forEach(function(c){ revApplyState(c, s); });
       revUpdateLock();
       revSyncHighlights();
+      revRefollowArrow();
+      revTutNote('revCompare');
     }
     function revSetItem(c, s){
       revItemState[c.id] = s;
@@ -5515,7 +5523,7 @@
       a.material.color.copy(col); a.material.emissive.copy(col);
       a.visible = true;
     }
-    function revHideArrow(){ if (revArrowMesh) revArrowMesh.visible = false; revArrowInfo = null; }
+    function revHideArrow(){ if (revArrowMesh) revArrowMesh.visible = false; revArrowInfo = null; revArrowItemId = null; }
     function stepRevArrow(){
       if (!revArrowMesh || !revArrowMesh.visible || !revArrowInfo) return;
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -5540,6 +5548,15 @@
       if (!box || box.isEmpty()) return;
       focusSelectedFurniture(box);
       revShowArrow(box, c.isWall);
+      revArrowItemId = c.id;
+    }
+    /* Before/After 가 바뀌어 가구 위치가 달라졌을 때, 화살표만 새 위치로 따라가게 함(카메라는 그대로) */
+    function revRefollowArrow(){
+      if (!revArrowItemId || !revArrowMesh || !revArrowMesh.visible) return;
+      var c = revItems().filter(function(x){ return x.id === revArrowItemId; })[0];
+      if (!c){ revHideArrow(); return; }
+      var box = revItemBox(c, revEffective(c));
+      if (box && !box.isEmpty()) revShowArrow(box, c.isWall);
     }
 
     /* ---- 이유 입력(플로팅) ---- */
@@ -5609,7 +5626,7 @@
       }
     }
 
-    function revTutNote(evt){ if (revise && typeof tutNotify === 'function') tutNotify(evt); }
+    function revTutNote(evt){ if (revAny && typeof tutNotify === 'function') tutNotify(evt); }
 
     /* ---- 항목별 되돌리기(×) ---- */
     var revToastEl = null, revToastTimer = 0;
@@ -5984,61 +6001,35 @@
       }
     }
 
-    /* ---- 보기 전용 팝업의 튜토리얼 ---- */
-    var REV_TUT_STEPS = [
-      { title:'바뀐 배치 비교하기', body:'아래 Before / After 버튼으로 원래 배치와 바뀐 배치를 번갈아 볼 수 있어요.', target:function(){ return revViewBarEl && revViewBarEl.querySelector('.oh-rev-sw'); }, panel:false },
-      { title:'의견창 열기', body:'오른쪽 위 “의견” 탭을 누르면 무엇을 왜 바꿨는지 채팅처럼 모아 볼 수 있는 의견창이 떠요. 다시 누르거나 × 를 누르면 닫혀요.', target:function(){ return revTabWrap; }, panel:false },
-      { title:'의견창 옮기고 키우기', body:'의견창 맨 위 손잡이를 끌면 원하는 곳으로 옮길 수 있고, 네 모서리를 끌면 크기를 바꿀 수 있어요. 화면을 가리면 옆으로 치워 두세요. 손잡이를 두 번 누르면 처음 자리로 돌아가요.', target:function(){ return revPanelEl; }, panel:true },
-      { title:'항목을 눌러보세요', body:'항목을 누르면 화면이 그 가구·벽으로 이동하고 화살표가 가리켜요. 항목마다 Before / After 버튼이 있고, 맨 아래 “전체 보기”는 전부 한 번에 바꿔줘요.', target:function(){ return revPanelEl; }, panel:true },
-      { title:'시점 도구', body:'도면 숨기기·노클립(자유롭게 날아다니기)·탑뷰 버튼으로 여러 각도에서 살펴보세요.', target:function(){ return viewControls; }, panel:false }
-    ];
-    function revTutClearPulse(){ if (revTutPulse){ revTutPulse.classList.remove('oh-rev-pulse'); revTutPulse = null; } }
-    function revTutEnd(){
-      revTutClearPulse();
-      if (revTutEl && revTutEl.parentNode) revTutEl.parentNode.removeChild(revTutEl);
-      revTutEl = null;
-      if (helpBtn) helpBtn.classList.remove('active');
-      if (revTutOpenedPanel){ revTutOpenedPanel = false; revSetPanel(false); }
-      try{ localStorage.setItem(REV_TUT_KEY, '1'); }catch(e){}
-    }
-    function revTutGo(i){
-      if (i < 0) i = 0;
-      if (i >= REV_TUT_STEPS.length){ revTutEnd(); return; }
-      revTutIdx = i;
-      var st = REV_TUT_STEPS[i];
-      if (st.panel && !revPanelOpen){ revSetPanel(true); revTutOpenedPanel = true; }
-      if (!st.panel && revTutOpenedPanel){ revTutOpenedPanel = false; revSetPanel(false); }
-      revTutClearPulse();
-      var t = st.target && st.target();
-      if (t){ t.classList.add('oh-rev-pulse'); revTutPulse = t; }
-      revTutEl.innerHTML = '<div class="oh-rev-tut-step">' + (i + 1) + ' / ' + REV_TUT_STEPS.length + '</div><strong></strong><p></p>' +
-        '<div class="oh-rev-tut-actions"><button type="button" data-a="skip">닫기</button>' +
-        (i > 0 ? '<button type="button" data-a="prev">이전</button>' : '') +
-        '<button type="button" class="primary" data-a="next">' + (i === REV_TUT_STEPS.length - 1 ? '끝내기' : '다음') + '</button></div>';
-      revTutEl.querySelector('strong').textContent = st.title;
-      revTutEl.querySelector('p').textContent = st.body;
-    }
-    function revTutStart(){
-      if (revTutEl) { revTutEnd(); return; }
-      revTutEl = document.createElement('div');
-      revTutEl.className = 'oh-rev-tut';
-      revTutEl.setAttribute('role', 'dialog');
-      revTutEl.addEventListener('click', function(e){
-        var b = e.target.closest ? e.target.closest('button[data-a]') : null;
-        if (!b) return;
-        var a = b.getAttribute('data-a');
-        if (a === 'next') revTutGo(revTutIdx + 1);
-        else if (a === 'prev') revTutGo(revTutIdx - 1);
-        else revTutEnd();
-      });
-      revTutEl.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
-      container.appendChild(revTutEl);
-      if (helpBtn) helpBtn.classList.add('active');
-      revTutGo(0);
+    /* ---- 튜토리얼: 기존 튜토리얼을 그대로 쓰고(보기 전용에선 가구 놓기·옮기기·삭제·벽 색 단계만 뺌) 맨 뒤에 의견 단계만 덧붙임 ---- */
+    function revTutStart(){ if (typeof toggleTutorial === 'function') toggleTutorial(); }
+
+    /* 보기 전용: 가구를 눌러 선택만 가능(옮기기·편집 불가) → F 포커스를 쓸 수 있음 */
+    function revPick(e){
+      var rect = canvas.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1; pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      var hit = furniture.length ? raycaster.intersectObjects(furniture, true)[0] : null;
+      var wHit = raycaster.intersectObjects(wallMeshes, false)[0];
+      var obj = hit ? findFurniture(hit) : null;
+      if (obj && wHit && wHit.distance < hit.distance - 0.001) obj = null; // 벽 뒤에 가려진 가구는 선택 안 함
+      if (obj) selectFurniture(obj); else { selectFurniture(null); selectWall(null); }
     }
 
     /* ---- 초기화(원본 복원) ---- */
     function revInit(){
+      if (readOnly && typeof TUT_STEPS !== 'undefined' && !TUT_STEPS._revAdded){
+        TUT_STEPS._revAdded = true;
+        var dropEvt = { furnitureAdded:1, move:1, 'delete':1, wallSelect:1 };
+        for (var ti = TUT_STEPS.length - 1; ti >= 0; ti--){
+          if (dropEvt[TUT_STEPS[ti].evt]) TUT_STEPS.splice(ti, 1);
+          else if (TUT_STEPS[ti].evt === 'focus') TUT_STEPS[ti].note = '클릭하면 가구가 주황빛으로 선택돼요.';
+        }
+        TUT_STEPS.push(
+          { title:'배치 비교하기', text:'아래 <b>Before / After</b> 버튼을 눌러보세요. 원래 배치와 바뀐 배치를 번갈아 볼 수 있어요.', evt:'revCompare', pulse:'revBar' },
+          { title:'의견창 열기', text:'오른쪽 위 <b>의견</b> 탭을 눌러보세요. 무엇을 왜 바꿨는지 모아 볼 수 있어요.', note:'항목을 누르면 그 자리로 이동하고, 창은 손잡이로 옮기고 모서리로 크기를 바꿀 수 있어요.', evt:'revPanel', pulse:'revTab', skipIf:function(){ if (revPanelOpen) revSetPanel(false, true); return false; } }
+        );
+      }
       if (revise && typeof TUT_STEPS !== 'undefined' && !TUT_STEPS._revAdded){
         TUT_STEPS._revAdded = true;
         TUT_STEPS.push(
@@ -6126,7 +6117,10 @@
       if (readOnly){
         var seen = false;
         try{ seen = !!localStorage.getItem(REV_TUT_KEY); }catch(e){}
-        if (!seen) setTimeout(function(){ if (!revTutEl) revTutStart(); }, 900);
+        if (!seen){
+          try{ localStorage.setItem(REV_TUT_KEY, '1'); }catch(e){}
+          setTimeout(function(){ if (typeof tutActive !== 'undefined' && !tutActive && typeof tutStart === 'function') tutStart(); }, 900);
+        }
       }
       if (typeof opts.onRevReady === 'function') opts.onRevReady();
     }
@@ -6143,7 +6137,7 @@
     }
     function revDispose(){
       clearTimeout(revToastTimer);
-      [revPanelEl, revReasonEl, revBannerEl, revViewBarEl, revTutEl, revLoadingEl].forEach(function(el){ if (el && el.parentNode) el.parentNode.removeChild(el); });
+      [revPanelEl, revReasonEl, revBannerEl, revViewBarEl, revLoadingEl].forEach(function(el){ if (el && el.parentNode) el.parentNode.removeChild(el); });
       if (revArrowMesh){ scene.remove(revArrowMesh); revArrowMesh.geometry.dispose(); revArrowMesh.material.dispose(); revArrowMesh = null; }
     }
     var revApi = revAny ? { finish: revFinish, startViewTutorial: revTutStart, isReady: function(){ return revReady; } } : null;
