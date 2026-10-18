@@ -1,4 +1,5 @@
 <title>갤러리 · 오늘의 하우징</title>
+<script src="/i18n.js"></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="오늘의 하우징">
 <meta property="og:title" content="갤러리 · 오늘의 하우징">
@@ -371,7 +372,7 @@
     if (hr < 24) return hr + "시간 전";
     var day = Math.floor(hr/24);
     if (day < 7) return day + "일 전";
-    return new Date(iso).toLocaleDateString("ko-KR");
+    return new Date(iso).toLocaleDateString((window.OH_I18N && OH_I18N.lang === "en") ? "en-US" : "ko-KR");
   }
   function ohEscapeHtml(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -450,8 +451,8 @@
           '<div class="gallery-thumb' + (hasImg ? ' has-image' : ' has-plan') + '" data-variant="1">' + inner + badge + '</div>' +
         '</a>' +
         '<div class="gallery-body">' +
-          '<h3><a href="' + href + '">' + ohEscapeHtml(p.title) + '</a></h3>' +
-          '<p class="gallery-user"><span class="gallery-name">' + ohEscapeHtml(a.name) + '</span>' + tag + '<span class="dot">·</span>' + ohTimeAgo(p.created_at) + '</p>' +
+          '<h3 data-i18n-skip><a href="' + href + '">' + ohEscapeHtml(p.title) + '</a></h3>' +
+          '<p class="gallery-user"><span class="gallery-name" data-i18n-skip>' + ohEscapeHtml(a.name) + '</span>' + tag + '<span class="dot">·</span>' + ohTimeAgo(p.created_at) + '</p>' +
           '<div class="gallery-stats">' +
             '<span>' + OH_COMMENT_ICON + ' ' + (p.comment_count || 0) + '</span>' +
             '<span>' + OH_LIKE_ICON + ' ' + (p.like_count || 0) + '</span>' + del +

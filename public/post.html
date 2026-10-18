@@ -1,4 +1,5 @@
 <title>게시물 · 오늘의 하우징</title>
+<script src="/i18n.js"></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="오늘의 하우징">
 <meta property="og:title" content="게시물 · 오늘의 하우징">
@@ -694,7 +695,7 @@
     if (hr < 24) return hr + "시간 전";
     var day = Math.floor(hr/24);
     if (day < 7) return day + "일 전";
-    return new Date(iso).toLocaleDateString("ko-KR");
+    return new Date(iso).toLocaleDateString((window.OH_I18N && OH_I18N.lang === "en") ? "en-US" : "ko-KR");
   }
   function ohEscapeHtml(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -1732,7 +1733,7 @@
           hintBadge.classList.remove("hint-hidden");
           return;
         }
-        if (hintInner.textContent === plain) return;
+        if (hintInner.textContent === plain || hintInner.textContent === (window.OH_I18N ? OH_I18N.t(plain) : plain)) return;
         // 이전 글자(유령 복사본)는 그 자리에서 서서히 사라지고, 새 글자는 겹쳐서 나타나면서 창 폭도 같은 시간 동안 맞춰짐
         var curOp = parseFloat(getComputedStyle(hintInner).opacity); if (isNaN(curOp)) curOp = 1;
         if (hintInner._fade){ hintInner._fade.cancel(); hintInner._fade = null; }
@@ -2146,7 +2147,7 @@
 
     document.getElementById("postContent").innerHTML =
       '<div class="post-head">' +
-        '<h1>' + ohEscapeHtml(post.title) + '</h1>' +
+        '<h1 data-i18n-skip>' + ohEscapeHtml(post.title) + '</h1>' +
         '<div class="post-meta"><span>' + ohEscapeHtml(post.author) + '</span>' + roleTag(post.role, post.guest) + (post.guest ? ipTag(post.ip) : "") + '<span>·</span><span>' + ohTimeAgo(post.createdAt) + '</span>' +
           '<button type="button" class="post-del" id="postDelBtn" hidden>삭제</button></div>' +
       '</div>' +
@@ -2446,9 +2447,9 @@
       var canDel = guest || (!!me.uid && (me.admin || c.user_id === me.uid));   /* 비회원 의견은 비밀번호로 누구나 지우기를 시도할 수 있다 */
       return '<div class="' + (isReply ? "reply-item" : "comment-main") + '" data-cid="' + ohEscapeHtml(c.id) + '">' +
         '<div class="comment-head">' + (isReply ? '<span class="reply-mark" aria-hidden="true">ㄴ</span>' : "") +
-          '<span class="comment-author">' + ohEscapeHtml(nick) + '</span>' + (guest ? ipTag(c.ip_prefix) : roleTag(prof.role, false)) + '<span class="ct">' + ohTimeAgo(c.created_at) + '</span>' +
+          '<span class="comment-author" data-i18n-skip>' + ohEscapeHtml(nick) + '</span>' + (guest ? ipTag(c.ip_prefix) : roleTag(prof.role, false)) + '<span class="ct">' + ohTimeAgo(c.created_at) + '</span>' +
           (canDel ? '<button type="button" class="comment-del" data-cdel="' + ohEscapeHtml(c.id) + '">삭제</button>' : "") + '</div>' +
-        '<p>' + bodyHtml(c.body) + '</p>' +
+        '<p' + (c.body === "(새로운 수정 배치를 등록했어요)" ? '' : ' data-i18n-skip data-cbody') + '>' + bodyHtml(c.body) + '</p>' +
         '<div class="comment-actions"><button type="button" class="comment-reply-btn" data-creply="' + ohEscapeHtml(rootId) + '"' +
           (isReply ? ' data-cnick="' + ohEscapeHtml(nick) + '"' : "") + '>답글</button>' + revButtonsHtml(c, isReply) + '</div>' +
       '</div>';
