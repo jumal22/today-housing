@@ -413,6 +413,59 @@
   .comment-form .btn{align-self:flex-end;}
 
   .post-not-found{padding:60px 0; text-align:center; color:var(--ink-soft);}
+  /* ---------- 배치 수정하고 의견 남기기 / 변경된 인테리어 보기 ---------- */
+  .comment-form .comment-row{align-items:flex-end; min-width:0;}
+  .comment-form .comment-row textarea{min-width:0;}
+  .rev-btn{
+    flex:none; display:inline-flex; align-items:center; gap:6px; padding:12px 20px; box-sizing:border-box;
+    border-radius:999px; border:1.5px solid var(--blueprint); background:transparent; color:var(--blueprint-deep);
+    font:inherit; font-size:.95rem; font-weight:600; cursor:pointer; white-space:nowrap;
+    transition:background .15s ease, color .15s ease, transform .15s ease, border-color .15s ease;
+  }
+  .rev-btn:hover{background:var(--blueprint-soft); transform:translateY(-1px);}
+  .rev-btn:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+  .rev-btn.is-disabled, .rev-btn.is-disabled:hover{
+    border-color:var(--line); background:color-mix(in srgb, var(--ink-soft) 14%, var(--paper)); color:var(--ink-soft);
+    cursor:not-allowed; transform:none; opacity:.8;
+  }
+  @media (max-width:560px){ .comment-foot-btns{width:100%;} .comment-foot-btns .rev-btn, .comment-foot-btns .btn{flex:1; justify-content:center;} }
+  .comment-foot{display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end;}
+  .comment-foot-btns{margin-left:auto; display:flex; align-items:center; gap:8px;}
+  .comment-foot-btns .btn{align-self:center;}
+  .rev-attached{
+    display:inline-flex; align-items:center; gap:6px; padding:5px 6px 5px 14px; border-radius:999px; max-width:100%; box-sizing:border-box;
+    background:var(--blueprint-soft); border:1.5px solid var(--blueprint); color:var(--blueprint-deep); font-size:.84rem; font-weight:600;
+  }
+  .rev-attached[hidden]{display:none;}
+  .rev-attached .rev-attached-text{margin-right:4px; white-space:nowrap;}
+  .rev-attached button{
+    appearance:none; border:1px solid color-mix(in srgb, var(--blueprint) 55%, transparent); background:var(--paper-raised); cursor:pointer; font:inherit; font-size:.76rem; font-weight:700;
+    color:var(--blueprint-deep); padding:3px 11px; border-radius:999px; white-space:nowrap; transition:background .12s, color .12s;
+  }
+  .rev-attached button:hover{background:var(--blueprint); color:var(--paper-raised);}
+  .rev-view-btn{
+    appearance:none; border:1.5px solid var(--blueprint); background:var(--blueprint-soft); color:var(--blueprint-deep); border-radius:999px;
+    font:inherit; font-size:.78rem; font-weight:700; padding:3px 12px; cursor:pointer; transition:background .15s ease, color .15s ease;
+  }
+  .rev-view-btn:hover{background:var(--blueprint); color:var(--paper-raised);}
+  .rev-view-btn:disabled{opacity:.6; cursor:wait;}
+  .rev-view-btn .rev-ver{opacity:.75; font-weight:600; margin-left:2px;}
+  .oh-tip{padding:9px 14px; font-size:.84rem; font-weight:600; color:var(--ink); white-space:nowrap; transform:translateY(6px) scale(.96); border-radius:12px;}
+  .oh-tip.open{transform:none;}
+  .rev-modal{position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; background:rgba(20,22,26,.58); opacity:0; transition:opacity .18s ease; padding:2vh 2vw; box-sizing:border-box;}
+  .rev-modal.open{opacity:1;}
+  .rev-modal-box{width:min(1320px, 100%); height:min(92vh, 900px); background:var(--paper-raised); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 24px 70px -20px rgba(0,0,0,.55); transform:translateY(10px) scale(.985); transition:transform .22s cubic-bezier(.22,1,.36,1);}
+  .rev-modal.open .rev-modal-box{transform:none;}
+  .rev-modal-head{display:flex; align-items:center; gap:12px; padding:12px 14px 12px 20px; border-bottom:1px solid var(--line); flex:none;}
+  .rev-modal-head strong{font-size:1rem; color:var(--ink);}
+  .rev-modal-sub{font-size:.82rem; color:var(--ink-soft); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rev-modal-x{appearance:none; border:0; background:transparent; color:var(--ink-soft); font-size:1.6rem; line-height:1; width:36px; height:36px; border-radius:9px; cursor:pointer; flex:none;}
+  .rev-modal-x:hover{background:var(--blueprint-soft); color:var(--ink);}
+  .rev-modal-body{position:relative; flex:1; min-height:0;}
+  .rev-modal-body iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--paper);}
+  .rev-modal-loading{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); font-size:.92rem; margin:0;}
+  body.rev-modal-open .oh-pop{z-index:2100;}
+  @media (max-width:700px){ .rev-modal{padding:0;} .rev-modal-box{height:100%; border-radius:0;} .rev-modal-sub{display:none;} }
   .post-not-found h1{margin-bottom:10px; color:var(--ink);}
 
   /* ---------- footer ---------- */
@@ -2169,6 +2222,184 @@
     var comments = [];
     var replyOpen = null;   /* { root: 원댓글 id, text: 입력 중인 내용 } — 답글 입력칸이 열려 있는 원댓글 */
     var COMMENT_COLS = "id, user_id, parent_id, author_name, ip_prefix, body, created_at, profiles(nickname, role)";
+    /* ----- 배치 수정하고 의견 남기기 / 변경된 인테리어 보기 -----
+       댓글(회원 전용)에 "바꾼 배치(가구·벽지)와 이유"를 붙일 수 있고, 누구나 팝업에서 Before/After 로 볼 수 있다.
+       팝업은 plan3d.html?embed=1 을 iframe 으로 띄우고 postMessage 로 주고받는다(편집기를 그대로 재사용).
+       변경안(changes)은 DB 의 comment_revisions 에 저장 — 댓글을 지우면 같이 지워진다. */
+    var revisions = {};          /* comment_id -> { comment_id, root_id, version, user_id } (changes 본문은 열 때 불러옴) */
+    var pendingRevision = null;  /* 쓰는 중인 댓글에 붙여둔 변경안 */
+    var REV_NOTICE_TEXT = "새로운 수정 배치를 등록했어요";
+    var REV_COLS = "comment_id, root_id, version, user_id, created_at";
+    function latestRevOf(rootId){
+      var best = null;
+      Object.keys(revisions).forEach(function(k){
+        var rv = revisions[k];
+        if (rv.root_id !== rootId) return;
+        if (!comments.some(function(c){ return c.id === rv.comment_id; })) return;   /* 지워진 댓글의 변경안은 제외 */
+        if (!best || rv.version > best.version) best = rv;
+      });
+      return best;
+    }
+    function revButtonsHtml(c, isReply){
+      var out = "";
+      if (!isReply){
+        var lat = latestRevOf(c.id);
+        if (lat){
+          out += '<button type="button" class="rev-view-btn" data-rev-view="' + ohEscapeHtml(lat.comment_id) + '">변경된 인테리어 보기' + (lat.version > 1 ? ' <span class="rev-ver">v' + lat.version + '</span>' : "") + '</button>';
+          if (me.user && c.user_id === me.uid) out += '<button type="button" class="comment-reply-btn" data-rev-redo="' + ohEscapeHtml(c.id) + '">배치 다시 수정</button>';
+        }
+      } else if (revisions[c.id]){
+        out += '<button type="button" class="rev-view-btn" data-rev-view="' + ohEscapeHtml(c.id) + '">보기</button>';
+      }
+      return out;
+    }
+    function loadRevisions(){
+      sb.from("comment_revisions").select(REV_COLS).eq("post_id", post.id).limit(1000).then(function(r){
+        if (r.error || !r.data) return;   /* 테이블이 아직 없어도 댓글은 그대로 보이게 조용히 넘어감 */
+        revisions = {};
+        r.data.forEach(function(x){ revisions[x.comment_id] = x; });
+        renderComments();
+      }, function(){});
+    }
+    function saveRevision(commentId, rootId, changes){
+      return sb.from("comment_revisions").insert({ comment_id: commentId, post_id: post.id, root_id: rootId, user_id: me.uid, version: 1, changes: changes })
+        .select(REV_COLS).single().then(function(r){ return (r.error || !r.data) ? null : r.data; }, function(){ return null; });
+    }
+    function fetchRevisionChanges(commentId){
+      return sb.from("comment_revisions").select("changes").eq("comment_id", commentId).maybeSingle().then(function(r){
+        return (r && r.data && r.data.changes) ? r.data.changes : null;
+      }, function(){ return null; });
+    }
+    function revCount(ch){ return ch ? (ch.furniture || []).length + (ch.walls || []).length : 0; }
+    function renderRevChip(){
+      var box = document.getElementById("revAttached");
+      if (!box) return;
+      if (!pendingRevision || !me.user){ box.hidden = true; box.innerHTML = ""; return; }
+      box.hidden = false;
+      box.innerHTML = '<span class="rev-attached-text">변경안 첨부됨 <b>' + revCount(pendingRevision) + '곳</b></span><button type="button" data-rev-edit>다시 수정</button><button type="button" data-rev-remove aria-label="첨부 취소">취소</button>';
+    }
+
+    /* 비회원이 눌렀을 때 버튼 바로 위에 스르륵 뜨는 작은 안내 */
+    var revTipEl = null, revTipTimer = null;
+    function hideRevTip(){
+      clearTimeout(revTipTimer);
+      document.removeEventListener("mousedown", revTipOutside, true);
+      if (!revTipEl) return;
+      var el = revTipEl; revTipEl = null;
+      el.classList.remove("open");
+      setTimeout(function(){ el.remove(); }, 160);
+    }
+    function revTipOutside(){ hideRevTip(); }
+    function showRevTip(anchor){
+      if (revTipEl){ hideRevTip(); return; }
+      var tip = document.createElement("div");
+      tip.className = "oh-pop oh-tip";
+      tip.setAttribute("role", "status");
+      tip.textContent = "로그인한 회원만 쓸 수 있어요";
+      document.body.appendChild(tip);
+      var r = anchor.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+      var left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+      tip.style.left = (left + window.scrollX) + "px";
+      tip.style.top = (r.top - h - 10 + window.scrollY) + "px";
+      tip.style.transformOrigin = "bottom center";
+      revTipEl = tip;
+      requestAnimationFrame(function(){ tip.classList.add("open"); });
+      revTipTimer = setTimeout(hideRevTip, 2600);
+      document.addEventListener("mousedown", revTipOutside, true);
+    }
+
+    /* 팝업(iframe) — mode: 'edit'(수정하고 변경 완료) / 'view'(읽기 전용) */
+    var revModalEl = null, revModalCleanup = null;
+    function closeRevModal(){
+      if (!revModalEl) return;
+      var el = revModalEl; revModalEl = null;
+      if (revModalCleanup){ revModalCleanup(); revModalCleanup = null; }
+      document.body.classList.remove("rev-modal-open");
+      document.body.style.overflow = el._prevOverflow || "";
+      el.classList.remove("open");
+      setTimeout(function(){ el.remove(); }, 200);
+    }
+    function openRevModal(o){
+      if (revModalEl) return;
+      var edit = o.mode === "edit";
+      var el = document.createElement("div");
+      el.className = "rev-modal";
+      el.setAttribute("role", "dialog");
+      el.setAttribute("aria-modal", "true");
+      el.setAttribute("aria-label", edit ? "배치 수정하고 의견 남기기" : "변경된 인테리어 보기");
+      el.innerHTML = '<div class="rev-modal-box"><div class="rev-modal-head"><strong>' + (edit ? "배치 수정하고 의견 남기기" : "변경된 인테리어 보기") + '</strong>' +
+        '<span class="rev-modal-sub">' + (edit ? "가구와 벽지를 바꾸고, 💬로 이유를 남긴 뒤 ‘변경 완료’를 눌러주세요." : "Before / After로 비교하고 ‘의견’ 탭에서 이유를 확인해 보세요.") + '</span>' +
+        '<button type="button" class="rev-modal-x" aria-label="닫기">×</button></div>' +
+        '<div class="rev-modal-body"><p class="rev-modal-loading">불러오는 중…</p><iframe title="' + (edit ? "배치 수정" : "변경된 인테리어") + '" src="/plan3d.html?embed=1" allow="fullscreen" style="visibility:hidden"></iframe></div></div>';
+      var frame = el.querySelector("iframe"), xBtn = el.querySelector(".rev-modal-x");
+      function onMsg(ev){
+        if (ev.source !== frame.contentWindow || ev.origin !== location.origin) return;
+        var m = ev.data || {};
+        if (m.type === "oh-embed-ready"){
+          frame.style.visibility = "visible";
+          frame.contentWindow.postMessage({ type: "oh-embed-init", mode: o.mode, wallData: post.wallData, furniture: post.furniture, changes: o.changes || null }, location.origin);
+        } else if (m.type === "oh-embed-done" && edit && m.changes){
+          closeRevModal();
+          if (o.onDone) o.onDone(m.changes);
+        }
+      }
+      function requestClose(){
+        if (!edit){ closeRevModal(); return; }
+        ohPop(xBtn, { title: "수정을 그만둘까요?", text: "지금까지 바꾼 내용이 사라져요.", yesLabel: "그만두기",
+          run: function(){ return Promise.resolve(null); } }).then(function(ok){ if (ok) closeRevModal(); });
+      }
+      function onKey(e){ if (e.key === "Escape" && !ohPopEl){ e.preventDefault(); requestClose(); } }
+      window.addEventListener("message", onMsg);
+      document.addEventListener("keydown", onKey);
+      xBtn.addEventListener("click", requestClose);
+      if (!edit) el.addEventListener("mousedown", function(e){ if (e.target === el) closeRevModal(); });
+      revModalCleanup = function(){ window.removeEventListener("message", onMsg); document.removeEventListener("keydown", onKey); if (ohPopClose) ohPopClose(false); };
+      el._prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("rev-modal-open");
+      document.body.appendChild(el);
+      revModalEl = el;
+      requestAnimationFrame(function(){ el.classList.add("open"); });
+    }
+    function openRevView(commentId, btn){
+      if (btn) btn.disabled = true;
+      fetchRevisionChanges(commentId).then(function(ch){
+        if (btn) btn.disabled = false;
+        if (!ch){ toastMsg("변경된 배치를 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+        openRevModal({ mode: "view", changes: ch });
+      });
+    }
+    function redoRevision(rootId, btn){
+      refreshMe();
+      if (!me.user) return;
+      var lat = latestRevOf(rootId);
+      if (!lat) return;
+      if (btn) btn.disabled = true;
+      fetchRevisionChanges(lat.comment_id).then(function(ch){
+        if (btn) btn.disabled = false;
+        if (!ch){ toastMsg("이전 변경안을 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+        openRevModal({ mode: "edit", changes: ch, onDone: function(next){ submitRedo(rootId, next); } });
+      });
+    }
+    /* 작성자가 나중에 배치를 다시 고치면 "새로운 수정 배치를 등록했어요" 답글이 자동으로 달리고, 그 답글에 새 버전이 붙는다 */
+    function submitRedo(rootId, changes){
+      toastMsg("새 배치를 등록하는 중…");
+      sendComment(REV_NOTICE_TEXT, rootId, "", "").then(function(r){
+        if (r.error || !r.data){ toastMsg(writeError(r.error) || "등록하지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+        saveRevision(r.data.id, rootId, changes).then(function(row){
+          if (!row){
+            sb.from("comments").delete().eq("id", r.data.id).then(function(){}, function(){});
+            toastMsg("변경안을 저장하지 못했어요. 잠시 뒤에 다시 시도해 주세요.");
+            return;
+          }
+          comments.push(r.data);
+          revisions[row.comment_id] = row;
+          renderComments();
+          toastMsg("새로운 수정 배치를 등록했어요");
+        });
+      }, function(){ toastMsg("네트워크가 불안정해요."); });
+    }
+
 
     function bodyHtml(text){
       /* 맨 앞 "@닉네임" 은 누구에게 단 답글인지 보이게 강조 */
@@ -2185,7 +2416,7 @@
           (canDel ? '<button type="button" class="comment-del" data-cdel="' + ohEscapeHtml(c.id) + '">삭제</button>' : "") + '</div>' +
         '<p>' + bodyHtml(c.body) + '</p>' +
         '<div class="comment-actions"><button type="button" class="comment-reply-btn" data-creply="' + ohEscapeHtml(rootId) + '"' +
-          (isReply ? ' data-cnick="' + ohEscapeHtml(nick) + '"' : "") + '>답글</button></div>' +
+          (isReply ? ' data-cnick="' + ohEscapeHtml(nick) + '"' : "") + '>답글</button>' + revButtonsHtml(c, isReply) + '</div>' +
       '</div>';
     }
     function guestRowHtml(nickAttr, pwAttr, nick, pw){
@@ -2230,6 +2461,7 @@
           if (r.error){ document.getElementById("commentList").innerHTML = '<p class="comment-empty">의견을 불러오지 못했어요.</p>'; return; }
           comments = r.data || [];
           renderComments();
+          loadRevisions();
         });
     }
     loadComments();
@@ -2238,9 +2470,24 @@
       refreshMe();
       var host = document.getElementById("commentFormHost");
       if (!host) return;
+      if (!me.user) pendingRevision = null;   /* 변경안 첨부는 회원만 */
       host.innerHTML = '<form class="comment-form" id="commentForm">' + (me.user ? "" : guestRowHtml('id="commentNick"', 'id="commentPw"', getGuestNick(), "")) +
         '<div class="comment-row"><textarea id="commentText" placeholder="이 배치에 대한 의견을 남겨주세요" maxlength="500" required></textarea></div>' +
-        '<button type="submit" class="btn btn-primary">의견 남기기</button></form>';
+        '<div class="comment-foot"><div class="rev-attached" id="revAttached" hidden></div><div class="comment-foot-btns">' +
+        (hasWallData ? '<button type="button" class="rev-btn' + (me.user ? "" : " is-disabled") + '" id="revBtn"' + (me.user ? "" : ' aria-disabled="true"') + '>배치 수정하기</button>' : "") +
+        '<button type="submit" class="btn btn-primary">의견 남기기</button></div></div></form>';
+      var revBtn = document.getElementById("revBtn");
+      if (revBtn) revBtn.addEventListener("click", function(){
+        refreshMe();
+        if (!me.user){ showRevTip(revBtn); return; }
+        openRevModal({ mode: "edit", changes: pendingRevision, onDone: function(ch){ pendingRevision = ch; renderRevChip(); toastMsg("변경안이 첨부됐어요. 의견을 쓰고 남기기를 눌러주세요."); } });
+      });
+      document.getElementById("revAttached").addEventListener("click", function(e){
+        var t = e.target.closest ? e.target : e.target.parentNode;
+        if (t.closest("[data-rev-edit]")) openRevModal({ mode: "edit", changes: pendingRevision, onDone: function(ch){ pendingRevision = ch; renderRevChip(); } });
+        else if (t.closest("[data-rev-remove]")){ pendingRevision = null; renderRevChip(); }
+      });
+      renderRevChip();
       document.getElementById("commentForm").addEventListener("submit", function(e){
         e.preventDefault();
         var textInput = document.getElementById("commentText");
@@ -2258,13 +2505,29 @@
         }
         var submit = e.target.querySelector("button[type=submit]");
         submit.disabled = true;
+        var rev = (me.user && pendingRevision) ? pendingRevision : null;
         sendComment(text, null, nick, pw).then(function(r){
-          submit.disabled = false;
-          if (r.error || !r.data){ toastMsg(writeError(r.error) || "의견을 남기지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
+          if (r.error || !r.data){ submit.disabled = false; toastMsg(writeError(r.error) || "의견을 남기지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
           if (nick) setGuestNick(nick);
-          comments.push(r.data);
-          textInput.value = "";
-          renderComments();
+          function finish(){
+            submit.disabled = false;
+            comments.push(r.data);
+            textInput.value = "";
+            pendingRevision = null; renderRevChip();
+            renderComments();
+          }
+          if (!rev){ finish(); return; }
+          /* 변경안은 댓글이 먼저 만들어진 뒤에 붙인다 — 실패하면 댓글도 되돌려서 반쪽짜리 글이 남지 않게 */
+          saveRevision(r.data.id, r.data.id, rev).then(function(row){
+            if (!row){
+              sb.from("comments").delete().eq("id", r.data.id).then(function(){}, function(){});
+              submit.disabled = false;
+              toastMsg("변경안을 저장하지 못해서 의견도 올리지 않았어요. 잠시 뒤에 다시 시도해 주세요.");
+              return;
+            }
+            revisions[row.comment_id] = row;
+            finish();
+          });
         }, sendFail(submit));
       });
       fillGuestIps(host);
@@ -2321,6 +2584,10 @@
     var cList = document.getElementById("commentList");
     cList.addEventListener("click", function(e){
       var t = e.target.closest ? e.target : e.target.parentNode;
+      var rvView = t.closest("[data-rev-view]");
+      if (rvView){ openRevView(rvView.getAttribute("data-rev-view"), rvView); return; }
+      var rvRedo = t.closest("[data-rev-redo]");
+      if (rvRedo){ redoRevision(rvRedo.getAttribute("data-rev-redo"), rvRedo); return; }
       var del = t.closest("[data-cdel]");
       if (del){
         var id = del.getAttribute("data-cdel");

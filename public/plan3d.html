@@ -754,6 +754,113 @@
     transition:transform .1s ease, background .1s ease;
   }
   .furniture-delete-btn:hover{ background:#fdf2f2; transform:scale(1.1); }
+  /* ===== 배치 수정 + 의견 (revMode) ===== */
+  .furniture-reason-btn, .wall-reason-btn{
+    display:none; position:relative; flex:none; width:22px; height:22px; border-radius:50%; padding:0; cursor:pointer;
+    border:1px solid var(--line); background:color-mix(in srgb, var(--paper) 85%, transparent);
+    font-size:.68rem; line-height:1; align-items:center; justify-content:center; transition:transform .1s ease, border-color .1s ease;
+  }
+  .wall-reason-btn{ width:24px; height:24px; font-size:.78rem; }
+  .is-revise .furniture-reason-btn, .is-revise .wall-reason-btn{ display:flex; }
+  .is-revise .wall-image-btn{ display:none; }
+  .furniture-reason-btn:hover, .wall-reason-btn:hover{ transform:scale(1.1); border-color:var(--blueprint); }
+  .furniture-reason-btn.has, .wall-reason-btn.has{ background:var(--blueprint-soft); border-color:var(--blueprint); }
+  .furniture-reason-btn.alert::after, .wall-reason-btn.alert::after{
+    content:''; position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%;
+    background:#e0483e; border:1.5px solid var(--paper-raised);
+  }
+  @keyframes ohRevIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+  @keyframes ohRevPop{ from{ opacity:0; transform:scale(.92) translateY(4px); } to{ opacity:1; transform:none; } }
+  @keyframes ohRevPulse{ 0%,100%{ outline-color:var(--blueprint); } 50%{ outline-color:transparent; } }
+  .oh-rev-panel{
+    position:absolute; left:12px; top:70px; width:300px; height:380px; display:none; flex-direction:column; z-index:12;
+    background:color-mix(in srgb, var(--paper-raised) 96%, transparent); border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 10px 32px var(--shadow); overflow:hidden; font-family:inherit;
+  }
+  .oh-rev-panel.open{ display:flex; animation:ohRevIn .22s cubic-bezier(.22,1,.36,1); }
+  .oh-rev-panel.dragging{ box-shadow:0 16px 40px var(--shadow); user-select:none; -webkit-user-select:none; }
+  .oh-rev-grip{ flex:none; height:16px; display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; }
+  .oh-rev-grip i{ display:block; width:38px; height:4px; border-radius:2px; background:var(--line); transition:background .15s; }
+  .oh-rev-grip:hover i, .oh-rev-panel.dragging .oh-rev-grip i{ background:var(--blueprint); }
+  .oh-rev-panel.dragging, .oh-rev-panel.dragging .oh-rev-grip, .oh-rev-panel.dragging .oh-rev-panel-head{ cursor:grabbing; }
+  .oh-rev-rs{ position:absolute; width:20px; height:20px; z-index:3; touch-action:none; }
+  .oh-rev-rs[data-c="nw"]{ left:0; top:0; cursor:nwse-resize; } .oh-rev-rs[data-c="ne"]{ right:0; top:0; cursor:nesw-resize; }
+  .oh-rev-rs[data-c="sw"]{ left:0; bottom:0; cursor:nesw-resize; } .oh-rev-rs[data-c="se"]{ right:0; bottom:0; cursor:nwse-resize; }
+  .oh-rev-rs::after{ content:""; position:absolute; width:9px; height:9px; border:0 solid var(--ink-soft); opacity:.45; transition:opacity .15s; }
+  .oh-rev-rs[data-c="nw"]::after{ left:5px; top:5px; border-width:2px 0 0 2px; border-top-left-radius:5px; }
+  .oh-rev-rs[data-c="ne"]::after{ right:5px; top:5px; border-width:2px 2px 0 0; border-top-right-radius:5px; }
+  .oh-rev-rs[data-c="sw"]::after{ left:5px; bottom:5px; border-width:0 0 2px 2px; border-bottom-left-radius:5px; }
+  .oh-rev-rs[data-c="se"]::after{ right:5px; bottom:5px; border-width:0 2px 2px 0; border-bottom-right-radius:5px; }
+  .oh-rev-rs:hover::after, .oh-rev-panel.dragging .oh-rev-rs::after{ opacity:1; border-color:var(--blueprint); }
+  .oh-rev-panel-head{ display:flex; align-items:center; justify-content:space-between; padding:0 10px 8px 14px; cursor:grab; flex:none; font-weight:700; font-size:.88rem; color:var(--ink); border-bottom:1px solid var(--line); }
+  .oh-rev-n{ font-style:normal; font-weight:700; color:var(--blueprint-deep); margin-left:3px; }
+  .oh-rev-x{ appearance:none; border:0; background:transparent; color:var(--ink-soft); font-size:1.25rem; line-height:1; cursor:pointer; width:26px; height:26px; border-radius:7px; padding:0; }
+  .oh-rev-x:hover{ background:var(--blueprint-soft); color:var(--ink); }
+  .oh-rev-list{ flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .oh-rev-item{ background:var(--paper); border:1px solid var(--line); border-radius:12px 12px 12px 4px; padding:9px 10px 10px; cursor:pointer; transition:border-color .12s, box-shadow .12s; }
+  .oh-rev-item:hover{ border-color:var(--blueprint); }
+  .oh-rev-item.sel{ border-color:var(--blueprint); box-shadow:0 0 0 2px var(--blueprint-soft); }
+  .oh-rev-item-head{ display:flex; align-items:center; gap:7px; font-size:.84rem; font-weight:700; color:var(--ink); }
+  .oh-rev-ico{ font-size:1rem; line-height:1; }
+  .oh-rev-title{ flex:1; min-width:0; }
+  .oh-rev-item-x{ appearance:none; border:0; background:transparent; color:var(--ink-soft); font-size:1.15rem; line-height:1; cursor:pointer; width:24px; height:24px; border-radius:7px; padding:0; flex:none; }
+  .oh-rev-item-x:hover{ background:#f6d9d4; color:#b3321f; }
+  .oh-rev-toast{ position:absolute; left:10px; right:10px; bottom:56px; z-index:4; display:none; align-items:center; justify-content:space-between; gap:8px; padding:8px 8px 8px 12px; border-radius:10px; background:var(--ink); color:var(--paper-raised); font-size:.78rem; font-weight:600; box-shadow:0 6px 18px var(--shadow); }
+  .oh-rev-toast.show{ display:flex; animation:ohRevPop .2s cubic-bezier(.34,1.3,.64,1); }
+  .oh-rev-toast button{ appearance:none; border:0; background:transparent; color:var(--paper-raised); font:inherit; font-weight:800; text-decoration:underline; cursor:pointer; padding:2px 6px; }
+  .oh-rev-chips{ margin-left:auto; display:flex; align-items:center; gap:4px; }
+  .oh-rev-chips i{ width:17px; height:17px; border-radius:50%; border:1px solid var(--line); display:inline-flex; align-items:center; justify-content:center; font-size:.58rem; font-style:normal; }
+  .oh-rev-chips b{ font-size:.72rem; color:var(--ink-soft); }
+  .oh-rev-why{ margin:6px 0 0; font-size:.82rem; color:var(--ink); line-height:1.45; word-break:break-word; }
+  .oh-rev-why.none{ color:var(--ink-soft); font-size:.76rem; }
+  .oh-rev-why-in{ width:100%; box-sizing:border-box; margin-top:6px; font:inherit; font-size:.8rem; padding:6px 9px; border-radius:8px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink); }
+  .oh-rev-why-in:focus{ outline:2px solid var(--focus); outline-offset:0; }
+  .oh-rev-sw{ display:inline-flex; margin-top:8px; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:var(--paper-raised); }
+  .oh-rev-sw button{ appearance:none; border:0; background:transparent; color:var(--ink-soft); font:inherit; font-size:.72rem; font-weight:700; padding:4px 12px; cursor:pointer; transition:background .12s, color .12s; }
+  .oh-rev-sw button:hover{ background:var(--blueprint-soft); color:var(--ink); }
+  .oh-rev-sw button.on, .oh-rev-sw button.on:hover{ background:var(--blueprint); color:var(--paper-raised); }
+  .oh-rev-sw.big{ margin-top:0; }
+  .oh-rev-sw.big button{ font-size:.84rem; padding:8px 18px; }
+  .oh-rev-panel-foot{ display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-top:1px solid var(--line); font-size:.78rem; font-weight:700; color:var(--ink-soft); }
+  .oh-rev-empty{ margin:auto; text-align:center; font-size:.82rem; color:var(--ink-soft); padding:20px 12px; line-height:1.5; }
+  .oh-rev-reason{
+    position:absolute; z-index:20; width:250px; display:none; box-sizing:border-box;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; padding:9px 10px 8px; box-shadow:0 8px 24px var(--shadow);
+  }
+  .oh-rev-reason.open{ display:block; animation:ohRevPop .18s cubic-bezier(.34,1.3,.64,1); }
+  .oh-rev-reason-head{ display:flex; align-items:center; justify-content:space-between; font-size:.78rem; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .oh-rev-reason textarea{ width:100%; box-sizing:border-box; resize:none; font:inherit; font-size:.82rem; padding:7px 8px; border-radius:8px; border:1px solid var(--line); background:var(--paper); color:var(--ink); }
+  .oh-rev-reason textarea:focus{ outline:2px solid var(--focus); outline-offset:0; }
+  .oh-rev-reason-foot{ display:flex; justify-content:space-between; margin-top:5px; font-size:.68rem; color:var(--ink-soft); }
+  .oh-rev-banner{
+    position:absolute; top:14px; left:50%; transform:translate(-50%,-8px); opacity:0; pointer-events:none; z-index:15;
+    background:var(--ink); color:var(--paper); padding:8px 16px; border-radius:999px; font-size:.8rem; font-weight:600; transition:opacity .2s, transform .2s; white-space:nowrap;
+  }
+  .oh-rev-banner.show{ opacity:.95; transform:translate(-50%,0); }
+  .rev-locked .sims-items{ pointer-events:none; opacity:.45; }
+  .oh-rev-viewbar{ flex:1; display:flex; align-items:center; justify-content:center; gap:24px; padding:0 20px; flex-wrap:wrap; }
+  .oh-rev-vb-text{ display:flex; flex-direction:column; gap:2px; font-size:.8rem; color:var(--ink-soft); }
+  .oh-rev-vb-text strong{ color:var(--ink); font-size:.95rem; }
+  .oh-rev-loading{ position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--paper) 82%, transparent); color:var(--ink-soft); font-size:.92rem; font-weight:600; }
+  .oh-rev-tut{
+    position:absolute; left:50%; bottom:130px; transform:translateX(-50%); width:min(440px, calc(100% - 24px)); box-sizing:border-box; z-index:26;
+    background:var(--paper-raised); border:1px solid var(--blueprint); border-radius:14px; padding:14px 16px 12px; box-shadow:0 10px 32px var(--shadow);
+    animation:ohRevPop .22s cubic-bezier(.34,1.3,.64,1);
+  }
+  .oh-rev-tut-step{ font-size:.7rem; font-weight:700; color:var(--blueprint-deep); letter-spacing:.04em; margin-bottom:3px; }
+  .oh-rev-tut strong{ display:block; font-size:.98rem; color:var(--ink); margin-bottom:4px; }
+  .oh-rev-tut p{ margin:0 0 10px; font-size:.85rem; line-height:1.55; color:var(--ink-soft); }
+  .oh-rev-tut-actions{ display:flex; justify-content:flex-end; gap:6px; }
+  .oh-rev-tut-actions button{ appearance:none; border:1px solid var(--line); background:var(--paper); color:var(--ink); font:inherit; font-size:.8rem; font-weight:700; padding:6px 14px; border-radius:8px; cursor:pointer; }
+  .oh-rev-tut-actions button:hover{ background:var(--blueprint-soft); border-color:var(--blueprint); }
+  .oh-rev-tut-actions button.primary{ background:var(--blueprint); border-color:var(--blueprint); color:var(--paper-raised); }
+  .oh-rev-pulse{ outline:3px solid var(--blueprint); outline-offset:3px; border-radius:12px; animation:ohRevPulse 1.1s ease-in-out infinite; }
+  @media (prefers-reduced-motion:reduce){ .oh-rev-pulse, .oh-rev-panel.open, .oh-rev-reason.open, .oh-rev-tut{ animation:none; } }
+  @media (max-width:600px){ .oh-rev-viewbar{ gap:10px; } .oh-rev-vb-text span{ display:none; } }
+  /* 팝업(iframe) 안에서 열릴 때: 이 편집기 화면만 꽉 차게 보이도록 나머지 페이지는 숨김 */
+  html.oh-embed, html.oh-embed body{ margin:0; height:100%; overflow:hidden; background:var(--paper); }
+  html.oh-embed body > *:not(#ohEmbedRoot):not(.oh-dialog-overlay){ display:none !important; }
+  #ohEmbedRoot{ position:fixed; inset:0; background:var(--paper); overflow:hidden; }
   /* 문 가구를 선택했을 때만 나타나는 열기/닫기 토글 — 평소엔 숨겨두고(door-mode일 때만 보이게)
      삭제 버튼 옆에 나란히 둠. */
   .door-toggle-btn{
@@ -2388,7 +2495,8 @@
     rebuildAllWalls();
 
     /* ============ 가구 배치 편집기 ============ */
-    var furnitureEditor = opts.furnitureEditor === true;
+    var revise = opts.revMode === 'edit', readOnly = opts.revMode === 'view', revAny = revise || readOnly; // 댓글 '배치 수정'(edit) / '변경된 인테리어 보기'(view)
+    var furnitureEditor = opts.furnitureEditor === true || revAny;
     var furniture = [], selectedFurniture = null, furnitureDragging = false;
     var selectedWall = null; // 지금 색상 팔레트가 뜬 채로 선택된 벽 메쉬(가구랑 동시 선택 안 되게 함)
     var raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
@@ -3177,6 +3285,7 @@
       syncSizePanel();
       syncRotatePanel();
       updateRotatePanelPosition(); // 고정이 풀렸으니 지금 위치에 맞게 즉시 한 번 다시 잡아줌
+      if (revAny) revOnSelect();
     }
     // 벽 클릭 색상 변경 — hitPoint(THREE.Vector3, 클릭한 실제 3D 지점)가 있으면 그 지점 바로 위에
     // 팔레트를 띄움. 벽마다(addWall에서) material을 따로 만들어두므로, 여기서 색을 바꿔도
@@ -3196,6 +3305,7 @@
         }
       }
       syncWallColorPanel();
+      if (revAny) revOnSelect();
     }
     function syncWallColorPanel(){
       if (!wallColorPanel) return;
@@ -3576,7 +3686,7 @@
       wallHintBadge.innerHTML = '<button type="button" class="hint-bulb" aria-label="도움말 끄기/켜기" title="도움말 끄기/켜기">💡</button><span class="hint-text"><span class="hint-text-inner"></span></span>';
       var wallHintBulb = wallHintBadge.querySelector('.hint-bulb');
       var wallHintInner = wallHintBadge.querySelector('.hint-text-inner');
-      wallHintInner.textContent = '처음이면 오른쪽 위 "튜토리얼" 버튼 · 벽 더블클릭: 벽 색 변경 · F: 선택 가구 포커스';
+      wallHintInner.textContent = readOnly ? '오른쪽 위 "의견" 탭에서 바뀐 곳을 하나씩 확인해보세요 · 아래 Before / After로 비교해요' : revise ? '가구·벽지를 바꾼 뒤 💬로 이유를 남겨보세요 · 벽 더블클릭: 벽 색 변경 · F: 선택 가구 포커스' : '처음이면 오른쪽 위 "튜토리얼" 버튼 · 벽 더블클릭: 벽 색 변경 · F: 선택 가구 포커스';
       container.appendChild(wallHintBadge);
 
       // 1-1. 가구 배치 화면(캔버스 + 위의 모든 오버레이 UI)만 브라우저 전체화면으로 띄우는 버튼.
@@ -3658,7 +3768,7 @@
         });
         itemsPanel.appendChild(btn);
       });
-      bottomPanel.appendChild(itemsPanel);
+      if (!readOnly) bottomPanel.appendChild(itemsPanel);
 
       // 맨 오른쪽 위아래 버튼: "✅ 가구 배치 완료"(게시 흐름 시작) / "전 단계로"(벽 편집으로 돌아가기).
       // 실제 동작은 페이지의 기존 버튼 핸들러(nextStepBtn, editWallsBtn)가 담당하고, 여기선 호출만 넘겨줌.
@@ -3669,7 +3779,7 @@
           doneBtnEl = document.createElement('button');
           doneBtnEl.type = 'button';
           doneBtnEl.className = 'sims-action-btn primary';
-          doneBtnEl.textContent = '✅ 가구 배치 완료';
+          doneBtnEl.textContent = revise ? '✅ 변경 완료' : '✅ 가구 배치 완료';
           // 튜토리얼 중 '가구 배치 완료'를 눌렀을 때 — '전 단계로' 말풍선과 같은 모양의 안내 말풍선
           // 말풍선을 가리키는 버튼 바로 위에 붙이고, 아래 화살표가 그 버튼 가운데를 향하게 위치를 계산
           var placeBubble = function(bub, btn){
@@ -3793,7 +3903,7 @@
       //    가구의 색상 팝업(furnitureColorPanel)이 뜨고, 삭제 버튼을 누르면 바로 그 가구를 지움.
       rotatePanel = document.createElement('div');
       rotatePanel.className = 'furniture-rotate-panel';
-      rotatePanel.innerHTML = '<div class="panel-grip" title="끌어서 팝업 옮기기 (더블클릭: 원래 위치)" aria-label="팝업 옮기기"></div><div class="handle-row"><button type="button" class="handle-btn" data-rotate="-1" aria-label="왼쪽으로 15도 회전">↺</button><button type="button" class="handle-btn" data-rotate="1" aria-label="오른쪽으로 15도 회전">↻</button></div><div class="handle-lower-row"><div class="handle-left-col"><button type="button" class="furniture-color-toggle" aria-label="가구 색상 변경" title="가구 색상 변경"></button><button type="button" class="furniture-delete-btn" aria-label="가구 삭제" title="가구 삭제">🗑️</button><button type="button" class="door-toggle-btn" aria-label="문 열기/닫기" title="문 열기/닫기">🚪 열기</button></div><div class="nudge-pad"><button type="button" class="nudge-btn" data-dir="up" aria-label="위로 이동">↑</button><div class="nudge-mid"><button type="button" class="nudge-btn" data-dir="left" aria-label="왼쪽으로 이동">←</button><button type="button" class="nudge-btn" data-dir="right" aria-label="오른쪽으로 이동">→</button></div><button type="button" class="nudge-btn" data-dir="down" aria-label="아래로 이동">↓</button></div></div>';
+      rotatePanel.innerHTML = '<div class="panel-grip" title="끌어서 팝업 옮기기 (더블클릭: 원래 위치)" aria-label="팝업 옮기기"></div><div class="handle-row"><button type="button" class="handle-btn" data-rotate="-1" aria-label="왼쪽으로 15도 회전">↺</button><button type="button" class="handle-btn" data-rotate="1" aria-label="오른쪽으로 15도 회전">↻</button></div><div class="handle-lower-row"><div class="handle-left-col"><button type="button" class="furniture-color-toggle" aria-label="가구 색상 변경" title="가구 색상 변경"></button><button type="button" class="furniture-delete-btn" aria-label="가구 삭제" title="가구 삭제">🗑️</button><button type="button" class="furniture-reason-btn" aria-label="변경 이유 남기기" title="변경 이유 남기기">💬</button><button type="button" class="door-toggle-btn" aria-label="문 열기/닫기" title="문 열기/닫기">🚪 열기</button></div><div class="nudge-pad"><button type="button" class="nudge-btn" data-dir="up" aria-label="위로 이동">↑</button><div class="nudge-mid"><button type="button" class="nudge-btn" data-dir="left" aria-label="왼쪽으로 이동">←</button><button type="button" class="nudge-btn" data-dir="right" aria-label="오른쪽으로 이동">→</button></div><button type="button" class="nudge-btn" data-dir="down" aria-label="아래로 이동">↓</button></div></div>';
       // 손잡이를 끌면 팝업이 그만큼 옮겨짐 — 위치는 가구 기준 상대값(rotatePanelOffset)이라 가구/카메라가 움직여도
       // 같은 간격으로 따라다님. 더블클릭하면 기본 위치로 복귀.
       (function(){
@@ -3921,6 +4031,7 @@
         '<div class="wall-color-head">' +
           '<span class="wall-color-label">🎨 이 벽 색상 변경</span>' +
           '<button type="button" class="wall-image-btn" aria-label="이미지로 벽 채우기" title="이미지로 벽 채우기">🖼️</button>' +
+          '<button type="button" class="wall-reason-btn" aria-label="변경 이유 남기기" title="변경 이유 남기기">💬</button>' +
         '</div>';
       var wallImageBtn = wallColorPanel.querySelector('.wall-image-btn');
       var wallImageInput = document.createElement('input');
@@ -4047,9 +4158,11 @@
       container.appendChild(wallColorPanel);
 
       // 초기 기본 가구 배치
-      addFurniture('sofa', center.x - size*.18, center.z);
-      addFurniture('table', center.x + size*.13, center.z - size*.12);
-      popEnabled = true; // 여기부터 새로 놓는 가구만 애니메이션
+      if (!revAny){
+        addFurniture('sofa', center.x - size*.18, center.z);
+        addFurniture('table', center.x + size*.13, center.z - size*.12);
+        popEnabled = true; // 여기부터 새로 놓는 가구만 애니메이션
+      }
       selectFurniture(null);
       selectWall(null);
     }
@@ -4138,7 +4251,7 @@
       // 가구를 드래그로 옮기는 시작점이면 여기서 끝 — 카메라 각도(phi/theta)나 탑뷰 고정 상태는
       // 전혀 안 건드림. 예전엔 이 체크 없이 모든 pointerdown에서 탑뷰 고정을 풀어버려서, 탑뷰
       // 상태에서 가구만 옮겨도 화면이 뚝 하고 삐딱한 각도로 튀어버리는 버그가 있었음.
-      if (furnitureEditor && beginFurnitureDrag(e)) return;
+      if (furnitureEditor && !readOnly && !revLock && beginFurnitureDrag(e)) return;
       // 노클립 중에는 캔버스 드래그가 "시선 돌리기"(궤도 회전 아님)
       if (noclipMode){ lookDragging = true; lastX = e.clientX; lastY = e.clientY; return; }
       // 여기부터는 진짜로 캔버스를 드래그해서 "카메라" 각도를 바꾸려는 경우 — 이때만 탑뷰 고정을 해제함.
@@ -4195,6 +4308,7 @@
       });
       canvas.addEventListener("drop", function(e){
         e.preventDefault();
+        if (readOnly || revLock) return;
         var type = e.dataTransfer.getData("text/plain");
         if (WALL_ITEM_TYPES[type]) {
           var rect = canvas.getBoundingClientRect();
@@ -4222,7 +4336,7 @@
     // 벽 색상 변경은 더블클릭으로만 — 단일 클릭/드래그는 전부 시점 회전용으로 남겨둠(가구 배치
     // 화면에서만 동작, 히어로/결과 비교 화면에서는 wallColorPanel이 없어서 selectWall이 그냥 무시됨).
     canvas.addEventListener("dblclick", function(e){
-      if (!furnitureEditor) return;
+      if (!furnitureEditor || readOnly || revLock) return;
       var rect = canvas.getBoundingClientRect();
       pointer.x = ((e.clientX-rect.left)/rect.width)*2-1; pointer.y = -((e.clientY-rect.top)/rect.height)*2+1;
       raycaster.setFromCamera(pointer, camera);
@@ -4338,7 +4452,7 @@
       helpBtn.className = "view-btn";
       helpBtn.title = "튜토리얼 (조작법을 직접 해보며 배우기)";
       helpBtn.innerHTML = HELP_ICON;
-      helpBtn.addEventListener("click", function(){ toggleTutorial(); helpBtn.blur(); });
+      helpBtn.addEventListener("click", function(){ if (readOnly) revTutStart(); else toggleTutorial(); helpBtn.blur(); });
       viewControls.appendChild(wrapWithLabel(helpBtn, "튜토리얼"));
     }
     // 도면 보이기/숨기기 — 노클립 버튼 바로 아래. 평소(꺼짐)엔 바닥에 원본 도면 사진이 항상 보이고,
@@ -4365,16 +4479,27 @@
       });
     }
     // 가구 배치 화면에서는 전체화면 버튼과 버튼줄을 한 묶음으로 만들어 오른쪽 위에 둠
+    // 배치 수정/보기 팝업: 도면 숨기기 버튼 옆에 '의견' 탭 버튼
+    var revTabBtn = null, revTabWrap = null;
+    if (revAny){
+      revTabBtn = document.createElement("button");
+      revTabBtn.type = "button";
+      revTabBtn.className = "view-btn";
+      revTabBtn.title = revise ? "내가 바꾼 내용과 이유 보기" : "바뀐 내용과 이유 보기";
+      revTabBtn.innerHTML = '<span style="font-size:1.35rem;line-height:1">💬</span>';
+      revTabWrap = wrapWithLabel(revTabBtn, "의견");
+    }
     var topRightStack = null;
     if (furnitureEditor && typeof fullscreenBtn !== 'undefined' && fullscreenBtn){
       topRightStack = document.createElement("div");
       topRightStack.className = "furniture-top-right";
       topRightStack.appendChild(fullscreenBtn);
       topRightStack.appendChild(viewControls);
-      if (planWrap){ // 노클립(가운데) 버튼 바로 아래 한 줄
+      if (planWrap || revTabWrap){ // 노클립(가운데) 버튼 바로 아래 한 줄
         var planRow = document.createElement("div");
         planRow.className = "view-controls plan-row";
-        planRow.appendChild(planWrap);
+        if (planWrap) planRow.appendChild(planWrap);
+        if (revTabWrap) planRow.appendChild(revTabWrap);
         topRightStack.appendChild(planRow);
       }
       if (typeof sizePanel !== 'undefined' && sizePanel) topRightStack.appendChild(sizePanel);
@@ -4598,9 +4723,12 @@
     }
     // F 포커스 — 마야/유니티/언리얼처럼 지금 보던 방향은 그대로 두고, 선택한 가구가 화면에 꽉 차게
     // 가까이 다가감(궤도 모드: 회전 중심+거리를 옮김 / 노클립 모드: 카메라를 가구 앞으로 이동).
-    function focusSelectedFurniture(){
-      if (!selectedFurniture) return;
-      var box = new THREE.Box3().setFromObject(selectedFurniture);
+    function focusSelectedFurniture(tgt){
+      // tgt: (선택 안 하고) 직접 가리킬 대상 — THREE.Box3 또는 3D 오브젝트. 없으면 지금 선택한 가구.
+      var isBox = !!(tgt && tgt.isBox3);
+      var focusObj = isBox ? null : (tgt || selectedFurniture);
+      if (!isBox && !focusObj) return;
+      var box = isBox ? tgt.clone() : new THREE.Box3().setFromObject(focusObj);
       if (box.isEmpty()) return;
       var c = new THREE.Vector3(); box.getCenter(c);
       var sz = new THREE.Vector3(); box.getSize(sz);
@@ -4612,7 +4740,7 @@
           ? { kind:'noclip', pos:flyPos.clone(), yaw:flyYaw, pitch:flyPitch }
           : { kind:'orbit', target:camTarget.clone(), radius:radius, theta:theta, phi:phi, top:trueTopView };
       }
-      focusedObj = selectedFurniture;
+      focusedObj = focusObj;
       var vHalf = camera.fov * Math.PI / 360;
       var hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
       var dist = (r / Math.sin(Math.min(vHalf, hHalf))) * 1.15;
@@ -4751,6 +4879,8 @@
       var target = null;
       if (kind === 'bottom' && typeof bottomPanel !== 'undefined') target = bottomPanel;
       else if (kind === 'noclip' && noclipBtn) target = noclipBtn.parentNode;
+      else if (kind === 'revTab' && revTabWrap) target = revTabWrap;
+      else if (kind === 'revPanel' && revPanelEl) target = revPanelEl;
       if (target) target.classList.add('tut-pulse');
     }
     // 단계가 바뀌어 내용이 달라질 때 카드가 뚝 바뀌지 않고, 이전 높이에서 새 높이로 부드럽게 늘었다 줄어들며
@@ -4921,13 +5051,14 @@
     // 우선순위: 튜토리얼 중(숨김) > 노클립 > 벽 한 번 클릭 > 벽 선택(더블클릭) > 가구 선택 > 아무것도 안 한 상태
     function computeContextHint(){
       if (tutActive) return '';
+      if (revLock) return '💡 Before 미리보기 중이에요 · After로 돌아가면 다시 수정할 수 있어요';
       if (focusReturn && !noclipMode) return '💡 F를 한 번 더 누르면 포커스 전 시점으로 돌아가요';
       if (noclipMode) return '🎮 노클립 · WASD 이동 · Space/C 상하 · Shift 빠르게 · F 포커스 · R 리셋 · V 해제';
       if (hintTransient){
         if (performance.now() >= hintTransient.until) hintTransient = null;
         else if (hintTransient.kind === 'wallClick' && !selectedWall) return '💡 벽을 더블클릭하면 색상을 바꿀 수 있어요';
       }
-      if (selectedWall) return '💡 액자(🖼️)를 눌러 이미지로 벽을 꾸며보세요';
+      if (selectedWall) return revise ? '💡 💬를 눌러 벽 색을 바꾼 이유를 남겨보세요' : '💡 액자(🖼️)를 눌러 이미지로 벽을 꾸며보세요';
       if (selectedFurniture){
         var ht = selectedFurniture.userData.type;
         if (ht === 'door') return '💡 "🚪 열기" 버튼으로 문을 열고 닫아보세요';
@@ -5136,6 +5267,888 @@
 
     var rafId;
     var lastTickT = performance.now();
+    /* ================= 배치 수정 + 의견 (revMode: 'edit' = 댓글 작성자가 수정 / 'view' = 모두가 읽기 전용으로 보기) =================
+       게시글의 가구/벽지 배치를 그대로 복원한 뒤, '원본'과 달라진 점만 변경안(changes)으로 뽑아냄.
+       가구는 key('b0'.. = 원본 게시글 가구 순서, 'n1'.. = 새로 추가한 가구)로 구분하고, 삭제돼도 그룹 참조는 revGroups에
+       남겨둬서 Before/After 를 오가며 되살릴 수 있음. */
+    var revReady = false, revLock = false;
+    var revGroups = {}, revBase = {}, revReasons = {}, revWallReasons = {}, revBaseWall = [];
+    var revNewCounter = 1, revChanges = null, revItemState = {}, revGlobal = 'after', revSig = '', revSigT = 0;
+    var revPanelEl = null, revListEl = null, revCountEl = null, revViewBarEl = null, revPanelSegEl = null, revBannerEl = null, revLoadingEl = null;
+    var revReasonEl = null, revReasonTA = null, revReasonTitle = null, revReasonTarget = null, revReasonAnchor = null;
+    var revArrowMesh = null, revArrowInfo = null, revPanelOpen = false;
+    var revTutEl = null, revTutIdx = 0, revTutPulse = null, revTutOpenedPanel = false;
+    var REV_ICONS = { sofa:'🛋️', table:'🪑', bed:'🛏️', plant:'🪴', door:'🚪', window:'🪟', outlet:'🔌' };
+    var REV_TUT_KEY = 'oh_rev_view_tut_v1';
+
+    function r4(v){ return Math.round((v || 0) * 10000) / 10000; }
+    function revSnapOf(f){
+      var colorHex = null;
+      f.traverse(function(child){
+        if (!colorHex && child.isMesh && child.userData.colorable !== false && child.material && child.material.color) colorHex = '#' + child.material.color.getHexString();
+      });
+      var dims = f.userData.size || { w:.6, d:.6, h:.6 };
+      return { x:r4(f.position.x), y:r4(f.position.y), z:r4(f.position.z), rotY:r4(f.rotation.y), w:r4(dims.w), d:r4(dims.d), h:r4(dims.h),
+        color: colorHex, doorOpen: !!f.userData.doorOpen,
+        wallIndex: f.userData.wallIndex != null ? f.userData.wallIndex : null, wallAlong: f.userData.wallAlong != null ? r4(f.userData.wallAlong) : null };
+    }
+    function revAngDiff(a, b){ return ((a - b) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI; }
+    function revSnapEq(a, b){
+      if (!a || !b) return a === b;
+      function n(x, y){ return Math.abs((x || 0) - (y || 0)) < 0.004; }
+      return n(a.x, b.x) && n(a.y, b.y) && n(a.z, b.z) && Math.abs(revAngDiff(a.rotY, b.rotY)) < 0.003 &&
+        n(a.w, b.w) && n(a.d, b.d) && n(a.h, b.h) && (a.color || '') === (b.color || '') && !!a.doorOpen === !!b.doorOpen;
+    }
+    function revApplySnap(g, s){
+      var base = g.userData.baseSize, type = g.userData.type;
+      var oldWall = g.userData.wallIndex;
+      g.userData.size = { w:s.w, d:s.d, h:s.h };
+      g.scale.set(s.w / base.w, s.h / base.h, s.d / base.d);
+      g.position.set(s.x, s.y, s.z);
+      g.rotation.y = s.rotY;
+      if (s.wallIndex != null){ g.userData.wallIndex = s.wallIndex; g.userData.wallAlong = s.wallAlong; }
+      if (s.color){
+        var hx = parseInt(String(s.color).replace('#', ''), 16);
+        g.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(hx); });
+      }
+      if (type === 'door' && g.userData.doorHinge){
+        g.userData.doorOpen = !!s.doorOpen;
+        g.userData.doorHinge.rotation.y = s.doorOpen ? -(Math.PI / 2) * 0.82 : 0;
+      }
+      if (g.userData.isWallItem && (type === 'door' || type === 'window') && furniture.indexOf(g) >= 0){
+        if (s.wallIndex != null) rebuildWallAt(s.wallIndex);
+        if (oldWall != null && oldWall !== s.wallIndex) rebuildWallAt(oldWall);
+      }
+    }
+    function revSetPresent(g, on){
+      if (g.userData.popAnim){ var pi = popAnims.indexOf(g); if (pi >= 0) popAnims.splice(pi, 1); finishPop(g); }
+      var idx = furniture.indexOf(g);
+      if (on && idx < 0){
+        scene.add(g); furniture.push(g);
+      } else if (!on && idx >= 0){
+        if (selectedFurniture === g) selectFurniture(null);
+        furniture = furniture.filter(function(f){ return f !== g; });
+        scene.remove(g);
+        if (g.userData.isWallItem && (g.userData.type === 'door' || g.userData.type === 'window') && g.userData.wallIndex != null) rebuildWallAt(g.userData.wallIndex);
+      }
+    }
+    function revSpawn(type, s, key){
+      var g;
+      if (WALL_ITEM_TYPES[type] && s.wallIndex != null && wallSegments[s.wallIndex]){
+        g = addFurniture(type, null, null, { wallIndex:s.wallIndex, along:s.wallAlong, height:s.y });
+      } else {
+        g = addFurniture(type, s.x, s.z);
+      }
+      if (!g) return null;
+      if (g.userData.popAnim){ var pi = popAnims.indexOf(g); if (pi >= 0) popAnims.splice(pi, 1); finishPop(g); }
+      revApplySnap(g, s);
+      g.userData.revKey = key; revGroups[key] = g;
+      return g;
+    }
+    function revKeyOf(g){
+      if (!g.userData.revKey){ g.userData.revKey = 'n' + (revNewCounter++); revGroups[g.userData.revKey] = g; }
+      return g.userData.revKey;
+    }
+    function revNum(v){ return typeof v === 'number' && isFinite(v) ? v : 0; }
+    function revParseHex(c){
+      if (typeof c === 'number') return c;
+      if (typeof c === 'string' && /^#?[0-9a-fA-F]{6}$/.test(c)) return parseInt(c.replace('#', ''), 16);
+      return null;
+    }
+    function revNormSnap(it){
+      var d = THREE_DEF_SIZE(it.type);
+      return { x:revNum(it.x), y:revNum(it.y), z:revNum(it.z), rotY:revNum(it.rotY), w:(it.w > 0 ? it.w : d.w), d:(it.d > 0 ? it.d : d.d), h:(it.h > 0 ? it.h : d.h),
+        color: it.color || null, doorOpen: !!it.doorOpen, wallIndex: it.wallIndex != null ? it.wallIndex : null, wallAlong: it.wallAlong != null ? it.wallAlong : null };
+    }
+    function THREE_DEF_SIZE(type){
+      return type === 'sofa' ? {w:1.55,d:.72,h:.94} : type === 'table' ? {w:1.04,d:1.04,h:.66} : type === 'bed' ? {w:1.5,d:2.0,h:.88} :
+        type === 'door' ? {w:.9,d:.16,h:2.05} : type === 'window' ? {w:1.2,d:.11,h:1.1} : type === 'outlet' ? {w:.11,d:.02,h:.075} : {w:.68,d:.68,h:.94};
+    }
+
+    /* ---- 원본 대비 달라진 점 계산 ---- */
+    function revWallInfo(i){
+      var b = revBaseWall[i] || { color: wallColor.getHex(), tex: null };
+      var curTex = wallImageOverrides[i] || null;
+      var curHex = wallColorOverrides[i] != null ? wallColorOverrides[i] : wallColor.getHex();
+      var changed = (curTex !== (b.tex || null)) || (!curTex && curHex !== b.color);
+      return { changed: changed, curHex: curHex, base: b };
+    }
+    function revFurnChanged(g){
+      var key = g.userData.revKey, base = key && revBase[key];
+      if (!base) return true;
+      return !revSnapEq(base, revSnapOf(g));
+    }
+    function revCompute(){
+      furniture.forEach(function(g){ revKeyOf(g); });
+      var furn = [], walls = [];
+      Object.keys(revGroups).forEach(function(key){
+        var g = revGroups[key], present = furniture.indexOf(g) >= 0, base = revBase[key], type = g.userData.type;
+        if (base){
+          if (present){
+            var now = revSnapOf(g);
+            if (!revSnapEq(base, now)) furn.push({ key:key, kind:'move', type:type, before:base, after:now, reason: revReasons[key] || '' });
+          } else furn.push({ key:key, kind:'del', type:type, before:base, after:null, reason: revReasons[key] || '' });
+        } else if (present){
+          furn.push({ key:key, kind:'add', type:type, before:null, after:revSnapOf(g), reason: revReasons[key] || '' });
+        }
+      });
+      wallSegments.forEach(function(seg, i){
+        var wi = revWallInfo(i);
+        if (wi.changed) walls.push({ wall:i, beforeColor: wi.base.color, beforeImg: !!wi.base.tex, afterColor: wi.curHex, reason: revWallReasons[i] || '' });
+      });
+      return { v:1, furniture:furn, walls:walls };
+    }
+    function revNormChanges(ch){
+      ch = ch || {};
+      var out = { v:1, furniture:[], walls:[] };
+      (ch.furniture || []).forEach(function(c){
+        if (!c || !c.key || !c.type) return;
+        out.furniture.push({ key:String(c.key), kind:c.kind, type:c.type,
+          before: c.before ? revNormSnap(Object.assign({ type:c.type }, c.before)) : null,
+          after: c.after ? revNormSnap(Object.assign({ type:c.type }, c.after)) : null,
+          reason: String(c.reason || '').slice(0, 80) });
+      });
+      (ch.walls || []).forEach(function(c){
+        if (!c || typeof c.wall !== 'number' || !wallSegments[c.wall]) return;
+        out.walls.push({ wall:c.wall, beforeColor: revParseHex(c.beforeColor) != null ? revParseHex(c.beforeColor) : wallColor.getHex(),
+          beforeImg: !!c.beforeImg, afterColor: revParseHex(c.afterColor) != null ? revParseHex(c.afterColor) : wallColor.getHex(), reason: String(c.reason || '').slice(0, 80) });
+      });
+      return out;
+    }
+    function revItems(){
+      var arr = [];
+      if (!revChanges) return arr;
+      revChanges.furniture.forEach(function(c){ c.id = 'f:' + c.key; c.isWall = false; arr.push(c); });
+      revChanges.walls.forEach(function(c){ c.id = 'w:' + c.wall; c.isWall = true; arr.push(c); });
+      return arr;
+    }
+
+    /* ---- Before / After 적용 ---- */
+    function revApplyState(c, s){
+      if (c.isWall){
+        var rb = revBaseWall[c.wall];
+        if (s === 'before'){
+          wallColorOverrides[c.wall] = c.beforeColor;
+          if (c.beforeImg && rb && rb.tex) wallImageOverrides[c.wall] = rb.tex; else delete wallImageOverrides[c.wall];
+        } else {
+          wallColorOverrides[c.wall] = c.afterColor;
+          delete wallImageOverrides[c.wall];
+        }
+        rebuildWallAt(c.wall);
+        return;
+      }
+      var g = revGroups[c.key];
+      if (!g) return;
+      var snap = s === 'before' ? c.before : c.after;
+      if (!snap){ revSetPresent(g, false); return; }
+      revSetPresent(g, true);
+      revApplySnap(g, snap);
+    }
+    function revEffective(c){ return revItemState[c.id] || revGlobal; }
+    function revUpdateLock(){
+      if (!revise) return;
+      var any = revItems().some(function(c){ return revEffective(c) === 'before'; });
+      if (any === revLock) return;
+      revLock = any;
+      container.classList.toggle('rev-locked', any);
+      if (any){ selectFurniture(null); selectWall(null); revCloseReason(); }
+      if (revBannerEl) revBannerEl.classList.toggle('show', any);
+    }
+    function revSyncHighlights(){
+      var items = revItems(), allB = items.length > 0, allA = items.length > 0;
+      if (revListEl){
+        revListEl.querySelectorAll('.oh-rev-item').forEach(function(row){
+          var c = items.filter(function(x){ return x.id === row.getAttribute('data-id'); })[0];
+          if (!c) return;
+          var e = revEffective(c);
+          row.querySelectorAll('.oh-rev-sw button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-s') === e); });
+        });
+      }
+      items.forEach(function(c){ var e = revEffective(c); if (e !== 'before') allB = false; if (e !== 'after') allA = false; });
+      [revPanelSegEl, revViewBarEl].forEach(function(seg){
+        if (!seg) return;
+        seg.querySelectorAll('button[data-s]').forEach(function(b){
+          var s = b.getAttribute('data-s');
+          b.classList.toggle('on', s === 'before' ? allB : allA);
+        });
+      });
+    }
+    function revSetGlobal(s){
+      revGlobal = s; revItemState = {};
+      revItems().forEach(function(c){ revApplyState(c, s); });
+      revUpdateLock();
+      revSyncHighlights();
+    }
+    function revSetItem(c, s){
+      revItemState[c.id] = s;
+      revApplyState(c, s);
+      revUpdateLock();
+      revSyncHighlights();
+      revFocusChange(c, s);
+      revTutNote('revCompare');
+    }
+    function revResetAll(){
+      if (revGlobal === 'after' && !Object.keys(revItemState).length) { revUpdateLock(); return; }
+      revSetGlobal('after');
+    }
+
+    /* ---- 화살표 + 포커스 ---- */
+    function revEnsureArrow(){
+      if (revArrowMesh) return revArrowMesh;
+      var shp = new THREE.Shape();
+      shp.moveTo(0, 0); shp.lineTo(0.5, 0.6); shp.lineTo(0.22, 0.6); shp.lineTo(0.22, 1.4);
+      shp.lineTo(-0.22, 1.4); shp.lineTo(-0.22, 0.6); shp.lineTo(-0.5, 0.6); shp.lineTo(0, 0);
+      var ageo = new THREE.ExtrudeGeometry(shp, { depth: 0.16, bevelEnabled: false });
+      ageo.translate(0, 0, -0.08);
+      revArrowMesh = new THREE.Mesh(ageo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness:.45, metalness:.1, emissive: 0xffffff, emissiveIntensity:.3 }));
+      revArrowMesh.visible = false;
+      scene.add(revArrowMesh);
+      return revArrowMesh;
+    }
+    function revShowArrow(box, isWall){
+      var a = revEnsureArrow(), c = new THREE.Vector3(), sz = new THREE.Vector3();
+      box.getCenter(c); box.getSize(sz);
+      var h = isWall ? 0.7 : Math.min(0.8, Math.max(0.3, Math.max(sz.x, sz.z) * 0.5));
+      revArrowInfo = { x:c.x, z:c.z, topY: isWall ? wallHeight + 0.1 : box.max.y + 0.06, h:h };
+      a.scale.setScalar(h / 1.4);
+      var col = accentThreeColor();
+      a.material.color.copy(col); a.material.emissive.copy(col);
+      a.visible = true;
+    }
+    function revHideArrow(){ if (revArrowMesh) revArrowMesh.visible = false; revArrowInfo = null; }
+    function stepRevArrow(){
+      if (!revArrowMesh || !revArrowMesh.visible || !revArrowInfo) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var bob = reduce ? 0 : (Math.sin(performance.now() / 230) + 1) * 0.5 * Math.max(0.08, revArrowInfo.h * 0.22);
+      revArrowMesh.position.set(revArrowInfo.x, revArrowInfo.topY + bob, revArrowInfo.z);
+      revArrowMesh.rotation.y = Math.atan2(camera.position.x - revArrowInfo.x, camera.position.z - revArrowInfo.z);
+    }
+    function revItemBox(c, s){
+      if (c.isWall){
+        var seg = wallSegments[c.wall];
+        var mx = (seg.x1 + seg.x2) / 2, mz = (seg.y1 + seg.y2) / 2;
+        return new THREE.Box3(new THREE.Vector3(mx - 1.2, 0, mz - 1.2), new THREE.Vector3(mx + 1.2, wallHeight, mz + 1.2));
+      }
+      var g = revGroups[c.key];
+      if (g && furniture.indexOf(g) >= 0) return new THREE.Box3().setFromObject(g);
+      var sn = c.before || c.after;
+      var hy = sn.y + sn.h / 2;
+      return new THREE.Box3(new THREE.Vector3(sn.x - sn.w / 2, sn.y, sn.z - sn.d / 2), new THREE.Vector3(sn.x + sn.w / 2, sn.y + sn.h, sn.z + sn.d / 2));
+    }
+    function revFocusChange(c, s){
+      var box = revItemBox(c, s);
+      if (!box || box.isEmpty()) return;
+      focusSelectedFurniture(box);
+      revShowArrow(box, c.isWall);
+    }
+
+    /* ---- 이유 입력(플로팅) ---- */
+    function revBuildReason(){
+      revReasonEl = document.createElement('div');
+      revReasonEl.className = 'oh-rev-reason';
+      revReasonEl.innerHTML = '<div class="oh-rev-reason-head"><span class="oh-rev-reason-title">💬 변경 이유</span><button type="button" class="oh-rev-x" aria-label="닫기">×</button></div>' +
+        '<textarea rows="2" maxlength="80" placeholder="왜 바꿨는지 짧게 남겨보세요 (선택)"></textarea>' +
+        '<div class="oh-rev-reason-foot"><span class="oh-rev-count">0/80</span><span class="oh-rev-tip">Enter 저장 · Esc 닫기</span></div>';
+      revReasonTA = revReasonEl.querySelector('textarea');
+      revReasonTitle = revReasonEl.querySelector('.oh-rev-reason-title');
+      var cnt = revReasonEl.querySelector('.oh-rev-count');
+      revReasonTA.addEventListener('input', function(){
+        var t = revReasonTA.value.replace(/\s+/g, ' ').slice(0, 80);
+        cnt.textContent = t.length + '/80';
+        if (!revReasonTarget) return;
+        if (revReasonTarget.kind === 'f'){ if (t.trim()) revReasons[revReasonTarget.id] = t.trim(); else delete revReasons[revReasonTarget.id]; }
+        else { if (t.trim()) revWallReasons[revReasonTarget.id] = t.trim(); else delete revWallReasons[revReasonTarget.id]; }
+      });
+      revReasonTA.addEventListener('keydown', function(e){
+        e.stopPropagation();
+        if (e.isComposing || e.keyCode === 229) return; // 한글 조합 중 Enter/Esc는 글자 확정용 — 여기서 닫으면 마지막 글자가 중복됨
+        if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); revCloseReason(); }
+        else if (e.key === 'Escape'){ e.preventDefault(); revCloseReason(); }
+      });
+      revReasonTA.addEventListener('keyup', function(e){ e.stopPropagation(); });
+      revReasonEl.querySelector('.oh-rev-x').addEventListener('click', function(){ revCloseReason(); });
+      revReasonEl.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+      container.appendChild(revReasonEl);
+    }
+    function revOpenReason(kind, id, anchor){
+      if (revLock || !revReasonEl) return;
+      if (revReasonTarget && revReasonTarget.kind === kind && revReasonTarget.id === id){ revCloseReason(); return; }
+      revReasonTarget = { kind:kind, id:id }; revReasonAnchor = anchor;
+      var cur = kind === 'f' ? (revReasons[id] || '') : (revWallReasons[id] || '');
+      revReasonTA.value = cur;
+      revReasonEl.querySelector('.oh-rev-count').textContent = cur.length + '/80';
+      revReasonTitle.textContent = kind === 'f' ? '💬 이 가구를 바꾼 이유' : '💬 이 벽을 바꾼 이유';
+      revReasonEl.classList.add('open');
+      revPlaceReason();
+      setTimeout(function(){ if (revReasonTA && revReasonEl.classList.contains('open')) revReasonTA.focus(); }, 30);
+      revTutNote('revReason');
+    }
+    function revCloseReason(){
+      revReasonTarget = null; revReasonAnchor = null;
+      if (revReasonEl){ revReasonEl.classList.remove('open'); if (revReasonTA) revReasonTA.blur(); }
+    }
+    function revPlaceReason(){
+      if (!revReasonEl || !revReasonAnchor || !revReasonEl.classList.contains('open')) return;
+      var host = revReasonTarget && revReasonTarget.kind === 'w' ? wallColorPanel : rotatePanel;
+      var cr = container.getBoundingClientRect(), hr = host.getBoundingClientRect();
+      if (!hr.width || !revReasonAnchor.getBoundingClientRect().width){ revReasonEl.style.visibility = 'hidden'; return; }
+      revReasonEl.style.visibility = '';
+      var w = revReasonEl.offsetWidth || 250, h = revReasonEl.offsetHeight || 110;
+      var left = Math.max(8, Math.min(cr.width - w - 8, hr.left - cr.left));
+      var top = hr.bottom - cr.top + 8;
+      if (top + h > cr.height - 8) top = Math.max(8, hr.top - cr.top - h - 8);
+      revReasonEl.style.left = left + 'px'; revReasonEl.style.top = top + 'px';
+    }
+    function revOnSelect(){
+      if (!revReady) return;
+      if (revReasonTarget){
+        var keep = false;
+        if (revReasonTarget.kind === 'f') keep = !!(selectedFurniture && selectedFurniture.userData.revKey === revReasonTarget.id);
+        else keep = !!(selectedWall && selectedWall.userData.logicalWallIndex === revReasonTarget.id);
+        if (!keep) revCloseReason();
+      }
+    }
+
+    function revTutNote(evt){ if (revise && typeof tutNotify === 'function') tutNotify(evt); }
+
+    /* ---- 항목별 되돌리기(×) ---- */
+    var revToastEl = null, revToastTimer = 0;
+    function revHideToast(){
+      clearTimeout(revToastTimer);
+      if (revToastEl){ revToastEl.classList.remove('show'); revToastEl._undo = null; }
+    }
+    function revShowToast(msg, undo){
+      if (!revPanelEl) return;
+      if (!revToastEl){
+        revToastEl = document.createElement('div');
+        revToastEl.className = 'oh-rev-toast';
+        revToastEl.innerHTML = '<span class="oh-rev-toast-msg"></span><button type="button">실행 취소</button>';
+        revToastEl.querySelector('button').addEventListener('click', function(e){
+          e.stopPropagation();
+          var fn = revToastEl._undo;
+          revHideToast();
+          if (fn) fn();
+        });
+        revPanelEl.appendChild(revToastEl);
+      }
+      revToastEl.querySelector('.oh-rev-toast-msg').textContent = msg;
+      revToastEl._undo = undo;
+      revToastEl.classList.add('show');
+      clearTimeout(revToastTimer);
+      revToastTimer = setTimeout(revHideToast, 6000);
+    }
+    function revRevertItem(c){
+      if (!revise) return;
+      if (revLock){ revSetGlobal('after'); revRefreshEdit(true); }
+      delete revItemState[c.id];
+      var undo, label;
+      if (c.isWall){
+        var wi = c.wall, prevColor = wallColorOverrides[wi], prevTex = wallImageOverrides[wi], prevWhy = revWallReasons[wi];
+        revApplyState(c, 'before');
+        delete revWallReasons[wi];
+        label = '벽 색상';
+        undo = function(){
+          if (prevColor != null) wallColorOverrides[wi] = prevColor; else delete wallColorOverrides[wi];
+          if (prevTex) wallImageOverrides[wi] = prevTex; else delete wallImageOverrides[wi];
+          if (prevWhy) revWallReasons[wi] = prevWhy;
+          rebuildWallAt(wi);
+          revRefreshEdit(true);
+        };
+      } else {
+        var key = c.key, g = revGroups[key], prevWhy2 = revReasons[key], after = c.after;
+        if (!g) return;
+        label = (FURNITURE_TYPE_LABELS[c.type] || '가구');
+        if (c.kind === 'add'){
+          revSetPresent(g, false);
+          delete revGroups[key];
+          undo = function(){
+            revGroups[key] = g;
+            revSetPresent(g, true);
+            if (after) revApplySnap(g, after);
+            if (prevWhy2) revReasons[key] = prevWhy2;
+            revRefreshEdit(true);
+          };
+        } else {
+          revApplyState(c, 'before');
+          undo = function(){
+            if (c.kind === 'del') revSetPresent(g, false);
+            else { revSetPresent(g, true); revApplySnap(g, after); }
+            if (prevWhy2) revReasons[key] = prevWhy2;
+            revRefreshEdit(true);
+          };
+        }
+        delete revReasons[key];
+      }
+      revCloseReason();
+      revHideArrow();
+      revRefreshEdit(true);
+      revShowToast(label + ' 변경을 되돌렸어요', undo);
+      revTutNote('revRevert');
+    }
+
+    /* ---- 의견 패널(채팅 목록) ---- */
+    function revSegHtml(extra){
+      return '<div class="oh-rev-sw ' + (extra || '') + '"><button type="button" data-s="before">Before</button><button type="button" data-s="after">After</button></div>';
+    }
+    function revDescribe(c){
+      if (c.kind === 'add') return '추가';
+      if (c.kind === 'del') return '삭제';
+      var a = c.before, b = c.after, parts = [];
+      if (Math.hypot(a.x - b.x, a.z - b.z) > 0.02 || Math.abs(a.y - b.y) > 0.02) parts.push('이동');
+      if (Math.abs(revAngDiff(a.rotY, b.rotY)) > 0.01) parts.push('회전');
+      if ((a.color || '') !== (b.color || '')) parts.push('색 변경');
+      if (Math.abs(a.w - b.w) > 0.01 || Math.abs(a.d - b.d) > 0.01 || Math.abs(a.h - b.h) > 0.01) parts.push('크기 변경');
+      if (!!a.doorOpen !== !!b.doorOpen) parts.push(b.doorOpen ? '열기' : '닫기');
+      return parts.join(' · ') || '변경';
+    }
+    function revHex6(n){ return '#' + ('000000' + (n >>> 0).toString(16)).slice(-6); }
+    function revBuildRow(c){
+      var row = document.createElement('div');
+      row.className = 'oh-rev-item';
+      row.setAttribute('data-id', c.id);
+      var head = document.createElement('div'); head.className = 'oh-rev-item-head';
+      var ico = document.createElement('span'); ico.className = 'oh-rev-ico';
+      var title = document.createElement('span'); title.className = 'oh-rev-title';
+      if (c.isWall){
+        ico.textContent = '🎨';
+        title.textContent = '벽 색상 변경';
+        head.appendChild(ico); head.appendChild(title);
+        var chips = document.createElement('span'); chips.className = 'oh-rev-chips';
+        var c1 = document.createElement('i'); c1.style.background = revHex6(c.beforeColor);
+        if (c.beforeImg){ c1.className = 'img'; c1.textContent = '🖼'; }
+        var ar = document.createElement('b'); ar.textContent = '→';
+        var c2 = document.createElement('i'); c2.style.background = revHex6(c.afterColor);
+        chips.appendChild(c1); chips.appendChild(ar); chips.appendChild(c2);
+        head.appendChild(chips);
+      } else {
+        ico.textContent = REV_ICONS[c.type] || '📦';
+        title.textContent = (FURNITURE_TYPE_LABELS[c.type] || '가구') + ' ' + revDescribe(c);
+        head.appendChild(ico); head.appendChild(title);
+      }
+      if (revise){
+        var rx = document.createElement('button');
+        rx.type = 'button'; rx.className = 'oh-rev-item-x'; rx.setAttribute('aria-label', '이 변경 되돌리기'); rx.title = '이 변경 되돌리기 (원래대로)';
+        rx.textContent = '×';
+        rx.addEventListener('click', function(e){ e.stopPropagation(); revRevertItem(c); });
+        head.appendChild(rx);
+      }
+      row.appendChild(head);
+      if (revise){
+        var inp = document.createElement('input');
+        inp.type = 'text'; inp.className = 'oh-rev-why-in'; inp.maxLength = 80; inp.placeholder = '바꾼 이유 (선택)';
+        inp.value = c.reason || '';
+        inp.addEventListener('input', function(){
+          var t = inp.value.replace(/\s+/g, ' ').trim().slice(0, 80);
+          c.reason = t;
+          if (c.isWall){ if (t) revWallReasons[c.wall] = t; else delete revWallReasons[c.wall]; }
+          else { if (t) revReasons[c.key] = t; else delete revReasons[c.key]; }
+        });
+        inp.addEventListener('keydown', function(e){ e.stopPropagation(); if (e.isComposing || e.keyCode === 229) return; if (e.key === 'Enter') inp.blur(); });
+        inp.addEventListener('keyup', function(e){ e.stopPropagation(); });
+        row.appendChild(inp);
+      } else {
+        var why = document.createElement('p'); why.className = 'oh-rev-why' + (c.reason ? '' : ' none');
+        why.textContent = c.reason || '이유는 적지 않았어요';
+        row.appendChild(why);
+      }
+      var sw = document.createElement('div'); sw.innerHTML = revSegHtml();
+      sw = sw.firstChild;
+      sw.addEventListener('click', function(e){
+        var b = e.target.closest ? e.target.closest('button[data-s]') : null;
+        if (!b) return;
+        e.stopPropagation();
+        revSetItem(c, b.getAttribute('data-s'));
+      });
+      row.appendChild(sw);
+      row.addEventListener('click', function(e){
+        if (e.target.closest && e.target.closest('button,input')) return;
+        revFocusChange(c, revEffective(c));
+        revListEl.querySelectorAll('.oh-rev-item.sel').forEach(function(x){ x.classList.remove('sel'); });
+        row.classList.add('sel');
+      });
+      return row;
+    }
+    function revRenderList(){
+      if (!revListEl) return;
+      var items = revItems();
+      revListEl.innerHTML = '';
+      if (revCountEl) revCountEl.textContent = items.length ? String(items.length) : '';
+      if (!items.length){
+        var em = document.createElement('p'); em.className = 'oh-rev-empty';
+        em.textContent = revise ? '아직 바꾼 게 없어요. 가구를 옮기거나 벽 색을 바꾸면 여기에 쌓여요.' : '바뀐 곳이 없어요.';
+        revListEl.appendChild(em);
+      }
+      items.forEach(function(c){ revListEl.appendChild(revBuildRow(c)); });
+      revSyncHighlights();
+    }
+    function revSignature(ch){
+      return JSON.stringify([ch.furniture.map(function(c){ return [c.key, c.kind, c.before, c.after]; }), ch.walls.map(function(c){ return [c.wall, c.beforeColor, c.beforeImg, c.afterColor]; })]);
+    }
+    function revRefreshEdit(force){
+      if (!revise || revLock) return;
+      var ch = revCompute(), sig = revSignature(ch);
+      if (!force && sig === revSig) return;
+      if (!force && revListEl && revListEl.contains(document.activeElement)) return;
+      revSig = sig;
+      revChanges = ch;
+      if (revPanelOpen) revRenderList();
+    }
+    function revSetPanel(open, silent){
+      if (open === revPanelOpen) return;
+      revPanelOpen = open;
+      if (open && !silent) revTutNote('revPanel');
+      if (revPanelEl) revPanelEl.classList.toggle('open', open);
+      if (revTabBtn) revTabBtn.classList.toggle('active', open);
+      if (open){
+        revApplyGeo();
+        revCloseReason();
+        if (revise){ selectFurniture(null); selectWall(null); revRefreshEdit(true); } else revRenderList();
+      } else {
+        revHideArrow();
+        if (revise) revResetAll();
+      }
+    }
+    /* ---- 의견창: 플로팅(손잡이로 이동 · 모서리로 크기 조절) ---- */
+    var REV_GEO_KEY = 'oh_rev_panel_geo_v1';
+    var revGeo = null; // {x,y,w,h} — 컨테이너 기준 px
+    function revBounds(){
+      var cw = container.clientWidth || 800, ch = container.clientHeight || 600;
+      var bh = (bottomPanel && bottomPanel.offsetHeight) || 0;
+      var bottom = Math.max(160, ch - (bh ? bh + 8 : 8));
+      return { cw: cw, top: 6, bottom: bottom, left: 6, right: cw - 6 };
+    }
+    function revClampGeo(g){
+      var b = revBounds();
+      var minW = Math.min(230, b.right - b.left), minH = Math.min(170, b.bottom - b.top);
+      g.w = Math.max(minW, Math.min(g.w, b.right - b.left));
+      g.h = Math.max(minH, Math.min(g.h, b.bottom - b.top));
+      g.x = Math.max(b.left, Math.min(g.x, b.right - g.w));
+      g.y = Math.max(b.top, Math.min(g.y, b.bottom - g.h));
+      return g;
+    }
+    function revDefaultGeo(){
+      var b = revBounds();
+      var w = Math.min(300, b.right - b.left);
+      var h = Math.min(400, b.bottom - 76);
+      /* 오른쪽 위(가구 크기 패널·시점 버튼)를 피해 왼쪽 위에 둔다 */
+      return revClampGeo({ x: 12, y: 70, w: w, h: h });
+    }
+    function revApplyGeo(){
+      if (!revPanelEl) return;
+      if (!revGeo){
+        try{
+          var raw = JSON.parse(localStorage.getItem(REV_GEO_KEY) || 'null');
+          if (raw && isFinite(raw.x) && isFinite(raw.y) && isFinite(raw.w) && isFinite(raw.h)) revGeo = { x: +raw.x, y: +raw.y, w: +raw.w, h: +raw.h };
+        }catch(e){}
+        revGeo = revGeo ? revClampGeo(revGeo) : revDefaultGeo();
+      } else revClampGeo(revGeo);
+      var st = revPanelEl.style;
+      st.left = Math.round(revGeo.x) + 'px'; st.top = Math.round(revGeo.y) + 'px';
+      st.width = Math.round(revGeo.w) + 'px'; st.height = Math.round(revGeo.h) + 'px';
+      revPanelEl._gk = revGk();
+    }
+    function revGk(){ return container.clientWidth + 'x' + container.clientHeight + 'x' + ((bottomPanel && bottomPanel.offsetHeight) || 0); }
+    function revSaveGeo(){ try{ localStorage.setItem(REV_GEO_KEY, JSON.stringify(revGeo)); }catch(e){} }
+    function revBindPanelDrag(){
+      var grip = revPanelEl.querySelector('.oh-rev-grip');
+      var head = revPanelEl.querySelector('.oh-rev-panel-head');
+      var drag = null, moved = false;
+      function start(e, mode, c){
+        if (e.button != null && e.button !== 0) return;
+        if (!revGeo) revApplyGeo();
+        var cr = container.getBoundingClientRect();
+        drag = { mode: mode, c: c, id: e.pointerId, px: e.clientX, py: e.clientY, g: { x: revGeo.x, y: revGeo.y, w: revGeo.w, h: revGeo.h }, el: e.currentTarget, sx: cr.width ? container.clientWidth / cr.width : 1 };
+        try{ drag.el.setPointerCapture(e.pointerId); }catch(er){}
+        revPanelEl.classList.add('dragging'); moved = false;
+        e.preventDefault(); e.stopPropagation();
+      }
+      function move(e){
+        if (!drag || e.pointerId !== drag.id) return;
+        var dx = (e.clientX - drag.px) * drag.sx, dy = (e.clientY - drag.py) * drag.sx;
+        var g = { x: drag.g.x, y: drag.g.y, w: drag.g.w, h: drag.g.h };
+        var b = revBounds();
+        var minW = Math.min(230, b.right - b.left), minH = Math.min(170, b.bottom - b.top);
+        if (drag.mode === 'move'){ g.x += dx; g.y += dy; }
+        else {
+          var c = drag.c;
+          if (c.indexOf('e') >= 0) g.w = drag.g.w + dx;
+          if (c.indexOf('s') >= 0) g.h = drag.g.h + dy;
+          if (c.indexOf('w') >= 0){ g.w = drag.g.w - dx; g.x = drag.g.x + dx; }
+          if (c.indexOf('n') >= 0){ g.h = drag.g.h - dy; g.y = drag.g.y + dy; }
+          /* 최소/최대 크기에서 반대쪽 모서리를 고정 */
+          if (g.w < minW){ if (c.indexOf('w') >= 0) g.x = drag.g.x + drag.g.w - minW; g.w = minW; }
+          if (g.h < minH){ if (c.indexOf('n') >= 0) g.y = drag.g.y + drag.g.h - minH; g.h = minH; }
+          if (g.x < b.left){ if (c.indexOf('w') >= 0) g.w -= (b.left - g.x); g.x = b.left; }
+          if (g.y < b.top){ if (c.indexOf('n') >= 0) g.h -= (b.top - g.y); g.y = b.top; }
+          if (g.x + g.w > b.right) g.w = b.right - g.x;
+          if (g.y + g.h > b.bottom) g.h = b.bottom - g.y;
+        }
+        revGeo = revClampGeo(g);
+        revApplyGeo();
+        if (Math.abs(dx) + Math.abs(dy) > 24) moved = true;
+      }
+      function end(e){
+        if (!drag || (e && e.pointerId !== drag.id)) return;
+        try{ drag.el.releasePointerCapture(drag.id); }catch(er){}
+        drag = null;
+        revPanelEl.classList.remove('dragging');
+        revSaveGeo();
+        if (moved) revTutNote('revMove');
+      }
+      [grip, head].forEach(function(el){
+        el.addEventListener('pointerdown', function(e){
+          if (e.target.closest && e.target.closest('.oh-rev-x')) return;
+          start(e, 'move');
+        });
+        el.addEventListener('pointermove', move);
+        el.addEventListener('pointerup', end);
+        el.addEventListener('pointercancel', end);
+      });
+      Array.prototype.forEach.call(revPanelEl.querySelectorAll('.oh-rev-rs'), function(h){
+        h.addEventListener('pointerdown', function(e){ start(e, 'resize', h.getAttribute('data-c')); });
+        h.addEventListener('pointermove', move);
+        h.addEventListener('pointerup', end);
+        h.addEventListener('pointercancel', end);
+      });
+      grip.addEventListener('dblclick', function(){ revGeo = revDefaultGeo(); revApplyGeo(); revSaveGeo(); });
+    }
+    function revBuildUI(){
+      container.classList.add(revise ? 'is-revise' : 'is-rev-view');
+      revPanelEl = document.createElement('div');
+      revPanelEl.className = 'oh-rev-panel';
+      revPanelEl.innerHTML = '<div class="oh-rev-grip" title="끌어서 옮기기"><i></i></div>' +
+        '<div class="oh-rev-panel-head"><span>💬 ' + (revise ? '내 의견' : '의견') + ' <em class="oh-rev-n"></em></span><button type="button" class="oh-rev-x" aria-label="닫기">×</button></div>' +
+        '<div class="oh-rev-list"></div>' +
+        '<div class="oh-rev-panel-foot"><span>전체 보기</span>' + revSegHtml('big') + '</div>' +
+        '<span class="oh-rev-rs" data-c="nw"></span><span class="oh-rev-rs" data-c="ne"></span><span class="oh-rev-rs" data-c="sw"></span><span class="oh-rev-rs" data-c="se"></span>';
+      revListEl = revPanelEl.querySelector('.oh-rev-list');
+      revCountEl = revPanelEl.querySelector('.oh-rev-n');
+      revPanelSegEl = revPanelEl.querySelector('.oh-rev-panel-foot .oh-rev-sw');
+      revPanelEl.querySelector('.oh-rev-x').addEventListener('click', function(){ revSetPanel(false); });
+      revPanelSegEl.addEventListener('click', function(e){
+        var b = e.target.closest ? e.target.closest('button[data-s]') : null;
+        if (b) revSetGlobal(b.getAttribute('data-s'));
+      });
+      revPanelEl.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+      revBindPanelDrag();
+      container.appendChild(revPanelEl);
+      if (revTabBtn) revTabBtn.addEventListener('click', function(){ revSetPanel(!revPanelOpen); revTabBtn.blur(); });
+      if (revise){
+        revBuildReason();
+        var fbtn = rotatePanel.querySelector('.furniture-reason-btn');
+        if (fbtn) fbtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          if (!selectedFurniture) return;
+          revOpenReason('f', revKeyOf(selectedFurniture), fbtn);
+        });
+        var wbtn = wallColorPanel.querySelector('.wall-reason-btn');
+        if (wbtn) wbtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          if (!selectedWall || selectedWall.userData.logicalWallIndex == null) return;
+          revOpenReason('w', selectedWall.userData.logicalWallIndex, wbtn);
+        });
+      } else {
+        revViewBarEl = document.createElement('div');
+        revViewBarEl.className = 'oh-rev-viewbar';
+        revViewBarEl.innerHTML = '<div class="oh-rev-vb-text"><strong>배치 비교</strong><span>원래 배치와 바뀐 배치를 번갈아 볼 수 있어요</span></div>' + revSegHtml('big');
+        revViewBarEl.addEventListener('click', function(e){
+          var b = e.target.closest ? e.target.closest('button[data-s]') : null;
+          if (b) revSetGlobal(b.getAttribute('data-s'));
+        });
+        bottomPanel.appendChild(revViewBarEl);
+      }
+    }
+    function revTick(now){
+      stepRevArrow();
+      if (revPanelOpen && revPanelEl){
+        if (revPanelEl._gk !== revGk()) revApplyGeo();
+      }
+      if (revReasonTarget) revPlaceReason();
+      if (revise){
+        if (now - revSigT > 450){
+          revSigT = now;
+          revRefreshEdit(false);
+        }
+        var f = selectedFurniture, fb = rotatePanel && rotatePanel.querySelector('.furniture-reason-btn');
+        if (fb){
+          var fk = f && f.userData.revKey;
+          fb.classList.toggle('alert', !!(f && revFurnChanged(f) && !(fk && revReasons[fk])));
+          fb.classList.toggle('has', !!(fk && revReasons[fk]));
+        }
+        var wb = wallColorPanel && wallColorPanel.querySelector('.wall-reason-btn');
+        if (wb){
+          var wi = selectedWall ? selectedWall.userData.logicalWallIndex : null;
+          wb.classList.toggle('alert', !!(wi != null && revWallInfo(wi).changed && !revWallReasons[wi]));
+          wb.classList.toggle('has', !!(wi != null && revWallReasons[wi]));
+        }
+      }
+    }
+
+    /* ---- 보기 전용 팝업의 튜토리얼 ---- */
+    var REV_TUT_STEPS = [
+      { title:'바뀐 배치 비교하기', body:'아래 Before / After 버튼으로 원래 배치와 바뀐 배치를 번갈아 볼 수 있어요.', target:function(){ return revViewBarEl && revViewBarEl.querySelector('.oh-rev-sw'); }, panel:false },
+      { title:'의견창 열기', body:'오른쪽 위 “의견” 탭을 누르면 무엇을 왜 바꿨는지 채팅처럼 모아 볼 수 있는 의견창이 떠요. 다시 누르거나 × 를 누르면 닫혀요.', target:function(){ return revTabWrap; }, panel:false },
+      { title:'의견창 옮기고 키우기', body:'의견창 맨 위 손잡이를 끌면 원하는 곳으로 옮길 수 있고, 네 모서리를 끌면 크기를 바꿀 수 있어요. 화면을 가리면 옆으로 치워 두세요. 손잡이를 두 번 누르면 처음 자리로 돌아가요.', target:function(){ return revPanelEl; }, panel:true },
+      { title:'항목을 눌러보세요', body:'항목을 누르면 화면이 그 가구·벽으로 이동하고 화살표가 가리켜요. 항목마다 Before / After 버튼이 있고, 맨 아래 “전체 보기”는 전부 한 번에 바꿔줘요.', target:function(){ return revPanelEl; }, panel:true },
+      { title:'시점 도구', body:'도면 숨기기·노클립(자유롭게 날아다니기)·탑뷰 버튼으로 여러 각도에서 살펴보세요.', target:function(){ return viewControls; }, panel:false }
+    ];
+    function revTutClearPulse(){ if (revTutPulse){ revTutPulse.classList.remove('oh-rev-pulse'); revTutPulse = null; } }
+    function revTutEnd(){
+      revTutClearPulse();
+      if (revTutEl && revTutEl.parentNode) revTutEl.parentNode.removeChild(revTutEl);
+      revTutEl = null;
+      if (helpBtn) helpBtn.classList.remove('active');
+      if (revTutOpenedPanel){ revTutOpenedPanel = false; revSetPanel(false); }
+      try{ localStorage.setItem(REV_TUT_KEY, '1'); }catch(e){}
+    }
+    function revTutGo(i){
+      if (i < 0) i = 0;
+      if (i >= REV_TUT_STEPS.length){ revTutEnd(); return; }
+      revTutIdx = i;
+      var st = REV_TUT_STEPS[i];
+      if (st.panel && !revPanelOpen){ revSetPanel(true); revTutOpenedPanel = true; }
+      if (!st.panel && revTutOpenedPanel){ revTutOpenedPanel = false; revSetPanel(false); }
+      revTutClearPulse();
+      var t = st.target && st.target();
+      if (t){ t.classList.add('oh-rev-pulse'); revTutPulse = t; }
+      revTutEl.innerHTML = '<div class="oh-rev-tut-step">' + (i + 1) + ' / ' + REV_TUT_STEPS.length + '</div><strong></strong><p></p>' +
+        '<div class="oh-rev-tut-actions"><button type="button" data-a="skip">닫기</button>' +
+        (i > 0 ? '<button type="button" data-a="prev">이전</button>' : '') +
+        '<button type="button" class="primary" data-a="next">' + (i === REV_TUT_STEPS.length - 1 ? '끝내기' : '다음') + '</button></div>';
+      revTutEl.querySelector('strong').textContent = st.title;
+      revTutEl.querySelector('p').textContent = st.body;
+    }
+    function revTutStart(){
+      if (revTutEl) { revTutEnd(); return; }
+      revTutEl = document.createElement('div');
+      revTutEl.className = 'oh-rev-tut';
+      revTutEl.setAttribute('role', 'dialog');
+      revTutEl.addEventListener('click', function(e){
+        var b = e.target.closest ? e.target.closest('button[data-a]') : null;
+        if (!b) return;
+        var a = b.getAttribute('data-a');
+        if (a === 'next') revTutGo(revTutIdx + 1);
+        else if (a === 'prev') revTutGo(revTutIdx - 1);
+        else revTutEnd();
+      });
+      revTutEl.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+      container.appendChild(revTutEl);
+      if (helpBtn) helpBtn.classList.add('active');
+      revTutGo(0);
+    }
+
+    /* ---- 초기화(원본 복원) ---- */
+    function revInit(){
+      if (revise && typeof TUT_STEPS !== 'undefined' && !TUT_STEPS._revAdded){
+        TUT_STEPS._revAdded = true;
+        TUT_STEPS.push(
+          { title:'의견창 열기', text:'오른쪽 위 <b>의견</b> 탭을 눌러보세요. 내가 바꾼 것들이 한곳에 모이는 의견창이 열려요.', note:'창은 위 손잡이로 옮기고 모서리로 크기를 바꿀 수 있어요.', evt:'revPanel', pulse:'revTab', skipIf:function(){ return revPanelOpen; } }
+        );
+      }
+      var rd = opts.revData || {};
+      revLoadingEl = document.createElement('div');
+      revLoadingEl.className = 'oh-rev-loading';
+      revLoadingEl.textContent = '배치를 불러오는 중…';
+      container.appendChild(revLoadingEl);
+      var wc = rd.wallColors || [], wi = rd.wallImages || [], waiting = 0, finished = false;
+      wallSegments.forEach(function(seg, i){
+        var hx = revParseHex(wc[i]);
+        revBaseWall[i] = { color: hx != null ? hx : wallColor.getHex(), tex: null };
+        if (hx != null) wallColorOverrides[i] = hx;
+      });
+      function done(){
+        if (finished) return;
+        finished = true;
+        revFinishInit(rd);
+      }
+      wallSegments.forEach(function(seg, i){
+        var url = wi[i];
+        if (!url) return;
+        waiting++;
+        var loader = new THREE.TextureLoader();
+        loader.crossOrigin = 'anonymous';
+        var src = /^data:/i.test(url) ? url : '/api/image-proxy?url=' + encodeURIComponent(url);
+        loader.load(src, function(tex){
+          tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          tex.needsUpdate = true;
+          revBaseWall[i].tex = tex; wallImageOverrides[i] = tex;
+          if (--waiting === 0) done();
+        }, undefined, function(){ if (--waiting === 0) done(); });
+      });
+      if (waiting === 0) done();
+      setTimeout(done, 8000); // 이미지가 너무 늦으면 일단 시작
+    }
+    function revFinishInit(rd){
+      rebuildAllWalls();
+      (rd.furniture || []).forEach(function(it, i){
+        if (!it || !it.type) return;
+        var key = 'b' + i;
+        var g = revSpawn(it.type, revNormSnap(it), key);
+        if (g) revBase[key] = revSnapOf(g);
+      });
+      var ch = revNormChanges(rd.changes);
+      ch.furniture.forEach(function(c){
+        if (c.reason) revReasons[c.key] = c.reason;
+        if (c.kind === 'add'){
+          var n = parseInt(String(c.key).replace(/\D/g, ''), 10);
+          if (n >= revNewCounter) revNewCounter = n + 1;
+          if (c.after) revSpawn(c.type, c.after, c.key);
+          return;
+        }
+        var g = revGroups[c.key];
+        if (!g) return;
+        if (c.kind === 'del') revSetPresent(g, false);
+        else if (c.after) revApplySnap(g, c.after);
+      });
+      ch.walls.forEach(function(c){
+        if (c.reason) revWallReasons[c.wall] = c.reason;
+        wallColorOverrides[c.wall] = c.afterColor; delete wallImageOverrides[c.wall];
+        rebuildWallAt(c.wall);
+      });
+      selectFurniture(null); selectWall(null);
+      revBuildUI();
+      if (readOnly){
+        revChanges = ch;
+        revItems(); // id 부여
+      } else {
+        revChanges = revCompute();
+        revSig = revSignature(revChanges);
+        popEnabled = true;
+      }
+      revReady = true;
+      if (revLoadingEl && revLoadingEl.parentNode) revLoadingEl.parentNode.removeChild(revLoadingEl);
+      revLoadingEl = null;
+      revRenderList();
+      if (readOnly && revChanges.furniture.length + revChanges.walls.length){
+        revSetPanel(true);
+      }
+      if (readOnly){
+        var seen = false;
+        try{ seen = !!localStorage.getItem(REV_TUT_KEY); }catch(e){}
+        if (!seen) setTimeout(function(){ if (!revTutEl) revTutStart(); }, 900);
+      }
+      if (typeof opts.onRevReady === 'function') opts.onRevReady();
+    }
+    function revFinish(){
+      if (!revise) return null;
+      if (revLock || Object.keys(revItemState).length) revResetAll();
+      revCloseReason();
+      var ch = revCompute();
+      var total = ch.furniture.length + ch.walls.length;
+      if (!total){ ohAlert('아직 바뀐 게 없어요. 가구를 옮기거나 벽 색을 바꿔보세요.'); return null; }
+      if (total > 80){ ohAlert('한 번에 80곳까지만 바꿔서 올릴 수 있어요.'); return null; }
+      if (JSON.stringify(ch).length > 100000){ ohAlert('변경 내용이 너무 커요. 조금 줄여주세요.'); return null; }
+      return ch;
+    }
+    function revDispose(){
+      clearTimeout(revToastTimer);
+      [revPanelEl, revReasonEl, revBannerEl, revViewBarEl, revTutEl, revLoadingEl].forEach(function(el){ if (el && el.parentNode) el.parentNode.removeChild(el); });
+      if (revArrowMesh){ scene.remove(revArrowMesh); revArrowMesh.geometry.dispose(); revArrowMesh.material.dispose(); revArrowMesh = null; }
+    }
+    var revApi = revAny ? { finish: revFinish, startViewTutorial: revTutStart, isReady: function(){ return revReady; } } : null;
+
+
     function tick(){
       rafId = requestAnimationFrame(tick);
       var nowT = performance.now();
@@ -5150,6 +6163,7 @@
         theta += 0.0022;
         updateCamera();
       }
+      if (revAny && revReady) revTick(nowT);
       if (furnitureEditor){
         updateContextHint();
         if (tutCard) tutCard.classList.toggle('trash-up', !!(dropTrash && dropTrash.classList.contains('show')));
@@ -5162,13 +6176,16 @@
       renderer.render(scene, camera);
       if (fxActive) renderFxOverlay();
     }
+    if (revAny) revInit();
     tick();
 
     return {
+      rev: revApi,
       startTutorial: function(silent){ tutStart(silent); return tutCard; },
       setDoneLabel: function(t){ if (doneBtnEl) doneBtnEl.textContent = t; },
       dispose: function(){
         cancelAnimationFrame(rafId);
+        if (revAny) revDispose();
         if (editorKeydown) document.removeEventListener('keydown', editorKeydown);
         if (editorKeyup) document.removeEventListener('keyup', editorKeyup);
         if (editorBlur) window.removeEventListener('blur', editorBlur);
@@ -6514,10 +7531,55 @@
     }
   }
 
+  var OH_EMBED = /[?&]embed=1(&|$)/.test(location.search);
+  if (OH_EMBED) document.documentElement.classList.add('oh-embed');
+  /* ============ 팝업(iframe)으로 열렸을 때: 갤러리 댓글의 "배치 수정하고 의견 남기기" / "변경된 인테리어 보기" ============
+     post.html 이 plan3d.html?embed=1 을 iframe으로 띄우고 postMessage 로 게시글 배치 데이터를 넘겨줌.
+     { type:'oh-embed-init', mode:'edit'|'view', wallData, furniture, changes }  →  편집기를 띄움
+     편집기에서 '변경 완료' → { type:'oh-embed-done', changes } 를 부모에게 돌려줌. */
+  if (OH_EMBED){
+    (function(){
+      var root = null, scene = null;
+      function post(msg){ try{ parent.postMessage(msg, location.origin); }catch(e){} }
+      function start(m){
+        if (scene && scene.dispose){ try{ scene.dispose(); }catch(e){} scene = null; }
+        if (!root){
+          root = document.createElement('div');
+          root.id = 'ohEmbedRoot';
+          root.className = 'canvas-stage';
+          document.body.appendChild(root);
+        }
+        root.innerHTML = '';
+        var wd = m.wallData || {};
+        var plan = Object.assign({}, wd, {
+          outer: wd.outer || [], inner: wd.inner || [],
+          floorplanImageUrl: wd.floorPhoto || null,
+          imageBBox: wd.floorPhoto ? { minU:0, minV:0, maxU:1, maxV:1 } : null
+        });
+        var mode = m.mode === 'edit' ? 'edit' : 'view';
+        scene = createWallScene(root, plan, {
+          autoRotate: false, revMode: mode,
+          revData: { furniture: m.furniture || [], wallColors: wd.wallColors || [], wallImages: wd.wallImages || [], changes: m.changes || null },
+          onComplete: mode === 'edit' ? function(){
+            var ch = scene && scene.rev ? scene.rev.finish() : null;
+            if (ch) post({ type:'oh-embed-done', changes: ch });
+          } : undefined
+        });
+      }
+      window.addEventListener('message', function(ev){
+        if (ev.origin !== location.origin) return;
+        var m = ev.data;
+        if (!m || m.type !== 'oh-embed-init') return;
+        start(m);
+      });
+      window.addEventListener('load', function(){ post({ type:'oh-embed-ready' }); });
+    })();
+  }
+
   /* ============ 5. 히어로 미리보기 ============ */
   window.addEventListener("load", function(){
     var heroStage = document.getElementById("heroStage");
-    if (window.THREE && heroStage){
+    if (window.THREE && heroStage && !OH_EMBED){
       createWallScene(heroStage, SAMPLE_COMPLEXES[0].plans[0], { autoRotate:true });
     }
   });
