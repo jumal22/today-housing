@@ -5627,6 +5627,10 @@
     }
     function revOnSelect(){
       if (!revReady) return;
+      if (revise && selectedFurniture && !revLock && !revAutoOff && !(typeof tutActive !== 'undefined' && tutActive)){
+        if (!revPanelOpen) revSetPanel(true, true, true);   /* 가구를 누르면 의견창이 자동으로 열림(선택은 유지) */
+        else revHighlightRow();
+      } else if (revise && revPanelOpen) revHighlightRow();
       if (revReasonTarget){
         var keep = false;
         if (revReasonTarget.kind === 'f') keep = !!(selectedFurniture && selectedFurniture.userData.revKey === revReasonTarget.id);
@@ -5806,6 +5810,15 @@
       }
       items.forEach(function(c){ revListEl.appendChild(revBuildRow(c)); });
       revSyncHighlights();
+      if (revise) revHighlightRow();
+    }
+    /* 가구를 누르면 의견창에서 그 가구의 항목을 표시하고 보이는 곳으로 스크롤 */
+    function revHighlightRow(){
+      if (!revListEl) return;
+      revListEl.querySelectorAll('.oh-rev-item.sel').forEach(function(x){ x.classList.remove('sel'); });
+      var key = selectedFurniture && selectedFurniture.userData.revKey;
+      var row = key ? revListEl.querySelector('.oh-rev-item[data-id="f:' + key + '"]') : null;
+      if (row){ row.classList.add('sel'); try{ row.scrollIntoView({ block:'nearest', behavior:'smooth' }); }catch(e){} }
     }
     function revSignature(ch){
       return JSON.stringify([ch.furniture.map(function(c){ return [c.key, c.kind, c.before, c.after]; }), ch.walls.map(function(c){ return [c.wall, c.beforeColor, c.beforeImg, c.afterColor]; })]);
@@ -5819,7 +5832,8 @@
       revChanges = ch;
       if (revPanelOpen) revRenderList();
     }
-    function revSetPanel(open, silent){
+    var revAutoOff = false; // 사용자가 직접 의견창을 닫았으면 가구를 눌러도 자동으로 열지 않음(다시 탭을 누르면 해제)
+    function revSetPanel(open, silent, keepSel){
       if (open === revPanelOpen) return;
       revPanelOpen = open;
       if (open && !silent) revTutNote('revPanel');
@@ -5828,7 +5842,7 @@
       if (open){
         revApplyGeo();
         revCloseReason();
-        if (revise){ selectFurniture(null); selectWall(null); revRefreshEdit(true); } else revRenderList();
+        if (revise){ if (!keepSel){ selectFurniture(null); selectWall(null); } revRefreshEdit(true); } else revRenderList();
       } else {
         revHideArrow();
         if (revise) revResetAll();
@@ -5950,7 +5964,7 @@
       revListEl = revPanelEl.querySelector('.oh-rev-list');
       revCountEl = revPanelEl.querySelector('.oh-rev-n');
       revPanelSegEl = revPanelEl.querySelector('.oh-rev-panel-foot .oh-rev-sw');
-      revPanelEl.querySelector('.oh-rev-x').addEventListener('click', function(){ revSetPanel(false); });
+      revPanelEl.querySelector('.oh-rev-x').addEventListener('click', function(){ revAutoOff = true; revSetPanel(false); });
       revPanelSegEl.addEventListener('click', function(e){
         var b = e.target.closest ? e.target.closest('button[data-s]') : null;
         if (b) revSetGlobal(b.getAttribute('data-s'));
@@ -5958,7 +5972,7 @@
       revPanelEl.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
       revBindPanelDrag();
       container.appendChild(revPanelEl);
-      if (revTabBtn) revTabBtn.addEventListener('click', function(){ revSetPanel(!revPanelOpen); revTabBtn.blur(); });
+      if (revTabBtn) revTabBtn.addEventListener('click', function(){ revAutoOff = revPanelOpen; revSetPanel(!revPanelOpen); revTabBtn.blur(); });
       if (revise){
         revBuildReason();
         var fbtn = rotatePanel.querySelector('.furniture-reason-btn');
