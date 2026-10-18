@@ -372,69 +372,153 @@
     return la >= 4 && la / (ko + la) >= 0.6;
   }
   var L = {
-    en: { go: 'Translate to English', busy: 'Translating…', orig: 'Show original', unsupported: "Translation isn't available in this browser", fail: "Couldn't translate", dl: 'Downloading language pack… ' },
-    ko: { go: '한국어로 번역하기', busy: '번역하는 중…', orig: '원문 보기', unsupported: '이 브라우저에서는 번역을 쓸 수 없어요', fail: '번역하지 못했어요', dl: '언어 팩을 받는 중… ' }
+    en: { all: 'Translate comments to English', allOff: 'Show all originals', busy: 'Translating…', orig: 'Show original', trans: 'Show translation',
+          unsupported: "Translation isn't available in this browser", fail: "Couldn't translate", dl: 'Downloading language pack… ' },
+    ko: { all: '댓글 한국어로 번역하기', allOff: '전체 원문 보기', busy: '번역하는 중…', orig: '원문 보기', trans: '번역 보기',
+          unsupported: '이 브라우저에서는 번역을 쓸 수 없어요', fail: '번역하지 못했어요', dl: '언어 팩을 받는 중… ' }
   };
-  var tCache = {}, tShown = {};
+  var tCache = {}, pinOrig = {}, allOn = false, queue = Promise.resolve(), pending = 0, total = 0, flashMsg = '';
+  function targetLang() { return lang === 'en' ? 'en' : 'ko'; }
   function cidOf(p) { var c = p.closest ? p.closest('[data-cid]') : null; return c ? c.getAttribute('data-cid') : null; }
+  function keyOf(p) { var c = cidOf(p); return c ? c + '|' + targetLang() : null; }
+
+  /* 댓글 하나: 번역/원문 전환 */
+  function ensureOrigBtn(p) {
+    var actions = p.parentNode && p.parentNode.querySelector('.comment-actions');
+    if (!actions) return null;
+    var b = actions.querySelector('.comment-trans-btn');
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'comment-reply-btn comment-trans-btn';
+      b.setAttribute('data-i18n-skip', '');
+      b.addEventListener('click', function () {
+        var key = keyOf(p);
+        if (p._ohShown) { if (key) pinOrig[key] = true; showOriginal(p); }
+        else { if (key) delete pinOrig[key]; allOn = true; translateComment(p).then(syncGlobal); }
+        syncGlobal();
+      });
+      actions.appendChild(b);
+    }
+    return b;
+  }
+  function showTranslated(p, out) {
+    p.textContent = out; p._ohShown = true;
+    var b = ensureOrigBtn(p); if (b) { b.textContent = L[lang].orig; b.disabled = false; }
+  }
+  function showOriginal(p) {
+    if (p._ohOrig != null) p.innerHTML = p._ohOrig;
+    p._ohShown = false;
+    var b = ensureOrigBtn(p); if (b) { b.textContent = L[lang].trans; b.disabled = false; }
+  }
+  function translateComment(p) {
+    var key = keyOf(p), tgt = targetLang(), text = p._ohOrigText;
+    if (key && tCache[key]) { showTranslated(p, tCache[key]); return Promise.resolve(true); }
+    var b = ensureOrigBtn(p); if (b) { b.disabled = true; b.textContent = L[lang].busy; }
+    return detectSource(text).then(function (from) {
+      if (from === tgt) throw new Error('same');
+      return engine.translate(text, from, tgt);
+    }).then(function (out) {
+      if (key) tCache[key] = out;
+      if (p.isConnected) showTranslated(p, out);
+      return true;
+    }).catch(function (err) {
+      var un = err && (err.message === 'unsupported' || err.message === 'unavailable');
+      if (p.isConnected && b) { b.remove(); }
+      if (err && err.message === 'same') return false;
+      flash(un ? L[lang].unsupported : L[lang].fail);
+      allOn = false;
+      return false;
+    });
+  }
+  function eligible() {
+    var out = [], ps = document.querySelectorAll('p[data-cbody]');
+    for (var i = 0; i < ps.length; i++) if (ps[i]._ohElig) out.push(ps[i]);
+    return out;
+  }
+  function enqueue(p) {
+    var key = keyOf(p);
+    if (p._ohShown || (key && pinOrig[key]) || p._ohQueued) return;
+    p._ohQueued = true; pending++; total++;
+    var b = ensureOrigBtn(p); if (b) { b.disabled = true; b.textContent = L[lang].busy; }
+    queue = queue.then(function () {
+      progressCb = function (f) { setGlobalText(L[lang].dl + Math.round((f || 0) * 100) + '%'); };
+      return translateComment(p);
+    }).catch(function () {}).then(function () {
+      p._ohQueued = false; pending--; if (!pending) { total = 0; progressCb = null; }
+      syncGlobal();
+    });
+    syncGlobal();
+  }
+
+  /* 맨 위 "의견 (N)" 옆 버튼: 다른 언어 댓글을 한 번에 번역 */
+  var gBtn = null, flashTimer = 0;
+  function flash(msg) {
+    flashMsg = msg; syncGlobal();
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function () { flashMsg = ''; syncGlobal(); }, 2800);
+  }
+  function setGlobalText(t) { if (gBtn) gBtn.textContent = t; }
+  function syncGlobal() {
+    var cnt = document.getElementById('commentCount');
+    var host = cnt && cnt.parentNode;
+    var list = eligible();
+    if (!host || !list.length) { if (gBtn && gBtn.parentNode) gBtn.parentNode.removeChild(gBtn); return; }
+    if (!gBtn || !gBtn.isConnected) {
+      gBtn = document.createElement('button');
+      gBtn.type = 'button';
+      gBtn.className = 'comment-trans-all';
+      gBtn.setAttribute('data-i18n-skip', '');
+      gBtn.addEventListener('click', function () {
+        if (pending) return;
+        if (allOn) {                                      // 전부 원문으로
+          allOn = false;
+          eligible().forEach(function (p) { if (p._ohShown) showOriginal(p); });
+        } else {                                          // 전부 번역
+          allOn = true; pinOrig = {};
+          eligible().forEach(enqueue);
+        }
+        syncGlobal();
+      });
+      host.appendChild(gBtn);
+    }
+    var T = L[lang];
+    if (flashMsg) { gBtn.textContent = flashMsg; gBtn.disabled = true; return; }
+    if (pending) { gBtn.textContent = T.busy + ' (' + (total - pending) + '/' + total + ')'; gBtn.disabled = true; return; }
+    gBtn.disabled = false;
+    var anyShown = list.some(function (p) { return p._ohShown; });
+    if (!anyShown && allOn) allOn = false;
+    gBtn.textContent = anyShown ? T.allOff : T.all;
+  }
+
+  /* 새로 그려진 댓글을 찾아 준비 (이미 번역해 둔 건 바로 보여주고, 전체 번역이 켜져 있으면 이어서 번역) */
   function setupComment(p) {
     if (p._ohTb) return;
     p._ohTb = true;
-    var wrapEl = p.parentNode, actions = wrapEl && wrapEl.querySelector('.comment-actions');
-    if (!actions) return;
     var text = p.textContent;
-    if (!shouldOffer(text)) return;
-    var T = L[lang], target = lang === 'en' ? 'en' : 'ko', cid = cidOf(p), key = cid ? cid + '|' + target : null;
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'comment-reply-btn comment-trans-btn';
-    b.setAttribute('data-i18n-skip', '');
-    b.textContent = T.go;
-    actions.appendChild(b);
-    p._ohOrig = p.innerHTML;
-    p._ohShown = false;
-    function showTranslated(out) {
-      p.textContent = out; p._ohShown = true; b.textContent = T.orig; b.disabled = false;
-      if (key) tShown[key] = true;
-    }
-    function showOriginal() {
-      p.innerHTML = p._ohOrig; p._ohShown = false; b.textContent = T.go; b.disabled = false;
-      if (key) delete tShown[key];
-    }
-    if (key && tShown[key] && tCache[key]) showTranslated(tCache[key]);
-    b.addEventListener('click', function () {
-      if (p._ohShown) { showOriginal(); return; }
-      if (key && tCache[key]) { showTranslated(tCache[key]); return; }
-      b.disabled = true; b.textContent = T.busy;
-      progressCb = function (f) { b.textContent = T.dl + Math.round((f || 0) * 100) + '%'; };
-      detectSource(text).then(function (from) {
-        if (from === target) throw new Error('same');
-        return engine.translate(text, from, target);
-      }).then(function (out) {
-        progressCb = null;
-        if (key) tCache[key] = out;
-        showTranslated(out);
-      }).catch(function (err) {
-        progressCb = null;
-        var msg = (err && (err.message === 'unsupported' || err.message === 'unavailable')) ? T.unsupported : T.fail;
-        b.textContent = msg;
-        setTimeout(function () { if (!p._ohShown) { b.textContent = T.go; b.disabled = false; } }, 2600);
-      });
-    });
+    p._ohOrigText = text; p._ohOrig = p.innerHTML;
+    p._ohElig = shouldOffer(text);
+    if (!p._ohElig) return;
+    var key = keyOf(p);
+    if (key && tCache[key] && !pinOrig[key] && allOn) showTranslated(p, tCache[key]);
+    else if (allOn) enqueue(p);
   }
   function scanComments() {
     var ps = document.querySelectorAll('p[data-cbody]');
     for (var i = 0; i < ps.length; i++) setupComment(ps[i]);
+    syncGlobal();
   }
   function resetComments() {
     var ps = document.querySelectorAll('p[data-cbody]');
     for (var i = 0; i < ps.length; i++) {
       var p = ps[i];
       if (p._ohShown && p._ohOrig != null) p.innerHTML = p._ohOrig;
-      p._ohTb = false; p._ohShown = false;
+      p._ohTb = false; p._ohShown = false; p._ohQueued = false; p._ohElig = false;
     }
     [].forEach.call(document.querySelectorAll('.comment-trans-btn'), function (b) { b.remove(); });
-    tShown = {};
+    if (gBtn && gBtn.parentNode) gBtn.parentNode.removeChild(gBtn);
+    allOn = false; pinOrig = {}; pending = 0; total = 0; flashMsg = '';
+    queue = Promise.resolve();
     scanComments();
   }
   window.OH_I18N.onChange(resetComments);
@@ -473,6 +557,11 @@
     '.oh-lang-item .chk{display:inline-flex;opacity:0;color:var(--terra,#C4703F)}' +
     '.oh-lang-item[aria-checked="true"] .chk{opacity:1}' +
     '@media (max-width:500px){.oh-lang-menu{right:-8px}}' +
+    '.comment-trans-all{appearance:none;cursor:pointer;font:inherit;font-size:.78rem;font-weight:600;line-height:1.4;margin-left:6px;padding:3px 11px;' +
+      'border-radius:100px;border:1px solid var(--line,#DAD3C3);background:var(--paper-raised,#fff);color:var(--blueprint,var(--ink-soft,#5B6169));align-self:center}' +
+    '.comment-trans-all:hover:not(:disabled){border-color:var(--blueprint,var(--ink-soft,#5B6169))}' +
+    '.comment-trans-all:disabled{cursor:default;opacity:.75}' +
+    '.comment-trans-all:focus-visible{outline:2px solid var(--focus,#C4703F);outline-offset:2px}' +
     '::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}' +
     '::view-transition-old(root){z-index:1}::view-transition-new(root){z-index:2}' +
     'header .logo,header .brand{white-space:nowrap}' +
