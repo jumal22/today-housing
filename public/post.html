@@ -466,6 +466,16 @@
   .rev-modal-loading{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); font-size:.92rem; margin:0;}
   body.rev-modal-open .oh-pop{z-index:2100;}
   @media (max-width:700px){ .rev-modal{padding:0;} .rev-modal-box{height:100%; border-radius:0;} .rev-modal-sub{display:none;} }
+
+
+  .rev-view-sm{font-size:.72rem; padding:2px 10px; border-width:1px; background:transparent;}
+  .rev-view-btn.rev-glow{animation:revGlow 1s ease-out 3; position:relative;}
+  @keyframes revGlow{
+    0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--blueprint) 70%, transparent); background:var(--blueprint); color:var(--paper-raised);}
+    60%{box-shadow:0 0 0 12px color-mix(in srgb, var(--blueprint) 0%, transparent); background:var(--blueprint-soft); color:var(--blueprint-deep);}
+    100%{box-shadow:0 0 0 0 transparent; background:var(--blueprint-soft); color:var(--blueprint-deep);}
+  }
+  @media (prefers-reduced-motion:reduce){ .rev-view-btn.rev-glow{animation:none; outline:3px solid var(--blueprint); outline-offset:2px;} }
   .post-not-found h1{margin-bottom:10px; color:var(--ink);}
 
   /* ---------- footer ---------- */
@@ -2228,7 +2238,7 @@
        변경안(changes)은 DB 의 comment_revisions 에 저장 — 댓글을 지우면 같이 지워진다. */
     var revisions = {};          /* comment_id -> { comment_id, root_id, version, user_id } (changes 본문은 열 때 불러옴) */
     var pendingRevision = null;  /* 쓰는 중인 댓글에 붙여둔 변경안 */
-    var REV_NOTICE_TEXT = "새로운 수정 배치를 등록했어요";
+    var REV_NOTICE_TEXT = "(새로운 수정 배치를 등록했어요)";
     var REV_COLS = "comment_id, root_id, version, user_id, created_at";
     function latestRevOf(rootId){
       var best = null;
@@ -2245,13 +2255,36 @@
       if (!isReply){
         var lat = latestRevOf(c.id);
         if (lat){
-          out += '<button type="button" class="rev-view-btn" data-rev-view="' + ohEscapeHtml(lat.comment_id) + '">변경된 인테리어 보기' + (lat.version > 1 ? ' <span class="rev-ver">v' + lat.version + '</span>' : "") + '</button>';
+          if (lat.comment_id === c.id){
+            /* 수정이 한 번도 없었던 댓글(v1뿐)은 바로 팝업을 연다 */
+            out += '<button type="button" class="rev-view-btn" data-rev-view="' + ohEscapeHtml(c.id) + '">변경된 인테리어 보기</button>';
+          } else {
+            /* 그 뒤로 수정이 있었다면 → 가장 나중 수정 댓글로 이동(거기서 이유도 읽고 "vN 보기"로 연다), v1 은 따로 */
+            out += '<button type="button" class="rev-view-btn" data-rev-jump="' + ohEscapeHtml(lat.comment_id) + '">변경된 인테리어 보기 <span class="rev-ver">v' + lat.version + '</span></button>';
+            out += '<button type="button" class="rev-view-btn rev-view-sm" data-rev-view="' + ohEscapeHtml(c.id) + '">v1 보기</button>';
+          }
           if (me.user && c.user_id === me.uid) out += '<button type="button" class="comment-reply-btn" data-rev-redo="' + ohEscapeHtml(c.id) + '">배치 다시 수정</button>';
         }
       } else if (revisions[c.id]){
-        out += '<button type="button" class="rev-view-btn" data-rev-view="' + ohEscapeHtml(c.id) + '">보기</button>';
+        out += '<button type="button" class="rev-view-btn" data-rev-view="' + ohEscapeHtml(c.id) + '">v' + revisions[c.id].version + ' 보기</button>';
       }
       return out;
+    }
+    /* "변경된 인테리어 보기 vN" → 가장 나중 수정 댓글로 스크롤하고, 그 댓글의 "vN 보기" 버튼을 반짝여서 알려준다 */
+    var revGlowTimer = null;
+    function revJumpTo(commentId){
+      var btn = document.querySelector('[data-rev-view="' + commentId + '"]');
+      if (!btn){ openRevView(commentId, null); return; }
+      var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var r = btn.getBoundingClientRect();
+      var inView = r.top > 90 && r.bottom < window.innerHeight - 60;
+      btn.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+      clearTimeout(revGlowTimer);
+      document.querySelectorAll(".rev-glow").forEach(function(x){ x.classList.remove("rev-glow"); });
+      revGlowTimer = setTimeout(function(){
+        btn.classList.remove("rev-glow"); void btn.offsetWidth; btn.classList.add("rev-glow");
+        revGlowTimer = setTimeout(function(){ btn.classList.remove("rev-glow"); }, 3000);
+      }, inView ? 80 : 520);
     }
     function loadRevisions(){
       sb.from("comment_revisions").select(REV_COLS).eq("post_id", post.id).limit(1000).then(function(r){
@@ -2337,10 +2370,10 @@
         var m = ev.data || {};
         if (m.type === "oh-embed-ready"){
           frame.style.visibility = "visible";
-          frame.contentWindow.postMessage({ type: "oh-embed-init", mode: o.mode, wallData: post.wallData, furniture: post.furniture, changes: o.changes || null }, location.origin);
+          frame.contentWindow.postMessage({ type: "oh-embed-init", mode: o.mode, wallData: post.wallData, furniture: post.furniture, changes: o.changes || null, ask: !!o.ask }, location.origin);
         } else if (m.type === "oh-embed-done" && edit && m.changes){
           closeRevModal();
-          if (o.onDone) o.onDone(m.changes);
+          if (o.onDone) o.onDone(m.changes, typeof m.comment === "string" ? m.comment : "");
         }
       }
       function requestClose(){
@@ -2378,13 +2411,14 @@
       fetchRevisionChanges(lat.comment_id).then(function(ch){
         if (btn) btn.disabled = false;
         if (!ch){ toastMsg("이전 변경안을 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
-        openRevModal({ mode: "edit", changes: ch, onDone: function(next){ submitRedo(rootId, next); } });
+        openRevModal({ mode: "edit", ask: true, changes: ch, onDone: function(next, comment){ postRedo(rootId, next, comment || REV_NOTICE_TEXT); } });
       });
     }
-    /* 작성자가 나중에 배치를 다시 고치면 "새로운 수정 배치를 등록했어요" 답글이 자동으로 달리고, 그 답글에 새 버전이 붙는다 */
-    function submitRedo(rootId, changes){
+    /* 작성자가 나중에 배치를 다시 고치면, 팝업 안 '변경 완료' 버튼 위 말풍선에서 "댓글도 남길까요?"를 묻고 → 댓글 없이면 "(새로운 수정 배치를 등록했어요)" 알림 답글이,
+       댓글을 쓰면 그 글이 답글로 달리면서 새 버전이 붙는다 */
+    function postRedo(rootId, changes, body){
       toastMsg("새 배치를 등록하는 중…");
-      sendComment(REV_NOTICE_TEXT, rootId, "", "").then(function(r){
+      sendComment(body, rootId, "", "").then(function(r){
         if (r.error || !r.data){ toastMsg(writeError(r.error) || "등록하지 못했어요. 잠시 뒤에 다시 시도해 주세요."); return; }
         saveRevision(r.data.id, rootId, changes).then(function(row){
           if (!row){
@@ -2584,6 +2618,8 @@
     var cList = document.getElementById("commentList");
     cList.addEventListener("click", function(e){
       var t = e.target.closest ? e.target : e.target.parentNode;
+      var rvJump = t.closest("[data-rev-jump]");
+      if (rvJump){ revJumpTo(rvJump.getAttribute("data-rev-jump")); return; }
       var rvView = t.closest("[data-rev-view]");
       if (rvView){ openRevView(rvView.getAttribute("data-rev-view"), rvView); return; }
       var rvRedo = t.closest("[data-rev-redo]");

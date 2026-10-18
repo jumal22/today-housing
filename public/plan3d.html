@@ -865,6 +865,11 @@
   /* 보기 전용: 가구를 눌러 선택은 되지만 편집 UI(회전·삭제 팝업, 크기 패널, 이동 화살표)는 숨김 */
   .is-rev-view .furniture-rotate-panel, .is-rev-view .furniture-size-panel, .is-rev-view .furniture-move-arrows,
   .is-rev-view .wall-color-panel, .is-rev-view .furniture-color-panel{ display:none !important; }
+
+  .back-bubble.oh-rev-ask{ width:340px; min-width:0; }
+  .oh-rev-ask textarea{ width:100%; box-sizing:border-box; resize:none; margin:0 0 10px; padding:9px 11px; font:inherit; font-size:.85rem; line-height:1.5; color:var(--ink); background:var(--paper); border:1px solid var(--line); border-radius:9px; }
+  .oh-rev-ask textarea:focus{ outline:2px solid var(--blueprint); outline-offset:1px; }
+  .oh-rev-ask .back-bubble-actions button[disabled]{ animation:none; opacity:.45; cursor:not-allowed; filter:none; }
   /* 문 가구를 선택했을 때만 나타나는 열기/닫기 토글 — 평소엔 숨겨두고(door-mode일 때만 보이게)
      삭제 버튼 옆에 나란히 둠. */
   .door-toggle-btn{
@@ -3829,6 +3834,7 @@
               openLockBubble();
               return;
             }
+            if (revise && opts.revAsk){ revOpenAsk(doneWrap, doneBtnEl, placeBubble); return; }
             opts.onComplete();
           });
           doneWrap.appendChild(doneBtnEl);
@@ -5075,6 +5081,8 @@
         return '💡 화살표/방향키로 이동 · ↺↻ 회전 · 오른쪽 패널로 크기 조절';
       }
       var isFs = document.fullscreenElement === container || document.webkitFullscreenElement === container;
+      if (readOnly) return '💡 가구를 눌러 선택하고, “의견” 탭에서 바뀐 곳을 확인해보세요';
+      if (revise) return '💡 아래 가구를 끌어다 놓거나 옮겨서 배치를 바꿔보세요';
       return isFs ? '💡 아래 가구를 끌어다 놓아 방을 꾸며보세요' : '💡 전체화면으로 가구를 배치해보세요';
     }
     // 도움말 배지: 글자가 바뀌면 이전 글자가 사라지고 -> 배지가 새 글자 길이에 맞게 부드럽게 늘었다/줄었다 -> 새 글자가 나타남.
@@ -5544,6 +5552,7 @@
       return new THREE.Box3(new THREE.Vector3(sn.x - sn.w / 2, sn.y, sn.z - sn.d / 2), new THREE.Vector3(sn.x + sn.w / 2, sn.y + sn.h, sn.z + sn.d / 2));
     }
     function revFocusChange(c, s){
+      if (readOnly && revSelHelper){ selectFurniture(null); revClearSelVisual(); }
       var box = revItemBox(c, s);
       if (!box || box.isEmpty()) return;
       focusSelectedFurniture(box);
@@ -5976,6 +5985,7 @@
       }
     }
     function revTick(now){
+      if (readOnly) revSelTick();
       stepRevArrow();
       if (revPanelOpen && revPanelEl){
         if (revPanelEl._gk !== revGk()) revApplyGeo();
@@ -6013,7 +6023,33 @@
       var wHit = raycaster.intersectObjects(wallMeshes, false)[0];
       var obj = hit ? findFurniture(hit) : null;
       if (obj && wHit && wHit.distance < hit.distance - 0.001) obj = null; // 벽 뒤에 가려진 가구는 선택 안 함
-      if (obj) selectFurniture(obj); else { selectFurniture(null); selectWall(null); }
+      if (obj){
+        selectFurniture(obj);
+        obj.traverse(function(n){ if (n.isMesh && n.material && n.material.emissive) n.material.emissive.setHex(0x000000); }); // 갤러리처럼 색 틴트 대신 상자 + 화살표로 표시
+        revSelVisual(obj);
+      } else { selectFurniture(null); selectWall(null); revClearSelVisual(); }
+    }
+    /* 보기 전용: 선택한 가구를 하이라이트 색 상자(Box3Helper) + 아래를 가리키는 화살표로 표시 — 갤러리 상세와 같은 모양 */
+    var revSelHelper = null;
+    function revClearSelVisual(){
+      if (revSelHelper){ scene.remove(revSelHelper); if (revSelHelper.geometry) revSelHelper.geometry.dispose(); if (revSelHelper.material) revSelHelper.material.dispose(); revSelHelper = null; }
+      revHideArrow();
+    }
+    function revSelVisual(obj){
+      revClearSelVisual();
+      if (!obj) return;
+      var box = new THREE.Box3().setFromObject(obj);
+      revSelHelper = new THREE.Box3Helper(box, accentThreeColor());
+      scene.add(revSelHelper);
+      revShowArrow(box, false);
+      revArrowItemId = null;
+    }
+    function revSelTick(){
+      if (!revSelHelper) return;
+      if (!selectedFurniture || furniture.indexOf(selectedFurniture) < 0){ selectFurniture(null); revClearSelVisual(); return; }
+      revSelHelper.box.setFromObject(selectedFurniture);
+      revShowArrow(revSelHelper.box, false);
+      revArrowItemId = null;
     }
 
     /* ---- 초기화(원본 복원) ---- */
@@ -6135,8 +6171,48 @@
       if (JSON.stringify(ch).length > 100000){ ohAlert('변경 내용이 너무 커요. 조금 줄여주세요.'); return null; }
       return ch;
     }
+    /* 재수정 → '변경 완료'를 누르면 버튼 바로 위에 말풍선으로 "댓글도 남길까요?"를 묻는다(팝업 X). 바깥을 누르거나 Esc = 닫고 계속 수정 */
+    var revAskClose = null;
+    function revOpenAsk(wrap, btn, place){
+      if (revAskClose){ revAskClose(); return; }
+      var ch = revFinish();   /* 바뀐 게 없거나 너무 크면 여기서 안내하고 멈춤 */
+      if (!ch) return;
+      var b = document.createElement('div');
+      b.className = 'back-bubble oh-rev-ask';
+      b.setAttribute('role', 'dialog');
+      b.innerHTML = '<p><strong>댓글도 남길까요?</strong><br>설명을 함께 남기거나, 댓글 없이 배치만 등록할 수 있어요.</p>' +
+        '<textarea maxlength="500" rows="3" placeholder="수정한 이유나 설명을 적어보세요" aria-label="댓글"></textarea>' +
+        '<div class="back-bubble-actions"><button type="button" data-act="skip">댓글 없이 등록</button><button type="button" class="danger" data-act="go" disabled>댓글 남기고 등록</button></div>';
+      var ta = b.querySelector('textarea'), go = b.querySelector('[data-act="go"]');
+      function onDown(e){ if (!b.contains(e.target) && !(btn && btn.contains(e.target))) close(); }
+      function onKey(e){ if (e.key === 'Escape' && !e.isComposing && e.keyCode !== 229){ e.preventDefault(); close(); } }
+      function close(){
+        document.removeEventListener('pointerdown', onDown, true);
+        document.removeEventListener('keydown', onKey, true);
+        if (b.parentNode) b.parentNode.removeChild(b);
+        revAskClose = null;
+      }
+      revAskClose = close;
+      ta.addEventListener('input', function(){ go.disabled = !ta.value.trim(); });
+      ta.addEventListener('keydown', function(e){ e.stopPropagation(); });
+      ta.addEventListener('keyup', function(e){ e.stopPropagation(); });
+      b.addEventListener('click', function(e){
+        var x = e.target.closest ? e.target.closest('button[data-act]') : null;
+        if (!x || x.disabled) return;
+        var text = x.getAttribute('data-act') === 'go' ? ta.value.trim() : '';
+        close();
+        opts.onComplete({ comment: text });
+      });
+      wrap.appendChild(b);
+      if (place) place(b, btn);
+      document.addEventListener('pointerdown', onDown, true);
+      document.addEventListener('keydown', onKey, true);
+      setTimeout(function(){ if (revAskClose === close) ta.focus(); }, 80);
+    }
     function revDispose(){
       clearTimeout(revToastTimer);
+      if (revAskClose) revAskClose();
+      if (revSelHelper){ scene.remove(revSelHelper); revSelHelper = null; }
       [revPanelEl, revReasonEl, revBannerEl, revViewBarEl, revLoadingEl].forEach(function(el){ if (el && el.parentNode) el.parentNode.removeChild(el); });
       if (revArrowMesh){ scene.remove(revArrowMesh); revArrowMesh.geometry.dispose(); revArrowMesh.material.dispose(); revArrowMesh = null; }
     }
@@ -7552,11 +7628,11 @@
         });
         var mode = m.mode === 'edit' ? 'edit' : 'view';
         scene = createWallScene(root, plan, {
-          autoRotate: false, revMode: mode,
+          autoRotate: false, revMode: mode, revAsk: mode === 'edit' && m.ask === true,
           revData: { furniture: m.furniture || [], wallColors: wd.wallColors || [], wallImages: wd.wallImages || [], changes: m.changes || null },
-          onComplete: mode === 'edit' ? function(){
+          onComplete: mode === 'edit' ? function(extra){
             var ch = scene && scene.rev ? scene.rev.finish() : null;
-            if (ch) post({ type:'oh-embed-done', changes: ch });
+            if (ch) post({ type:'oh-embed-done', changes: ch, comment: (extra && typeof extra.comment === 'string') ? extra.comment : '' });
           } : undefined
         });
       }
