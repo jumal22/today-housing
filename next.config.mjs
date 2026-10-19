@@ -15,6 +15,7 @@ const nextConfig = {
         // 이용약관·개인정보처리방침 (구글 로그인 동의 화면에 넣는 공개 주소)
         { source: "/terms", destination: "/terms.html" },
         { source: "/privacy", destination: "/privacy.html" },
+        { source: "/credits", destination: "/credits.html" },
       ],
     };
   },

@@ -484,6 +484,9 @@
   .footer-row{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
   footer .logo{font-size:1rem;}
   footer p{color:var(--ink-soft); font-size:.82rem;}
+  .credits-link{color:var(--ink-soft); font-size:.82rem; text-decoration:underline; text-underline-offset:2px;}
+  .credits-link:hover{color:var(--ink);}
+  .credits-link:focus-visible{outline:2px solid var(--focus,#C4703F); outline-offset:2px; border-radius:3px;}
   /* ---------- 다크/라이트 전환 애니메이션 ---------- */
   /* 지원하는 브라우저(View Transitions): 테마 버튼 자리에서 새 테마가 원으로 퍼져나감(JS가 clip-path를 움직임) */
   ::view-transition-old(root), ::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
@@ -588,10 +591,12 @@
   <div class="wrap footer-row">
     <a class="logo" href="/">오늘의 하우징</a>
     <p>도면으로 세운 3D 집, 가구 배치, 커뮤니티 조언 · 캡스톤 프로젝트 프로토타입 · 2026</p>
+    <a class="credits-link" href="/credits">에셋 출처</a>
   </div>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/furniture-glb.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1011,7 +1016,7 @@
           bottom = Math.max(0, (f.y || 0) - h/2);
           top = Math.min(wallHeight, (f.y || 0) + h/2);
         }
-        return { pos: f.wallAlong, width: f.w || 0.9, bottom: bottom, top: top };
+        return { pos: f.wallAlong, width: f.w || 0.9, bottom: bottom, top: top, arch: !!(f.variant && window.OH_GLB && OH_GLB.isArch(f.variant)) };
       });
     }
     function addWall(seg, thickness, isOuter, doors){
@@ -1023,6 +1028,33 @@
       var builtAny = false, lastMesh = null;
       var wallImgData = wallImagesData ? wallImagesData[wallColorIdx] : null;
       var wallPieces = [];
+      // 아치 창: 구멍 위쪽이 반원이라, 직사각형 조각만으로는 모서리가 비어 보임 → 양쪽 모서리를 채우는 조각을 따로 만듦
+      function placeArchCorners(g, gsx, gsy, gex, gey){
+        var W = g.to - g.from, r = W / 2;
+        if (g.top - g.bottom <= r + 0.05) return;
+        var yBase = g.top - r;
+        var segDir = Math.atan2(gey - gsy, gex - gsx);
+        [0, 1].forEach(function(side){
+          var sh = new THREE.Shape();
+          if (side === 0){ sh.moveTo(0, 0); sh.lineTo(0, r); sh.lineTo(r, r); sh.absarc(r, 0, r, Math.PI / 2, Math.PI, false); }
+          else { sh.moveTo(W, 0); sh.lineTo(W, r); sh.lineTo(r, r); sh.absarc(r, 0, r, Math.PI / 2, 0, true); }
+          var geo = new THREE.ExtrudeGeometry(sh, { depth: thickness, bevelEnabled: false, steps: 1, curveSegments: 20 });
+          geo.translate(0, 0, -thickness / 2);
+          if (wallImgData){
+            var pa = geo.attributes.position, ua = geo.attributes.uv, s0 = (gsx - (x1 - ux*ext))*ux + (gsy - (y1 - uy*ext))*uy;
+            for (var vi = 0; vi < pa.count; vi++) ua.setXY(vi, (s0 + pa.getX(vi)) / (length + 2*ext), (yBase + pa.getY(vi)) / wallHeight);
+          }
+          var needsFade = opts.wallView === true || opts.interactive === true;
+          var wm = new THREE.MeshStandardMaterial({ color: colorHex ? new THREE.Color(colorHex) : wallColor, roughness:0.85, metalness:0.05, transparent: needsFade });
+          if (!colorHex) defaultWallMats.push(wm);
+          var mesh = new THREE.Mesh(geo, wm);
+          mesh.position.set(gsx, yBase, gsy);
+          mesh.rotation.y = -segDir;
+          scene.add(mesh);
+          if (needsFade) wallMeshes.push(mesh);
+          builtAny = true; wallPieces.push(mesh);
+        });
+      }
       function place(sx, sy, ex, ey, heightExtent, skipEdges){
         var info = wallImgData ? { s0: (sx - (x1 - ux*ext))*ux + (sy - (y1 - uy*ext))*uy, total: length + 2*ext } : null;
         var m = buildWallPiece(sx, sy, ex, ey, thickness, colorHex, heightExtent, skipEdges, info);
@@ -1040,7 +1072,8 @@
             from: Math.max(0, centerDist - halfW),
             to: Math.min(length, centerDist + halfW),
             bottom: d.bottom != null ? d.bottom : 0,
-            top: d.top != null ? d.top : wallHeight
+            top: d.top != null ? d.top : wallHeight,
+            arch: !!d.arch
           };
         }).sort(function(a,b){ return a.from - b.from; });
         var cursor = 0;
@@ -1060,6 +1093,7 @@
           if (g.top < wallHeight - 0.01){
             place(gsx, gsy, gex, gey, { bottom: g.top, top: wallHeight }, true);
           }
+          if (g.arch) placeArchCorners(g, gsx, gsy, gex, gey);
           if (g.bottom > 0.01){
             place(gsx, gsy, gex, gey, { bottom: 0, top: g.bottom }, true);
           }
@@ -1103,7 +1137,18 @@
       var c = f.color ? parseInt(f.color.replace("#",""), 16) : (OH_FURN_COLORS_NUM[type] || OH_FURN_COLORS_NUM.sofa);
       var group = new THREE.Group();
       var baseSize;
-      if (type === "sofa"){
+      // 게시물에 모양(variant)이 저장돼 있으면 GLB 로 그림(없으면 예전 게시물이라 기존 도형 가구)
+      var glbD = (f.variant && window.OH_GLB && OH_GLB.dims) ? OH_GLB.dims(f.variant) : null;
+      if (glbD){
+        baseSize = { w:glbD.w, d:glbD.d, h:glbD.h };
+        (function(grp, fv, col, hasCol, isDoor, doorOpen, bs, isWallCenter){
+          OH_GLB.load(fv).then(function(r){
+            if (hasCol) r.root.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(col); });
+            if (isDoor && r.hinge && doorOpen) r.hinge.rotation.y = -(Math.PI/2) * 0.82;
+            grp.add(r.root);
+          }).catch(function(){ grp.add(buildPart(new THREE.BoxGeometry(bs.w, bs.h, bs.d), 0xc9c2b4, 0, (isWallCenter ? 0 : bs.h/2), 0)); });   // 불러오기 실패 시 상자로 대체
+        })(group, f.variant, c, !!f.color, type === "door", !!f.doorOpen, baseSize, type === "window" || type === "outlet" || type === "walltv");
+      } else if (type === "sofa"){
         group.add(buildPart(new THREE.BoxGeometry(1.55,.38,.72), c, 0,.28,0));
         group.add(buildPart(new THREE.BoxGeometry(1.55,.52,.16), c, 0,.68,.28));
         group.add(buildPart(new THREE.BoxGeometry(.16,.52,.72), c, -.7,.58,0));

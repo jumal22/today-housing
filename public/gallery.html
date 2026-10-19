@@ -256,6 +256,9 @@
   .footer-row{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
   footer .logo{font-size:1rem;}
   footer p{color:var(--ink-soft); font-size:.82rem;}
+  .credits-link{color:var(--ink-soft); font-size:.82rem; text-decoration:underline; text-underline-offset:2px;}
+  .credits-link:hover{color:var(--ink);}
+  .credits-link:focus-visible{outline:2px solid var(--focus,#C4703F); outline-offset:2px; border-radius:3px;}
   /* ---------- 다크/라이트 전환 애니메이션 ---------- */
   /* 지원하는 브라우저(View Transitions): 테마 버튼 자리에서 새 테마가 원으로 퍼져나감(JS가 clip-path를 움직임) */
   ::view-transition-old(root), ::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
@@ -350,6 +353,7 @@
   <div class="wrap footer-row">
     <a class="logo" href="/">오늘의 하우징</a>
     <p>도면으로 세운 3D 집, 가구 배치, 커뮤니티 조언 · 캡스톤 프로젝트 프로토타입 · 2026</p>
+    <a class="credits-link" href="/credits">에셋 출처</a>
   </div>
 </footer>
 
