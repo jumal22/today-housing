@@ -7,9 +7,9 @@
 (function(){
   var MAX_LIGHTS = 10; // 점광원 최대 개수 — 그림자도 같은 수까지(사용자가 말풍선에서 켰을 때만)
   var LAMPS = {
-    ceilinglight: { I: 1.15, D: 8.5, S: 1.05, order: 0 },
-    floorlamp:    { I: 1.0, D: 6, S: 0.85, order: 1 },
-    tablelamp:    { I: 1.0, D: 5,   S: 0.6, order: 2 }
+    ceilinglight: { I: 1.0,  D: 8.5, S: 1.05, order: 0, dy: 0,    decay: 1.8 },
+    floorlamp:    { I: 1.0,  D: 6.5, S: 0.85, order: 1, dy: 0.2,  decay: 1.4 },
+    tablelamp:    { I: 1.0,  D: 5.5, S: 0.6, order: 2, dy: 0.28, decay: 1.2 }
   };
   var cssDone = false;
   function injectCss(){
@@ -63,6 +63,7 @@
 
     var hemi = o.hemi, dirs = o.dirs || [];
     var DAY = { hSky: hemi.color.clone(), hGround: hemi.groundColor.clone(), hI: hemi.intensity, dI: dirs.map(function (d) { return d.intensity; }), dC: dirs.map(function (d) { return d.color.clone(); }) };
+    var WARM = new THREE.Color(0xffc48a), warmK = 0, skyTmp = new THREE.Color();
     var NIGHT = { hSky: new THREE.Color(0x7d8fd6), hGround: new THREE.Color(0x151a33), hI: 0.3, dI: [0.17, 0.07], dC: new THREE.Color(0x9db0ff) };
     var tmpC = new THREE.Color();
 
@@ -252,9 +253,10 @@
     }
 
     function applyBlend(e){
-      hemi.color.copy(DAY.hSky).lerp(NIGHT.hSky, e);
+      skyTmp.copy(NIGHT.hSky).lerp(WARM, 0.3 * warmK); // 조명이 많을수록 방 전체가 따뜻하게 번짐(간접광 흉내)
+      hemi.color.copy(DAY.hSky).lerp(skyTmp, e);
       hemi.groundColor.copy(DAY.hGround).lerp(NIGHT.hGround, e);
-      hemi.intensity = lerp(DAY.hI, NIGHT.hI, e);
+      hemi.intensity = lerp(DAY.hI, NIGHT.hI + 0.1 * warmK, e);
       dirs.forEach(function (d, i){
         d.intensity = lerp(DAY.dI[i], NIGHT.dI[Math.min(i, NIGHT.dI.length - 1)], e);
         d.color.copy(DAY.dC[i]).lerp(NIGHT.dC, e);
@@ -278,15 +280,19 @@
         var L = pool[i], lp = lamps[i];
         if (lp){
           var cfg = LAMPS[lp.t];
-          L.position.set(lp.x, lp.y, lp.z);
+          L.position.set(lp.x, lp.y + cfg.dy, lp.z); // 낮은 조명은 빛을 살짝 위에서 쏴서 멀리 있는 바닥에도 덜 비스듬히 닿게
           L.intensity = cfg.I * ek;
           L.distance = cfg.D;
+          L.decay = cfg.decay;
           L.visible = true;
           L.castShadow = shadowOn && i < shadowCap;
         } else {
           L.intensity = 0; L.visible = false; L.castShadow = false;
         }
       }
+      var wt = Math.min(1, lamps.length / 3);
+      warmK += (wt - warmK) * Math.min(1, dt * 3);
+      applyBlend(ek);
       var spi = 0;
       for (var j = 0; j < lamps.length; j++){
         var lq = lamps[j], c2 = LAMPS[lq.t], nb = lq.bulbs.length;
