@@ -270,6 +270,7 @@
     position:absolute; left:10px; bottom:10px; z-index:1; font-size:.7rem; color:var(--ink-soft);
     background:color-mix(in srgb, var(--paper-raised) 75%, transparent); padding:3px 8px; border-radius:6px;
   }
+  .canvas-hint.draft-status{ left:auto; right:10px; opacity:0; transition:opacity .6s; pointer-events:none; }
   .view-controls{
     position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:2;
   }
@@ -1623,6 +1624,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/furniture-glb.js"></script>
+<script src="/night-mode.js"></script>
 <script>
 (function(){
   "use strict";
@@ -4415,7 +4417,41 @@
       container.appendChild(wallColorPanel);
 
       // 초기 기본 가구 배치
-      if (!revAny){
+      if (!revAny && opts.restore){
+        // 임시저장에서 이어서 하기: 저장해둔 벽 색/벽지/가구를 그대로 복원
+        var rs = opts.restore;
+        var rwc = rs.wallColors || [], rwi = rs.wallImages || [];
+        wallSegments.forEach(function(seg, i){
+          var hx = revParseHex(rwc[i]);
+          if (hx != null && hx !== wallColor.getHex()) wallColorOverrides[i] = hx;
+        });
+        rebuildAllWalls();
+        (rs.furniture || []).forEach(function(it){
+          if (!it || !it.type) return;
+          var s = revNormSnap(it), g;
+          if (WALL_ITEM_TYPES[it.type] && s.wallIndex != null && wallSegments[s.wallIndex]){
+            g = addFurniture(it.type, null, null, { wallIndex:s.wallIndex, along:s.wallAlong, height:s.y }, s.variant || null);
+          } else {
+            g = addFurniture(it.type, s.x, s.z, undefined, s.variant || null);
+          }
+          if (!g) return;
+          if (g.userData.popAnim){ var pi = popAnims.indexOf(g); if (pi >= 0) popAnims.splice(pi, 1); finishPop(g); }
+          revApplySnap(g, s);
+        });
+        wallSegments.forEach(function(seg, i){
+          var url = rwi[i];
+          if (!url) return;
+          var ld = new THREE.TextureLoader();
+          ld.load(url, function(tex){
+            tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
+            tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            tex.needsUpdate = true;
+            wallImageOverrides[i] = tex;
+            rebuildWallAt(i);
+          });
+        });
+        popEnabled = true;
+      } else if (!revAny){
         addFurniture('sofa', center.x - size*.18, center.z);
         addFurniture('table', center.x + size*.13, center.z - size*.12);
         popEnabled = true; // 여기부터 새로 놓는 가구만 애니메이션
@@ -4749,16 +4785,42 @@
       revTabBtn.innerHTML = REV_ICON;
       revTabWrap = wrapWithLabel(revTabBtn, "의견");
     }
+    // 불 끄기(밤 모드) — 기본 조명을 낮추고 놓아둔 조명 가구(천장등/스탠드/탁상등)만 켜짐. 저장되는 값은 아님.
+    var night = null, nightWrap = null;
+    if (furnitureEditor && window.OHNight){
+      night = OHNight.create({ THREE: THREE, scene: scene, renderer: renderer, container: container, hemi: hemi, dirs: [dir, fill],
+        getFurniture: function(){ return furniture; }, getPhotoFloor: function(){ return photoFloorMesh; } });
+      var BULB_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 3.5a5.6 5.6 0 0 0-3.4 10.1c.6.5.9 1.1.9 1.9h5c0-.8.3-1.4.9-1.9A5.6 5.6 0 0 0 12 3.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+      var MOON_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 14.2A8 8 0 0 1 9.8 4 8 8 0 1 0 20 14.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="currentColor" fill-opacity=".25"/></svg>';
+      var nightBtn = document.createElement("button");
+      nightBtn.type = "button";
+      nightBtn.className = "view-btn";
+      nightBtn.innerHTML = BULB_ICON;
+      nightBtn.title = "불 끄기 (밤 모드 — 놓아둔 조명만 켜져요)";
+      nightWrap = wrapWithLabel(nightBtn, "불 끄기");
+      var nightLabelEl = nightWrap.querySelector(".view-btn-label");
+      nightBtn.addEventListener("click", function(){
+        var nv = !night.isOn();
+        night.set(nv);
+        if (nv) night.askShadow(nightWrap); else night.closeBubble();
+        nightBtn.classList.toggle("active", nv);
+        nightBtn.innerHTML = nv ? MOON_ICON : BULB_ICON;
+        nightBtn.title = nv ? "불 켜기 (낮 모드로)" : "불 끄기 (밤 모드 — 놓아둔 조명만 켜져요)";
+        nightLabelEl.textContent = nv ? "불 켜기" : "불 끄기";
+        nightBtn.blur();
+      });
+    }
     var topRightStack = null;
     if (furnitureEditor && typeof fullscreenBtn !== 'undefined' && fullscreenBtn){
       topRightStack = document.createElement("div");
       topRightStack.className = "furniture-top-right";
       topRightStack.appendChild(fullscreenBtn);
       topRightStack.appendChild(viewControls);
-      if (planWrap || revTabWrap){ // 노클립(가운데) 버튼 바로 아래 한 줄
+      if (planWrap || revTabWrap || nightWrap){ // 노클립(가운데) 버튼 바로 아래 한 줄
         var planRow = document.createElement("div");
         planRow.className = "view-controls plan-row";
         if (planWrap) planRow.appendChild(planWrap);
+        if (nightWrap) planRow.appendChild(nightWrap);
         if (revTabWrap) planRow.appendChild(revTabWrap);
         topRightStack.appendChild(planRow);
       }
@@ -6520,6 +6582,7 @@
         updateWallColorPanelPosition();
         updateFurnitureColorPanelPosition();
       }
+      if (night) night.update();
       renderer.render(scene, camera);
       if (fxActive) renderFxOverlay();
     }
@@ -6528,10 +6591,12 @@
 
     return {
       rev: revApi,
+      getNight: function(){ return night; },
       startTutorial: function(silent){ tutStart(silent); return tutCard; },
       setDoneLabel: function(t){ if (doneBtnEl) doneBtnEl.textContent = t; },
       dispose: function(){
         cancelAnimationFrame(rafId);
+        if (night){ try{ night.dispose(); }catch(e){} }
         if (revAny) revDispose();
         if (editorKeydown) document.removeEventListener('keydown', editorKeydown);
         if (editorKeyup) document.removeEventListener('keyup', editorKeyup);
@@ -6596,6 +6661,14 @@
       // plan.outer/plan.inner 개수와 정확히 같은 길이의 배열이 나옴(post.html의 wallColorIdx
       // 매칭 방식과 어긋나지 않게 하기 위함). 게시할 때 wallData.wallColors로 같이 저장해서,
       // 갤러리/게시물 상세 화면(post.html)에서도 사용자가 고른 벽 색이 그대로 보이게 함.
+      // 임시저장용: 바뀌었는지 가볍게 비교하려는 서명 문자열(벽지 이미지는 텍스처 id 로만 비교)
+      getDraftSig: function(){
+        var ids = wallSegments.map(function(seg, i){ var t = wallImageOverrides[i]; return (t && t.image) ? t.uuid : null; });
+        return JSON.stringify([this.getFurnitureData(), this.getWallColors(), ids]);
+      },
+      getWallImageIds: function(){
+        return wallSegments.map(function(seg, i){ var t = wallImageOverrides[i]; return (t && t.image) ? t.uuid : null; });
+      },
       getWallColors: function(){
         return wallSegments.map(function(seg, i){
           var hex = wallColorOverrides[i] != null ? wallColorOverrides[i] : wallColor.getHex();
@@ -6610,6 +6683,8 @@
       // 라이트 모드는 흰색, 다크 모드는 검은색.
       screenshot: function(maxW, withPhoto){
         maxW = maxW || 480;
+        var nightWas = !!(night && night.isOn()); // 썸네일은 항상 낮 모드로 찍음
+        if (nightWas) night.set(false, true);
         var hadPhotoFloor = !!(photoFloorMesh && photoFloorMesh.visible);
         if (photoFloorMesh) photoFloorMesh.visible = !!withPhoto; // 도면 이미지를 같이 게시할 때만 썸네일에도 넣음
         // 썸네일은 게시하는 순간 카메라가 어느 각도를 보고 있었든 상관없이 항상 탑뷰(바로 위에서 본
@@ -6637,6 +6712,7 @@
         trueTopView = savedTrueTopView;
         updateCamera();
         if (photoFloorMesh) photoFloorMesh.visible = hadPhotoFloor;
+        if (nightWas) night.set(true, true);
         return c.toDataURL("image/jpeg", 0.86);
       }
     };
@@ -7118,6 +7194,182 @@
     renderIntro();
   }
 
+  /* ============ 임시저장(자동) + 이어서 하기 ============
+     가구 배치 화면에 들어오면 1.5초마다 "바뀐 게 있나" 확인하고, 바뀐 상태가 잠깐 가만히 있으면 이 브라우저의
+     IndexedDB 에 저장. (localStorage 는 도면/벽지 이미지(data URL)가 커서 용량이 모자라 IndexedDB 사용.)
+     다시 접속하면 "이어서 하기 / 새로 시작"을 물어봄. 게시를 마치면 지움. 서버에는 아무것도 안 올라감. */
+  var OHDraft = (function(){
+    var dbp = null;
+    function open(){
+      if (dbp) return dbp;
+      dbp = new Promise(function(res){
+        try{
+          var rq = indexedDB.open("oh-draft", 1);
+          rq.onupgradeneeded = function(){ rq.result.createObjectStore("kv"); };
+          rq.onsuccess = function(){ res(rq.result); };
+          rq.onerror = rq.onblocked = function(){ res(null); };
+        } catch(e){ res(null); }
+      });
+      return dbp;
+    }
+    function put(map){
+      return open().then(function(db){
+        return new Promise(function(res){
+          if (!db) return res(false);
+          try{
+            var t = db.transaction("kv", "readwrite"), s = t.objectStore("kv");
+            Object.keys(map).forEach(function(k){ s.put(map[k], k); });
+            t.oncomplete = function(){ res(true); };
+            t.onerror = t.onabort = function(){ res(false); };
+          } catch(e){ res(false); }
+        });
+      });
+    }
+    function get(){
+      return open().then(function(db){
+        return new Promise(function(res){
+          if (!db) return res(null);
+          try{
+            var t = db.transaction("kv", "readonly"), s = t.objectStore("kv"), out = {};
+            var r1 = s.get("meta"), r2 = s.get("state");
+            t.oncomplete = function(){ res({ meta: r1.result || null, state: r2.result || null }); };
+            t.onerror = t.onabort = function(){ res(null); };
+          } catch(e){ res(null); }
+        });
+      });
+    }
+    function clear(){
+      return open().then(function(db){
+        return new Promise(function(res){
+          if (!db) return res(false);
+          try{
+            var t = db.transaction("kv", "readwrite"), s = t.objectStore("kv");
+            s.delete("meta"); s.delete("state");
+            t.oncomplete = function(){ res(true); };
+            t.onerror = t.onabort = function(){ res(false); };
+          } catch(e){ res(false); }
+        });
+      });
+    }
+    return { put: put, get: get, clear: clear };
+  })();
+  window.OHDraft = OHDraft;
+
+  var draftTimer = null, draftMetaFor = null, draftLastSig = null, draftPendingSig = null, draftBusy = false;
+  var draftImgCache = {}, draftStatusTimer = null, pendingDraftRestore = null, draftScene = null;
+  function draftStop(){ if (draftTimer){ clearInterval(draftTimer); draftTimer = null; } draftScene = null; }
+  function draftShowSaved(){
+    var el = document.getElementById("draftStatus");
+    if (!el) return;
+    el.textContent = "✓ 자동 저장됨";
+    el.style.opacity = "1";
+    clearTimeout(draftStatusTimer);
+    draftStatusTimer = setTimeout(function(){ el.style.opacity = ".45"; }, 2500);
+  }
+  function draftStart(scene, initialSig, metaKnown){
+    draftStop();
+    draftScene = scene;
+    draftMetaFor = metaKnown ? furniturePlan : null;
+    draftLastSig = initialSig || null;
+    draftPendingSig = null;
+    draftTimer = setInterval(function(){ draftTick(scene, false); }, 1500);
+  }
+  async function draftWrite(scene, sig){
+    var ids = scene.getWallImageIds ? scene.getWallImageIds() : [];
+    if (ids.some(function(id){ return id && !draftImgCache[id]; })){
+      var imgs = scene.getWallImages();
+      ids.forEach(function(id, i){ if (id && imgs[i]) draftImgCache[id] = imgs[i]; });
+    }
+    var map = { state: {
+      v: 1, savedAt: Date.now(),
+      furniture: scene.getFurnitureData(), wallColors: scene.getWallColors(),
+      wallImages: ids.map(function(id){ return id ? (draftImgCache[id] || null) : null; })
+    } };
+    var newMeta = draftMetaFor !== furniturePlan;
+    if (newMeta){
+      var wd = Object.assign({}, furniturePlan);
+      delete wd.floorplanImageUrl; // 큰 이미지는 tracePlan 쪽에만 한 번 저장
+      map.meta = {
+        v: 1,
+        complex: { name: (traceComplex && traceComplex.name) || "내 도면", address: (traceComplex && traceComplex.address) || "" },
+        tracePlan: tracePlan ? { pyeongName: tracePlan.pyeongName || "", supplyArea: tracePlan.supplyArea || null, exclusiveArea: tracePlan.exclusiveArea || null, floorplanImageUrl: tracePlan.floorplanImageUrl || (furniturePlan && furniturePlan.floorplanImageUrl) || null } : null,
+        wallData: wd,
+        chains: traceChains, tw: traceWidthInput.value, td: traceDepthInput.value,
+        correct: !!traceCorrectToggle.checked, grid: traceStage.classList.contains("is-grid-plan")
+      };
+    }
+    var ok = await OHDraft.put(map);
+    if (ok){
+      draftLastSig = sig;
+      if (newMeta) draftMetaFor = furniturePlan;
+      draftShowSaved();
+    }
+    return ok;
+  }
+  async function draftTick(scene, force){
+    if (draftBusy) return;
+    if (resultScene !== scene || !furnitureMode || furniturePublished || !furniturePlan){ draftStop(); return; }
+    var sig;
+    try{ sig = scene.getDraftSig(); } catch(e){ return; }
+    if (sig === draftLastSig){ draftPendingSig = null; return; }
+    if (!force && sig !== draftPendingSig){ draftPendingSig = sig; return; } // 아직 바뀌는 중 — 가만히 있을 때 저장
+    draftBusy = true;
+    try{ await draftWrite(scene, sig); } catch(e){ console.warn("[draft]", e); }
+    draftBusy = false;
+  }
+  function draftFlush(){ if (draftScene) draftTick(draftScene, true); }
+  document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "hidden") draftFlush(); });
+  window.addEventListener("pagehide", draftFlush);
+
+  function draftAgo(ts){
+    var en = window.OH_I18N && OH_I18N.lang === "en";
+    var s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if (s < 60) return en ? "just now" : "방금 전";
+    var m = Math.round(s / 60);
+    if (m < 60) return en ? (m + " min ago") : (m + "분 전");
+    var h = Math.round(m / 60);
+    if (h < 24) return en ? (h + " hr ago") : (h + "시간 전");
+    var d = Math.round(h / 24);
+    return en ? (d + (d === 1 ? " day ago" : " days ago")) : (d + "일 전");
+  }
+  async function ohResumeDraft(d){
+    var m = d.meta, s = d.state;
+    var tp = m.tracePlan || {};
+    var wd = Object.assign({}, m.wallData);
+    if (tp.floorplanImageUrl) wd.floorplanImageUrl = tp.floorplanImageUrl;
+    traceComplex = m.complex || { name: "내 도면", address: "" };
+    tracePlan = { isReal: true, pyeongName: tp.pyeongName || "", supplyArea: tp.supplyArea || null, exclusiveArea: tp.exclusiveArea || null,
+      floorplanImageUrl: tp.floorplanImageUrl || null, wallData: wd, aiError: null };
+    traceChains = Array.isArray(m.chains) ? m.chains : [];
+    traceCurrent = [];
+    traceWidthInput.value = m.tw || "9"; traceDepthInput.value = m.td || "7";
+    traceCorrectToggle.checked = !!m.correct;
+    traceStage.classList.toggle("is-grid-plan", !!m.grid);
+    pendingDraftRestore = s;
+    openModal();
+    suppressGhost = true;
+    showResult(traceComplex, tracePlan);
+    document.getElementById("nextStepBtn").click();
+    suppressGhost = false;
+  }
+  async function ohOfferDraft(){
+    if (OH_EMBED || !overlay.hidden) return;
+    var d = await OHDraft.get();
+    if (!d || !d.meta || !d.state || !d.meta.wallData || !Array.isArray(d.meta.wallData.outer) || !Array.isArray(d.state.furniture)) return;
+    if (!overlay.hidden) return;
+    if (!(d.state.savedAt > Date.now() - 30*24*3600*1000)){ OHDraft.clear(); return; } // 30일 넘은 임시저장은 버림
+    var en = window.OH_I18N && OH_I18N.lang === "en";
+    var n = d.state.furniture.length;
+    var sub = en
+      ? (draftAgo(d.state.savedAt) + " · " + n + (n === 1 ? " item" : " items") + ". Starting over deletes the saved layout.")
+      : (draftAgo(d.state.savedAt) + " 자동 저장됨 · 가구 " + n + "개. 새로 시작하면 저장된 내용은 지워져요.");
+    var pick = await ohDialog({ message: "작업하던 배치가 있어요", sub: sub,
+      buttons: [ { label: "새로 시작", value: "new", back: true }, { label: "이어서 하기", value: "resume", primary: true } ], escValue: "keep" });
+    if (pick === "resume") ohResumeDraft(d);
+    else if (pick === "new") OHDraft.clear();
+  }
+  window.addEventListener("load", function(){ setTimeout(ohOfferDraft, 700); });
+
   /* "다음: 가구 배치 시작하기" — 3D 변환 결과 화면을 가구 배치 전용 풀스크린으로 전환하고,
      동일한 createWallScene을 furnitureEditor:true로 다시 띄움 (팀원 구현 이식) */
   document.getElementById("nextStepBtn").addEventListener("click", async function(){
@@ -7136,11 +7388,13 @@
       btn.textContent = "✅ 가구 배치 완료";
       document.querySelector('[data-back="search-from-result"]').textContent = "메인화면으로";
       if (resultScene){ resultScene.dispose(); resultScene = null; }
-      resultStage.innerHTML = '<span class="canvas-hint">가구를 하단에서 드래그해서 배치 및 회전</span>';
-      resultScene = createWallScene(resultStage, furniturePlan, { autoRotate:false, furnitureEditor:true, onComplete: function(){ document.getElementById("nextStepBtn").click(); }, onBack: function(){ document.getElementById("editWallsBtn").click(); } });
-      // 화면이 다 펼쳐진 뒤에 시작 안내 팝업을 띄움(전환 중에 겹쳐 뜨지 않게)
+      resultStage.innerHTML = '<span class="canvas-hint">가구를 하단에서 드래그해서 배치 및 회전</span><span class="canvas-hint draft-status" id="draftStatus"></span>';
+      var restoreData = pendingDraftRestore; pendingDraftRestore = null;
+      resultScene = createWallScene(resultStage, furniturePlan, { autoRotate:false, furnitureEditor:true, restore: restoreData || undefined, onComplete: function(){ document.getElementById("nextStepBtn").click(); }, onBack: function(){ document.getElementById("editWallsBtn").click(); } });
+      draftStart(resultScene, restoreData ? resultScene.getDraftSig() : null, !!restoreData);
+      // 화면이 다 펼쳐진 뒤에 시작 안내 팝업을 띄움(전환 중에 겹쳐 뜨지 않게) — 이어서 하기로 들어온 경우엔 생략
       var enteredScene = resultScene;
-      setTimeout(function(){ if (furnitureMode && resultScene === enteredScene) showTutorialWelcome(); }, 900);
+      if (!restoreData) setTimeout(function(){ if (furnitureMode && resultScene === enteredScene) showTutorialWelcome(); }, 900);
     } else if (furniturePublished){
       location.href = "/gallery";
     } else {
@@ -7292,6 +7546,7 @@
         }
       }
       furniturePublished = true;
+      draftStop(); OHDraft.clear(); // 게시했으니 임시저장은 지움
       btn.textContent = "게시 완료 ✓ · 갤러리로 이동";
       if (resultScene && resultScene.setDoneLabel) resultScene.setDoneLabel("✓ 게시 완료 · 갤러리로");
 

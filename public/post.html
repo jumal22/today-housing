@@ -597,6 +597,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/furniture-glb.js"></script>
+<script src="/night-mode.js"></script>
 <script>
 (function(){
   "use strict";
@@ -854,7 +855,8 @@
     var center = new THREE.Vector3(b.w/2, 0, b.d/2);
     var size = Math.max(b.w, b.d, 4);
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.9));
+    var hemiLight = new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.9);
+    scene.add(hemiLight);
     var dir = new THREE.DirectionalLight(0xffffff, 0.95);
     dir.position.set(size*0.9, size*1.6, size*0.4);
     scene.add(dir);
@@ -887,6 +889,7 @@
 
     // 게시할 때 "도면 이미지도 함께 게시"를 체크했으면 벽 영역만 잘라 저장해둔 도면 사진을 바닥에 깔아줌
     // (체크 해제했거나 옛날 게시물이면 wallData.floorPhoto가 없어서 그대로 단색 바닥).
+    var photoFloorMesh = null;
     if (wallData.floorPhoto){
       ohTexLoader().load(wallData.floorPhoto, function(tex){
         tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -898,6 +901,7 @@
         photoFloor.rotation.x = -Math.PI/2;
         photoFloor.position.set(center.x, -0.03, center.z);
         scene.add(photoFloor);
+        photoFloorMesh = photoFloor;
       });
     }
 
@@ -1202,8 +1206,19 @@
       group.position.set(f.x || 0, f.y || 0, f.z || 0);
       group.rotation.y = f.rotY || 0;
       scene.add(group);
+      group.userData.type = type;
       furnGroups.push(group);
     });
+
+    // 불 끄기(밤 모드) — 화면 오른쪽 버튼이 window 이벤트(oh-night)로 알리면 이 페이지의 3D 화면(오른쪽 + 왼쪽 벽 뷰)이 같이 바뀜
+    var night = null, onNightEvt = null;
+    if (window.OHNight){
+      night = OHNight.create({ THREE: THREE, scene: scene, renderer: renderer, container: container, hemi: hemiLight, dirs: [dir, fillLight],
+        getFurniture: function(){ return furnGroups; }, getPhotoFloor: function(){ return photoFloorMesh; } });
+      onNightEvt = function(e){ night.set(!!(e.detail && e.detail.on)); };
+      window.addEventListener("oh-night", onNightEvt);
+      if (window.__ohNightOn) night.set(true, true);
+    }
 
     var canvas = renderer.domElement;
     var mode = opts.wallView ? "wall" : (interactive ? "orbit" : "top");
@@ -1407,6 +1422,30 @@
       controlsRow.className = "post-view-controls";
       controlsRow.appendChild(wrapWithLabel(topViewBtn, "탑뷰"));
       controlsRow.appendChild(wrapWithLabel(noclipBtn, "노클립 (V)"));
+      if (night){
+        var BULB_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 3.5a5.6 5.6 0 0 0-3.4 10.1c.6.5.9 1.1.9 1.9h5c0-.8.3-1.4.9-1.9A5.6 5.6 0 0 0 12 3.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+        var MOON_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 14.2A8 8 0 0 1 9.8 4 8 8 0 1 0 20 14.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="currentColor" fill-opacity=".25"/></svg>';
+        var nightBtn = document.createElement("button");
+        nightBtn.type = "button"; nightBtn.className = "post-view-btn";
+        var nightWrap = wrapWithLabel(nightBtn, "불 끄기");
+        var nightLab = nightWrap.querySelector(".post-view-btn-label");
+        function syncNightBtn(){
+          var nv = night.isOn();
+          nightBtn.classList.toggle("active", nv);
+          nightBtn.innerHTML = nv ? MOON_ICON : BULB_ICON;
+          nightBtn.title = nv ? "불 켜기 (낮 모드로)" : "불 끄기 (밤 모드 — 놓아둔 조명만 켜져요)";
+          nightLab.textContent = nv ? "불 켜기" : "불 끄기";
+        }
+        syncNightBtn();
+        nightBtn.addEventListener("click", function(){
+          window.__ohNightOn = !night.isOn();
+          window.dispatchEvent(new CustomEvent("oh-night", { detail: { on: window.__ohNightOn } }));
+          if (window.__ohNightOn) night.askShadow(nightWrap); else night.closeBubble();
+          syncNightBtn(); nightBtn.blur();
+        });
+        window.addEventListener("oh-night", syncNightBtn);
+        controlsRow.appendChild(nightWrap);
+      }
       function releaseTopView(){
         trueTopView = false;
         if (phi < TOP_PHI) phi = TOP_PHI;
@@ -1935,6 +1974,7 @@
       lastTickT = nowT;
       if (stepNoclip) stepNoclip(dtT);
       if (spinning){ theta += 0.0022; updateCamera(); }
+      if (night) night.update();
       renderer.render(scene, camera);
     }
     tick();
@@ -1951,6 +1991,8 @@
     return {
       dispose: function(){
         cancelAnimationFrame(rafId);
+        if (onNightEvt) window.removeEventListener("oh-night", onNightEvt);
+        if (night){ try{ night.dispose(); }catch(e){} }
         themeObserver.disconnect();
         if (themeMql && themeMql.removeEventListener) themeMql.removeEventListener("change", applyTheme);
         if (removeNoclipListeners) removeNoclipListeners();
