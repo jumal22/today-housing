@@ -41,7 +41,7 @@
       { id:'door_02', ko:'유리창 문',   en:'Glass-panel door', rot:0,  fit:['h',2.05], thick:0.14, hinge:'door' },
       { id:'door_03', ko:'판넬 문',     en:'Panel door',     rot:PI/2, fit:['h',2.05], thick:0.14, hinge:'all' },
       { id:'door_04', ko:'유리 판넬 문', en:'Panel door with glass', rot:PI/2, fit:['h',2.05], thick:0.14, hinge:'all' },
-      { id:'door_05', ko:'아치 문',     en:'Arched door',    rot:PI/2, fit:['h',2.05], thick:0.14, hinge:'all' } ] },
+      { id:'door_05', ko:'아치 문',     en:'Arched door',    rot:PI/2, fit:['h',2.05], thick:0.14, hinge:'all', arch:true } ] },
     window: { mount:'center', items:[
       { id:'window_01', ko:'창문',        en:'Window',          rot:0, fit:['h',1.2], thick:0.11 },
       { id:'window_02', ko:'미닫이 창',   en:'Sliding window',  rot:0, fit:['h',1.2], thick:0.11 },

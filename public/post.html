@@ -820,6 +820,10 @@
     return { w: w, d: d };
   }
 
+  // 문 상태: 0=닫힘, 1=안쪽으로 열기(방 안쪽, 예전 true와 동일), 2=바깥쪽으로 열기
+  function ohDoorState(v){ return (v === 2 || v === '2') ? 2 : ((v === true || v === 1 || v === '1') ? 1 : 0); }
+  function ohDoorAngle(v){ var s = ohDoorState(v); return s === 1 ? -(Math.PI / 2) * 0.82 : (s === 2 ? (Math.PI / 2) * 0.82 : 0); }
+  function ohDoorLabel(v){ var s = ohDoorState(v); return s === 1 ? '안쪽으로 열기' : (s === 2 ? '바깥쪽으로 열기' : '닫기'); }
   function ohMountRoomScene(container, wallData, furnitureList, opts){
     opts = opts || {};
     var interactive = opts.interactive === true;
@@ -1151,10 +1155,10 @@
         (function(grp, fv, col, hasCol, isDoor, doorOpen, bs, isWallCenter){
           OH_GLB.load(fv).then(function(r){
             if (hasCol) r.root.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(col); });
-            if (isDoor && r.hinge && doorOpen) r.hinge.rotation.y = -(Math.PI/2) * 0.82;
+            if (isDoor && r.hinge && doorOpen) r.hinge.rotation.y = ohDoorAngle(doorOpen);
             grp.add(r.root);
           }).catch(function(){ grp.add(buildPart(new THREE.BoxGeometry(bs.w, bs.h, bs.d), 0xc9c2b4, 0, (isWallCenter ? 0 : bs.h/2), 0)); });   // 불러오기 실패 시 상자로 대체
-        })(group, f.variant, c, !!f.color, type === "door", !!f.doorOpen, baseSize, type === "window" || type === "outlet" || type === "walltv");
+        })(group, f.variant, c, !!f.color, type === "door", ohDoorState(f.doorOpen), baseSize, type === "window" || type === "outlet" || type === "walltv");
       } else if (type === "sofa"){
         group.add(buildPart(new THREE.BoxGeometry(1.55,.38,.72), c, 0,.28,0));
         group.add(buildPart(new THREE.BoxGeometry(1.55,.52,.16), c, 0,.68,.28));
@@ -1179,7 +1183,7 @@
         doorHinge.position.set(-.39, 0, 0);
         doorHinge.add(buildPart(new THREE.BoxGeometry(.78,2.0,.045), c, .39,1.0,0));
         doorHinge.add(buildPart(new THREE.SphereGeometry(.03,8,8), 0x2b2b2b, .72,1.0,.05));
-        if (f.doorOpen) doorHinge.rotation.y = -(Math.PI/2) * 0.82;
+        if (f.doorOpen) doorHinge.rotation.y = ohDoorAngle(f.doorOpen);
         group.add(doorHinge);
         baseSize = { w:.9, d:.16, h:2.05 };
       } else if (type === "window"){

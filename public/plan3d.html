@@ -2229,6 +2229,10 @@
   /* ============ 3. three.js 3D 벽 렌더링 ============ */
   var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // 문 상태: 0=닫힘, 1=안쪽으로 열기(방 안쪽, 예전 true와 동일), 2=바깥쪽으로 열기
+  function ohDoorState(v){ return (v === 2 || v === '2') ? 2 : ((v === true || v === 1 || v === '1') ? 1 : 0); }
+  function ohDoorAngle(v){ var s = ohDoorState(v); return s === 1 ? -(Math.PI / 2) * 0.82 : (s === 2 ? (Math.PI / 2) * 0.82 : 0); }
+  function ohDoorLabel(v){ var s = ohDoorState(v); return s === 1 ? '안쪽으로 열기' : (s === 2 ? '바깥쪽으로 열기' : '닫기'); }
   function createWallScene(container, plan, opts){
     opts = opts || {};
     if (!window.THREE){
@@ -2346,7 +2350,7 @@
       var g2 = gaps.map(function(g){ return { from: g.from+ext, to: g.to+ext, bottom: g.bottom, top: g.top, arch: g.arch }; });
       var floorNotches = [], ceilNotches = [], holes = [];
       g2.forEach(function(g){
-        if (g.bottom <= 0.01) floorNotches.push({ from: g.from, to: g.to, top: Math.min(g.top, wallHeight - 0.02) });
+        if (g.bottom <= 0.01) floorNotches.push({ from: g.from, to: g.to, top: Math.min(g.top, wallHeight - 0.02), arch: !!g.arch });
         else if (g.top >= wallHeight - 0.01) ceilNotches.push({ from: g.from, to: g.to, bottom: Math.max(g.bottom, 0.02) });
         else holes.push(g);
       });
@@ -2357,8 +2361,14 @@
       shape.moveTo(0, 0);
       floorNotches.forEach(function(g){
         shape.lineTo(g.from, 0);
-        shape.lineTo(g.from, g.top);
-        shape.lineTo(g.to, g.top);
+        var nar = (g.to - g.from) / 2;
+        if (g.arch && g.top > nar + 0.05){        // 아치 문: 위쪽을 반원으로 파냄
+          shape.lineTo(g.from, g.top - nar);
+          shape.absarc((g.from + g.to) / 2, g.top - nar, nar, Math.PI, 0, true);
+        } else {
+          shape.lineTo(g.from, g.top);
+          shape.lineTo(g.to, g.top);
+        }
         shape.lineTo(g.to, 0);
       });
       shape.lineTo(extLen, 0);
@@ -2606,7 +2616,7 @@
         group.add(r.root);
         if (type === 'door' && r.hinge){
           group.userData.doorHinge = r.hinge;
-          r.hinge.rotation.y = group.userData.doorOpen ? -(Math.PI / 2) * 0.82 : 0;
+          r.hinge.rotation.y = ohDoorAngle(group.userData.doorOpen);
         }
         if (group.userData.glbColor != null) glbPaint(group, group.userData.glbColor);
         if (group === selectedFurniture && !revAny) group.traverse(function(n){ if (n.isMesh && n.material && n.material.emissive) n.material.emissive.setHex(0x4a2600); });
@@ -2682,7 +2692,7 @@
         doorHinge.add(doorPanel, doorKnob);
         group.add(doorHinge);
         group.userData.doorHinge = doorHinge;
-        group.userData.doorOpen = false;
+        group.userData.doorOpen = 0;
       } else if (type === 'window'){
         // 유리를 채우지 않고 테두리(위/아래/좌/우 얇은 띠)만 만들어서 가운데는 완전히 뚫려있게 함
         // — 벽 자체도 이 창문 높이만큼 실제로 뚫려 있어서(computeWallOpenings), 창틀 사이로 뒤쪽이
@@ -2749,7 +2759,7 @@
 
       group.userData.baseSize = glbD ? { w:glbD.w, d:glbD.d, h:glbD.h } : THREE_DEF_SIZE(type);
       group.userData.variant = glbId || null;
-      if (glbId && type === 'door') group.userData.doorOpen = false;
+      if (glbId && type === 'door') group.userData.doorOpen = 0;
       group.userData.roomScale = roomScale;
       group.userData.size = {
         w: group.userData.baseSize.w * roomScale,
@@ -3324,7 +3334,8 @@
       }
       var doorBtn = rotatePanel.querySelector('.door-toggle-btn');
       if (doorBtn && selectedFurniture){
-        doorBtn.textContent = selectedFurniture.userData.doorOpen ? '🚪 닫기' : '🚪 열기';
+        var ds = ohDoorState(selectedFurniture.userData.doorOpen);
+        doorBtn.textContent = ds === 0 ? '🚪 안쪽으로 열기' : (ds === 1 ? '🚪 바깥쪽으로 열기' : '🚪 닫기');
       }
     }
     function rotateBy(deltaDeg){
@@ -3408,9 +3419,10 @@
     // 것처럼 보이게 함(문틀은 그대로 고정).
     function toggleDoorOpen(){
       if (!selectedFurniture || selectedFurniture.userData.type !== 'door' || !selectedFurniture.userData.doorHinge) return;
-      var open = !selectedFurniture.userData.doorOpen;
-      selectedFurniture.userData.doorOpen = open;
-      selectedFurniture.userData.doorHinge.rotation.y = open ? -(Math.PI/2) * 0.82 : 0;
+      // 닫힘 → 안쪽으로 열기 → 바깥쪽으로 열기 → 닫힘
+      var next = (ohDoorState(selectedFurniture.userData.doorOpen) + 1) % 3;
+      selectedFurniture.userData.doorOpen = next;
+      selectedFurniture.userData.doorHinge.rotation.y = ohDoorAngle(next);
     }
     // 버튼을 짧게 클릭하면 한 번만, 누르고 있으면 떼기 전까지 계속 반복 실행 — 방향키(이동 패드)에
     // 씀. 처음 누르면 바로 한 번 실행되고, 잠깐(HOLD_DELAY) 눌린 채로 있으면 그때부터 일정 간격
@@ -4162,7 +4174,7 @@
       //    가구의 색상 팝업(furnitureColorPanel)이 뜨고, 삭제 버튼을 누르면 바로 그 가구를 지움.
       rotatePanel = document.createElement('div');
       rotatePanel.className = 'furniture-rotate-panel';
-      rotatePanel.innerHTML = '<div class="panel-grip" title="끌어서 팝업 옮기기 (더블클릭: 원래 위치)" aria-label="팝업 옮기기"></div><div class="handle-row"><button type="button" class="handle-btn" data-rotate="-1" aria-label="왼쪽으로 15도 회전">↺</button><button type="button" class="handle-btn" data-rotate="1" aria-label="오른쪽으로 15도 회전">↻</button></div><div class="handle-lower-row"><div class="handle-left-col"><button type="button" class="furniture-color-toggle" aria-label="가구 색상 변경" title="가구 색상 변경"></button><button type="button" class="furniture-delete-btn" aria-label="가구 삭제" title="가구 삭제">🗑️</button><button type="button" class="furniture-reason-btn" aria-label="변경 이유 남기기" title="변경 이유 남기기">💬</button><button type="button" class="door-toggle-btn" aria-label="문 열기/닫기" title="문 열기/닫기">🚪 열기</button></div><div class="nudge-pad"><button type="button" class="nudge-btn" data-dir="up" aria-label="위로 이동">↑</button><div class="nudge-mid"><button type="button" class="nudge-btn" data-dir="left" aria-label="왼쪽으로 이동">←</button><button type="button" class="nudge-btn" data-dir="right" aria-label="오른쪽으로 이동">→</button></div><button type="button" class="nudge-btn" data-dir="down" aria-label="아래로 이동">↓</button></div></div>';
+      rotatePanel.innerHTML = '<div class="panel-grip" title="끌어서 팝업 옮기기 (더블클릭: 원래 위치)" aria-label="팝업 옮기기"></div><div class="handle-row"><button type="button" class="handle-btn" data-rotate="-1" aria-label="왼쪽으로 15도 회전">↺</button><button type="button" class="handle-btn" data-rotate="1" aria-label="오른쪽으로 15도 회전">↻</button></div><div class="handle-lower-row"><div class="handle-left-col"><button type="button" class="furniture-color-toggle" aria-label="가구 색상 변경" title="가구 색상 변경"></button><button type="button" class="furniture-delete-btn" aria-label="가구 삭제" title="가구 삭제">🗑️</button><button type="button" class="furniture-reason-btn" aria-label="변경 이유 남기기" title="변경 이유 남기기">💬</button><button type="button" class="door-toggle-btn" aria-label="문 열기/닫기" title="문 열기/닫기">🚪 안쪽으로 열기</button></div><div class="nudge-pad"><button type="button" class="nudge-btn" data-dir="up" aria-label="위로 이동">↑</button><div class="nudge-mid"><button type="button" class="nudge-btn" data-dir="left" aria-label="왼쪽으로 이동">←</button><button type="button" class="nudge-btn" data-dir="right" aria-label="오른쪽으로 이동">→</button></div><button type="button" class="nudge-btn" data-dir="down" aria-label="아래로 이동">↓</button></div></div>';
       // 손잡이를 끌면 팝업이 그만큼 옮겨짐 — 위치는 가구 기준 상대값(rotatePanelOffset)이라 가구/카메라가 움직여도
       // 같은 간격으로 따라다님. 더블클릭하면 기본 위치로 복귀.
       (function(){
@@ -5385,7 +5397,7 @@
       if (selectedFurniture){
         if (readOnly) return '💡 F를 누르면 선택한 가구로 카메라가 다가가요';
         var ht = selectedFurniture.userData.type;
-        if (ht === 'door') return '💡 "🚪 열기" 버튼으로 문을 열고 닫아보세요';
+        if (ht === 'door') return '💡 문 버튼으로 안쪽·바깥쪽으로 열고 닫아보세요';
         if (ht === 'window') return '💡 창문은 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
         if (ht === 'outlet') return '💡 콘센트는 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
         if (ht === 'walltv') return '💡 벽걸이 TV는 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
@@ -5622,7 +5634,7 @@
       }
       var dims = f.userData.size || { w:.6, d:.6, h:.6 };
       return { x:r4(f.position.x), y:r4(f.position.y), z:r4(f.position.z), rotY:r4(f.rotation.y), w:r4(dims.w), d:r4(dims.d), h:r4(dims.h),
-        color: colorHex, doorOpen: !!f.userData.doorOpen, variant: f.userData.variant || null,
+        color: colorHex, doorOpen: ohDoorState(f.userData.doorOpen), variant: f.userData.variant || null,
         wallIndex: f.userData.wallIndex != null ? f.userData.wallIndex : null, wallAlong: f.userData.wallAlong != null ? r4(f.userData.wallAlong) : null };
     }
     function revAngDiff(a, b){ return ((a - b) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI; }
@@ -5630,7 +5642,7 @@
       if (!a || !b) return a === b;
       function n(x, y){ return Math.abs((x || 0) - (y || 0)) < 0.004; }
       return n(a.x, b.x) && n(a.y, b.y) && n(a.z, b.z) && Math.abs(revAngDiff(a.rotY, b.rotY)) < 0.003 &&
-        n(a.w, b.w) && n(a.d, b.d) && n(a.h, b.h) && (a.color || '') === (b.color || '') && !!a.doorOpen === !!b.doorOpen && (a.variant || null) === (b.variant || null);
+        n(a.w, b.w) && n(a.d, b.d) && n(a.h, b.h) && (a.color || '') === (b.color || '') && ohDoorState(a.doorOpen) === ohDoorState(b.doorOpen) && (a.variant || null) === (b.variant || null);
     }
     function revApplySnap(g, s){
       if (s.variant && s.variant !== g.userData.variant && glbDims(s.variant)){      // 모양이 다른 상태로 되돌릴 때
@@ -5649,8 +5661,8 @@
         if (g.userData.variant) g.userData.glbColor = hx;
       }
       if (type === 'door'){
-        g.userData.doorOpen = !!s.doorOpen;
-        if (g.userData.doorHinge) g.userData.doorHinge.rotation.y = s.doorOpen ? -(Math.PI / 2) * 0.82 : 0;
+        g.userData.doorOpen = ohDoorState(s.doorOpen);
+        if (g.userData.doorHinge) g.userData.doorHinge.rotation.y = ohDoorAngle(s.doorOpen);
       }
       if (g.userData.isWallItem && (type === 'door' || type === 'window') && furniture.indexOf(g) >= 0){
         if (s.wallIndex != null) rebuildWallAt(s.wallIndex);
@@ -5695,7 +5707,7 @@
     function revNormSnap(it){
       var d = THREE_DEF_SIZE(it.type);
       return { x:revNum(it.x), y:revNum(it.y), z:revNum(it.z), rotY:revNum(it.rotY), w:(it.w > 0 ? it.w : d.w), d:(it.d > 0 ? it.d : d.d), h:(it.h > 0 ? it.h : d.h),
-        color: it.color || null, doorOpen: !!it.doorOpen, variant: (typeof it.variant === 'string' && it.variant) ? it.variant : null, wallIndex: it.wallIndex != null ? it.wallIndex : null, wallAlong: it.wallAlong != null ? it.wallAlong : null };
+        color: it.color || null, doorOpen: ohDoorState(it.doorOpen), variant: (typeof it.variant === 'string' && it.variant) ? it.variant : null, wallIndex: it.wallIndex != null ? it.wallIndex : null, wallAlong: it.wallAlong != null ? it.wallAlong : null };
     }
     function THREE_DEF_SIZE(type){
       return type === 'sofa' ? {w:1.55,d:.72,h:.94} : type === 'table' ? {w:1.04,d:1.04,h:.66} : type === 'bed' ? {w:1.5,d:2.0,h:.88} :
@@ -6053,7 +6065,7 @@
       if ((a.variant || null) !== (b.variant || null)) parts.push('모양 변경');
       if ((a.color || '') !== (b.color || '')) parts.push('색 변경');
       if (Math.abs(a.w - b.w) > 0.01 || Math.abs(a.d - b.d) > 0.01 || Math.abs(a.h - b.h) > 0.01) parts.push('크기 변경');
-      if (!!a.doorOpen !== !!b.doorOpen) parts.push(b.doorOpen ? '열기' : '닫기');
+      if (ohDoorState(a.doorOpen) !== ohDoorState(b.doorOpen)) parts.push(ohDoorLabel(b.doorOpen));
       return parts.join(' · ') || '변경';
     }
     function revHex6(n){ return '#' + ('000000' + (n >>> 0).toString(16)).slice(-6); }
@@ -6632,7 +6644,7 @@
             }
           });
           var dims = f.userData.size || { w:.6, d:.6, h:.6 };
-          return { type: f.userData.type, variant: f.userData.variant || null, x: f.position.x, y: f.position.y, z: f.position.z, rotY: f.rotation.y, w: dims.w, d: dims.d, h: dims.h, color: colorHex, doorOpen: !!f.userData.doorOpen, wallIndex: (f.userData.wallIndex != null ? f.userData.wallIndex : null), wallAlong: (f.userData.wallAlong != null ? f.userData.wallAlong : null) };
+          return { type: f.userData.type, variant: f.userData.variant || null, x: f.position.x, y: f.position.y, z: f.position.z, rotY: f.rotation.y, w: dims.w, d: dims.d, h: dims.h, color: colorHex, doorOpen: ohDoorState(f.userData.doorOpen), wallIndex: (f.userData.wallIndex != null ? f.userData.wallIndex : null), wallAlong: (f.userData.wallAlong != null ? f.userData.wallAlong : null) };
         });
       },
       getBounds: function(){ return { w: b.w, d: b.d }; },
