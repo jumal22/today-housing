@@ -540,10 +540,10 @@
     '.oh-lang-btn:hover,.oh-lang-btn[aria-expanded="true"]{color:var(--ink,#23262B);border-color:var(--ink-soft,#5B6169)}' +
     '.oh-lang-btn:focus-visible{outline:2px solid var(--focus,#C4703F);outline-offset:2px}' +
     '.oh-lang-btn svg{display:block}' +
-    '.oh-lang-menu{position:absolute;top:calc(100% + 12px);right:0;z-index:300;min-width:176px;padding:8px;' +
+    '.oh-lang-menu{position:absolute;top:calc(100% + 12px);left:0;z-index:300;min-width:176px;padding:8px;' +
       'background:var(--paper-raised,#fff);border:1px solid var(--line,#DAD3C3);border-radius:16px;' +
       'box-shadow:0 14px 36px -14px var(--shadow,rgba(0,0,0,.35));' +
-      'transform-origin:top right;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px) scale(.9);' +
+      'transform-origin:top center;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px) scale(.9);' +
       'transition:opacity .16s ease,transform .18s ease,visibility 0s linear .18s}' +
     '.oh-lang-menu.open{opacity:1;visibility:visible;pointer-events:auto;transform:none;' +
       'transition:opacity .18s ease,transform .38s cubic-bezier(.34,1.56,.64,1),visibility 0s}' +
@@ -556,8 +556,7 @@
     '.oh-lang-item[aria-checked="true"]{font-weight:600}' +
     '.oh-lang-item .chk{display:inline-flex;opacity:0;color:var(--terra,#C4703F)}' +
     '.oh-lang-item[aria-checked="true"] .chk{opacity:1}' +
-    '@media (max-width:500px){.oh-lang-menu{right:-8px}}' +
-    '.comment-trans-all{appearance:none;cursor:pointer;font:inherit;font-size:.78rem;font-weight:600;line-height:1.4;margin-left:6px;padding:3px 11px;' +
+        '.comment-trans-all{appearance:none;cursor:pointer;font:inherit;font-size:.78rem;font-weight:600;line-height:1.4;margin-left:6px;padding:3px 11px;' +
       'border-radius:100px;border:1px solid var(--line,#DAD3C3);background:var(--paper-raised,#fff);color:var(--blueprint,var(--ink-soft,#5B6169));align-self:center}' +
     '.comment-trans-all:hover:not(:disabled){border-color:var(--blueprint,var(--ink-soft,#5B6169))}' +
     '.comment-trans-all:disabled{cursor:default;opacity:.75}' +
@@ -577,8 +576,20 @@
   var CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   var wrap = null, btn = null, menu = null;
+  // 메뉴는 아이콘 바로 아래 가운데에 펼치되, 화면 양쪽 끝을 넘으면 그만큼만 안쪽으로 당긴다
+  function placeMenu() {
+    menu.style.left = '0px';
+    var w = menu.offsetWidth, r = wrap.getBoundingClientRect();
+    var vw = document.documentElement.clientWidth, pad = 10;
+    var left = (r.width - w) / 2;
+    var abs = r.left + left;
+    if (abs + w > vw - pad) left -= abs + w - (vw - pad);
+    if (r.left + left < pad) left = pad - r.left;
+    menu.style.left = left + 'px';
+  }
   function openMenu(open) {
     if (!menu) return;
+    if (open) placeMenu();
     menu.classList.toggle('open', !!open);
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
