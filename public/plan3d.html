@@ -646,7 +646,7 @@
   }
   /* 가구를 끌 때 아래에서 올라오는 삭제 휴지통 */
   .drop-trash{
-    position:absolute; left:50%; bottom:128px; width:84px; height:84px; margin-left:-42px; z-index:11;
+    position:absolute; left:50%; bottom:158px; width:84px; height:84px; margin-left:-42px; z-index:11;
     border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:var(--paper-raised); border:2px solid var(--line); box-shadow:0 8px 22px var(--shadow);
     opacity:0; transform:translateY(240%) scale(.7); pointer-events:none;
@@ -686,7 +686,7 @@
   /* 포커스(F) / 노클립(V) 상태 표시 — 휴지통과 같은 자리에서 키캡이 올라왔다가, 해제되면 휴지통처럼 내려가며 사라짐.
      가구를 끌어 휴지통이 올라오면 이 키 표시가 위로 밀려나고, 튜토리얼 카드가 떠 있으면 그 카드 위에 얹힘. */
   .mode-keys{
-    position:absolute; left:50%; bottom:128px; width:0; height:92px; z-index:11; pointer-events:none;
+    position:absolute; left:50%; bottom:158px; width:0; height:92px; z-index:11; pointer-events:none;
     transition:bottom .4s cubic-bezier(.22,1,.36,1) .3s;
   }
   .mode-keys.up{ transition-delay:0s; transition-timing-function:cubic-bezier(.34,1.4,.64,1); }
@@ -861,7 +861,7 @@
   .oh-rev-vb-text strong{ color:var(--ink); font-size:.95rem; }
   .oh-rev-loading{ position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--paper) 82%, transparent); color:var(--ink-soft); font-size:.92rem; font-weight:600; }
   .oh-rev-tut{
-    position:absolute; left:50%; bottom:130px; transform:translateX(-50%); width:min(440px, calc(100% - 24px)); box-sizing:border-box; z-index:26;
+    position:absolute; left:50%; bottom:160px; transform:translateX(-50%); width:min(440px, calc(100% - 24px)); box-sizing:border-box; z-index:26;
     background:var(--paper-raised); border:1px solid var(--blueprint); border-radius:14px; padding:14px 16px 12px; box-shadow:0 10px 32px var(--shadow);
     animation:ohRevPop .22s cubic-bezier(.34,1.3,.64,1);
   }
@@ -890,7 +890,7 @@
   .oh-rev-ask .back-bubble-actions button[disabled]{ animation:none; opacity:.45; cursor:not-allowed; filter:none; }
   /* 문 가구를 선택했을 때만 나타나는 열기/닫기 토글 — 평소엔 숨겨두고(door-mode일 때만 보이게)
      삭제 버튼 옆에 나란히 둠. */
-  .door-toggle-btn{
+  .door-toggle-btn, .fx-toggle-btn{
     display:none; flex:none; align-items:center; justify-content:center; gap:2px;
     padding:3px 7px; border-radius:9px; cursor:pointer; white-space:nowrap;
     border:1px solid color-mix(in srgb, var(--blueprint) 45%, var(--line));
@@ -898,8 +898,20 @@
     color:var(--ink); font-size:.68rem; line-height:1.3;
     transition:transform .1s ease, background .1s ease;
   }
-  .door-toggle-btn:hover{ background:var(--blueprint-soft); transform:scale(1.05); }
+  .door-toggle-btn:hover, .fx-toggle-btn:hover{ background:var(--blueprint-soft); transform:scale(1.05); }
   .furniture-rotate-panel.door-mode .door-toggle-btn{ display:flex; }
+  /* 선풍기(천장/탁자)를 선택했을 때만 나타나는 켜기/끄기 토글 — 문 열기 버튼과 같은 자리·같은 모양 */
+  .furniture-rotate-panel.fx-mode .fx-toggle-btn{ display:flex; }
+  .fx-toggle-btn.on{ background:var(--blueprint-soft); border-color:var(--blueprint); }
+  /* 액자를 선택하면 색상 팝업에 나타나는 '그림 바꾸기' 줄 (벽지 이미지 버튼과 같은 🖼️ 아이콘) */
+  .furniture-color-panel .frame-image-row{ display:none; align-items:center; gap:6px; }
+  .furniture-color-panel.is-wallart .frame-image-row{ display:flex; }
+  .frame-image-label{ flex:1 1 auto; min-width:0; font-size:.68rem; color:var(--ink); line-height:1.25; }
+  .frame-image-reset{ display:none; flex:none; padding:2px 7px; border-radius:999px; font-size:.66rem; line-height:1.3; cursor:pointer;
+    border:1px solid var(--line); background:color-mix(in srgb, var(--paper) 85%, transparent); color:var(--ink); }
+  .frame-image-reset:hover{ border-color:var(--blueprint); }
+  .furniture-color-panel.has-img .frame-image-reset{ display:inline-block; }
+  .is-revise .frame-image-row, .is-rev-view .frame-image-row{ display:none !important; }
   /* 벽에만 붙는 아이템(창문/콘센트)은 회전이 항상 벽 방향으로 고정돼야 해서 회전 버튼 줄을
      아예 숨김 — 이동 패드(↑↓←→)는 그대로 두되 의미만 바꿔서 씀(상하=높이, 좌우=벽을 따라 이동). */
   .furniture-rotate-panel.wall-item-mode .handle-row{ display:none; }
@@ -1061,7 +1073,7 @@
   .oh-dialog-overlay input, .oh-dialog-overlay textarea{ -webkit-user-select:text; user-select:text; }
   /* ---------- 튜토리얼 카드 ---------- */
   .tut-card{
-    position:absolute; left:50%; bottom:130px; transform:translateX(-50%); z-index:30;
+    position:absolute; left:50%; bottom:160px; transform:translateX(-50%); z-index:30;
     width:min(460px, calc(100% - 24px)); padding:14px 16px 12px;
     background:var(--paper-raised); color:var(--ink);
     border:1.5px solid var(--blueprint); border-radius:14px; box-shadow:0 10px 30px var(--shadow);
@@ -1127,7 +1139,7 @@
   .sims-bottom-panel.tut-pulse{ outline-offset:-4px; }
   @keyframes tutPulse{ 0%,100%{ outline-color:transparent; } 50%{ outline-color:var(--blueprint); } }
   @media (prefers-reduced-motion:reduce){ .tut-pulse{ animation:none; outline-color:var(--blueprint); } }
-  @media (max-width:600px){ .tut-card{ bottom:122px; } .tut-text{ font-size:.86rem; } }
+  @media (max-width:600px){ .tut-card{ bottom:152px; } .tut-text{ font-size:.86rem; } }
 
   /* ---------- 가구 배치 화면 첫 입장 안내 팝업 ---------- */
   .tut-welcome-overlay{
@@ -1170,7 +1182,8 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 112px;
+    height: 142px;
+    container: simspanel / inline-size;
     background: var(--paper-raised);
     border-top: 2px solid var(--line);
     display: flex;
@@ -1192,9 +1205,35 @@
   @media (max-width:520px){ .sims-flyout{gap:6px; padding:8px;} .sims-var{width:64px;} .sims-var img{width:48px; height:48px;} }
   @keyframes simsFlyIn{ from{opacity:0; transform:translateY(10px) scale(.86);} to{opacity:1; transform:none;} }
   @keyframes simsFlyOut{ from{opacity:1; transform:none;} to{opacity:0; transform:translateY(8px) scale(.9);} }
+  .sims-btn.tab-in{ animation:simsBtnIn .26s cubic-bezier(.2,.9,.3,1.1) backwards; animation-delay:calc(var(--ti,0) * 32ms); }
+  @keyframes simsBtnIn{ from{opacity:0; transform:translateY(10px) scale(.92);} to{opacity:1; transform:none;} }
+  @media (prefers-reduced-motion:reduce){ .sims-btn.tab-in{ animation:none; } }
   @keyframes simsVarIn{ from{opacity:0; transform:translateX(var(--from-x,0px)) scale(.6);} to{opacity:1; transform:none;} }
   @media (prefers-reduced-motion:reduce){ .sims-var, .sims-flyout, .sims-flyout.closing{animation:none;} }
   .rev-locked .sims-flyout{ display:none; }
+  .sims-palette{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .sims-tabs{ flex:0 0 auto; display:flex; gap:4px; padding:8px 20px 0; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
+  .sims-tabs::-webkit-scrollbar{ display:none; }
+  .sims-tab{ appearance:none; flex:0 0 auto; padding:6px 14px 7px; margin-bottom:-1px; border:1px solid transparent; border-bottom:0; border-radius:8px 8px 0 0;
+    background:none; color:var(--ink-soft); font:inherit; font-size:.82rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .sims-tab:hover{ color:var(--ink); background:var(--blueprint-soft); }
+  .sims-tab.active{ color:var(--blueprint); background:var(--paper-raised); border-color:var(--line); box-shadow:inset 0 2px 0 var(--blueprint); }
+  .sims-tab:focus-visible{ outline:2px solid var(--blueprint); outline-offset:-2px; }
+  .sims-btn[hidden]{ display:none; }
+  .sims-btn span:last-child{ white-space:nowrap; letter-spacing:-.02em; }
+  /* 탭이 한 줄에 다 안 들어가면 오른쪽(또는 왼쪽) 끝을 흐리게 해서 '더 있다'는 걸 알려줌 */
+  .sims-tabs.more-r{ -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent); }
+  .sims-tabs.more-l{ -webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 34px),transparent); mask-image:linear-gradient(270deg,#000 calc(100% - 34px),transparent); }
+  .sims-tabs.more-l.more-r{ -webkit-mask-image:linear-gradient(90deg,transparent,#000 34px,#000 calc(100% - 34px),transparent); mask-image:linear-gradient(90deg,transparent,#000 34px,#000 calc(100% - 34px),transparent); }
+  /* 좁은 화면(팝업·모바일): 오른쪽 '배치 완료' 버튼 칸을 줄여서 팔레트에 자리를 더 줌 */
+  @container simspanel (max-width: 760px){
+    .sims-bottom-panel .sims-done{ padding:0 10px; }
+    .sims-bottom-panel .sims-action-btn{ min-width:104px; padding:0 8px; font-size:.78rem; }
+    .sims-bottom-panel .sims-tabs{ padding:6px 10px 0; gap:2px; }
+    .sims-bottom-panel .sims-tab{ padding:6px 10px 7px; font-size:.78rem; }
+    .sims-bottom-panel .sims-items{ padding:10px 12px; gap:10px; }
+  }
+  .rev-locked .sims-tabs{ pointer-events:none; opacity:.45; }
   .sims-items {
     flex: 1;
     padding: 12px 20px;
@@ -1205,7 +1244,9 @@
   }
   .sims-btn {
     appearance: none;
-    width: 70px;
+    flex: 0 0 auto;
+    min-width: 70px;
+    padding: 0 8px;
     height: 70px;
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -1287,7 +1328,7 @@
   @media (prefers-reduced-motion: reduce){ .back-bubble, .back-bubble-actions button{ animation:none; } }
   /* 하단 패널이 있을 때 캔버스 힌트 위치 조정 */
   .modal.furniture-fullscreen .canvas-hint {
-    bottom: 126px;
+    bottom: 156px;
   }
 
   /* ---------- 화면 전환 애니메이션 (팝업/단계 이동을 뚝뚝 끊기지 않고 부드럽게) ----------
@@ -1982,6 +2023,13 @@
           }
           row.wall_image_paths = paths;
         }
+        if (o.frameImages && o.frameImages.some(function(x){ return !!x; })){
+          // 액자 그림: 가구 목록 순서대로 올리고, 해당 가구 항목에 imgPath 로 경로를 남김
+          row.furniture = (o.furniture || []).map(function(f){ return Object.assign({}, f); });
+          for (var fi = 0; fi < o.frameImages.length; fi++){
+            if (o.frameImages[fi] && row.furniture[fi]) row.furniture[fi].imgPath = await upload("frame-" + fi, o.frameImages[fi]);
+          }
+        }
       } else {
         row.author_name = (o.author || "익명").slice(0, 12);
         row.guest_pw = o.guestPw || null;
@@ -2569,8 +2617,14 @@
     var wallDragPlane = new THREE.Plane();
     var wallDragState = null;
     var furnitureColors = { sofa:0xc98f72, table:0x9a704d, bed:0x90a8bb, plant:0x5c8d61, door:0x8a5a34, window:0xdfeff5, outlet:0xf1efe9, walltv:0x2b2b2b, tv:0x2b2b2b, floorlamp:0xe9dcb8, tablelamp:0xe9dcb8, ceilinglight:0xe9dcb8 };
-    var WALL_ITEM_TYPES = { window:true, outlet:true, door:true, walltv:true };
-    var WALL_ITEM_DEFAULT_WIDTH = { door:0.9, window:1.2, outlet:0.11, walltv:1.2 };
+    var WALL_ITEM_TYPES = { window:true, outlet:true, door:true, walltv:true, walldeco:true, aircon:true, wallart:true };
+    // 벽 장식처럼 벽에 붙고 ↑↓로 높이를 조절하는 종류(구멍 없음)
+    var WALLDECO_LIKE = { walldeco:true, aircon:true, wallart:true };
+    // 벽 장식(거울·수건걸이 등)을 처음 놓을 때의 중심 높이(m) — 모양마다 다름
+    var WALLDECO_H = { walldeco_01:1.45, walldeco_02:1.45, walldeco_03:1.05, walldeco_04:1.55, aircon_01:2.0, aircon_02:2.0, aircon_03:2.0, wallart_01:1.5, wallart_02:1.5, wallart_03:1.5, wallart_04:1.5, wallart_05:1.5, wallart_06:1.5 };
+    // 화분·탁상등·TV 를 올려놓을 수 있는 가구(표면) 종류
+    var SURFACE_TYPES = { table:true, desk:true, nightstand:true, drawer:true, roundtable:true, kitchen:true, counter:true };
+    var WALL_ITEM_DEFAULT_WIDTH = { door:0.9, window:1.2, outlet:0.11, walltv:1.2, walldeco:0.6, aircon:0.85, wallart:0.6 };
     var ROTATE_STEP_DEG = 15, NUDGE_STEP = 0.08, MOVE_ARROW_STEP = 0.05;
 
     var furnitureColorPicker;
@@ -2590,6 +2644,7 @@
     function glbClear(group){
       for (var i = group.children.length - 1; i >= 0; i--) group.remove(group.children[i]);
       group.userData.doorHinge = null;
+      group.userData.spin = null; group.userData.hasSpin = false; group.userData.fire = null; group.userData.hasFire = false;
     }
     function glbPaint(group, hex){
       group.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(hex); });
@@ -2607,7 +2662,7 @@
       var type = group.userData.type, tok = group.userData.glbTok = (group.userData.glbTok || 0) + 1;
       var d0 = glbDims(id);
       // 불러오는 동안에도 클릭되도록 눈에 안 보이는 히트 박스를 먼저 깔아둠(창문은 계속 유지: 유리 부분이 비어 있어서)
-      var hit = furniturePart(new THREE.BoxGeometry(d0.w, d0.h, d0.d), 0xffffff, 0, type === 'window' || type === 'outlet' || type === 'walltv' ? 0 : (type === 'ceilinglight' ? -d0.h / 2 : d0.h / 2), 0, false);
+      var hit = furniturePart(new THREE.BoxGeometry(d0.w, d0.h, d0.d), 0xffffff, 0, type === 'window' || type === 'outlet' || type === 'walltv' || WALLDECO_LIKE[type] ? 0 : (type === 'ceilinglight' ? -d0.h / 2 : d0.h / 2), 0, false);
       hit.material.transparent = true; hit.material.opacity = 0; hit.material.depthWrite = false;
       glbClear(group); group.add(hit);
       OH_GLB.load(id).then(function(r){
@@ -2618,9 +2673,12 @@
           group.userData.doorHinge = r.hinge;
           r.hinge.rotation.y = ohDoorAngle(group.userData.doorOpen);
         }
+        if (r.spin){ group.userData.spin = r.spin; group.userData.hasSpin = true; }
+        if (r.fire){ group.userData.fire = r.fire; group.userData.hasFire = true; }
+        if (group.userData.imgTex) frameApplyImage(group);
         if (group.userData.glbColor != null) glbPaint(group, group.userData.glbColor);
         if (group === selectedFurniture && !revAny) group.traverse(function(n){ if (n.isMesh && n.material && n.material.emissive) n.material.emissive.setHex(0x4a2600); });
-        if (group === selectedFurniture) syncColorFromSelected();
+        if (group === selectedFurniture){ syncColorFromSelected(); syncRotatePanel(); }
       }).catch(function(){ if (group.userData.glbTok === tok) glbFallback(group); });
     }
     function syncColorFromSelected(){
@@ -2717,6 +2775,10 @@
         group.add(furniturePart(new THREE.BoxGeometry(.016,.016,.012),0x2b2b2b,.022,.014,.014, false));
       } else if (type === 'walltv'){
         group.add(furniturePart(new THREE.BoxGeometry(1.2,.7,.06),0x2b2b2b,0,0,0, false));
+      } else if (type === 'walldeco' || type === 'wallart'){
+        group.add(furniturePart(new THREE.BoxGeometry(.6,.8,.05),0x9aa6ad,0,0,0));
+      } else if (type === 'aircon'){
+        group.add(furniturePart(new THREE.BoxGeometry(.85,.27,.2),0xe9edf0,0,0,0));
       } else if (type === 'tv'){
         group.add(furniturePart(new THREE.BoxGeometry(1.1,.64,.06),0x2b2b2b,0,.62,0, false));
         group.add(furniturePart(new THREE.BoxGeometry(.5,.03,.2),0x555555,0,.3,0, false));
@@ -2750,8 +2812,8 @@
       var rawScale = Math.max(b.w, b.d) / 9.0;
       var roomScale = 1 + (rawScale - 1) * 0.35;
       if (roomScale <= 0.2) roomScale = 0.2;
-      if (type === 'door' || type === 'window' || type === 'outlet' || type === 'walltv') roomScale = 1;
-      if (type === 'tv' || type === 'floorlamp' || type === 'tablelamp' || type === 'ceilinglight') roomScale = Math.min(roomScale, 1.15) < 0.6 ? 0.6 : Math.min(roomScale, 1.15);
+      if (type === 'door' || type === 'window' || type === 'outlet' || type === 'walltv' || WALLDECO_LIKE[type]) roomScale = 1;
+      if (type === 'tv' || type === 'floorlamp' || type === 'tablelamp' || type === 'ceilinglight' || type === 'smallapp') roomScale = Math.min(roomScale, 1.15) < 0.6 ? 0.6 : Math.min(roomScale, 1.15);
 
       group.userData.isFurniture = true;
       group.userData.type = type;
@@ -3072,8 +3134,8 @@
       var type = obj.userData.type;
       // 문/창문은 이제 벽에 실제로 구멍이 뚫리므로 그 구멍 한가운데(벽 중심선)에 놓고,
       // 콘센트는 구멍 없이 벽 표면에 붙어야 해서 두께 절반만큼 방 안쪽으로 내밈.
-      var embed = type === 'outlet' ? Math.max(w.thickness/2 - 0.005, 0.02) : (type === 'walltv' ? w.thickness/2 + ((obj.userData.size && obj.userData.size.d) || 0.12)/2 - 0.005 : 0);
-      var defaultH = type === 'outlet' ? 0.32 : (type === 'door' ? 0 : (type === 'walltv' ? 1.15 : 1.05));
+      var embed = type === 'outlet' ? Math.max(w.thickness/2 - 0.005, 0.02) : ((type === 'walltv' || WALLDECO_LIKE[type]) ? w.thickness/2 + ((obj.userData.size && obj.userData.size.d) || 0.12)/2 - 0.005 : 0);
+      var defaultH = type === 'outlet' ? 0.32 : (type === 'door' ? 0 : (type === 'walltv' ? 1.15 : (WALLDECO_LIKE[type] ? (WALLDECO_H[obj.userData.variant] || 1.3) : 1.05)));
       var y = type === 'door' ? 0 : (height == null ? defaultH : height);
       obj.position.set(cx + nx*embed, y, cz + nz*embed);
       obj.rotation.y = -Math.atan2(uz, ux);
@@ -3138,7 +3200,7 @@
       var ux = dx/wallLen, uz = dz/wallLen;
       var t = ((hitPoint.x-w.x1)*ux + (hitPoint.z-w.y1)*uz) / wallLen;
       // 놓는 높이는 포인터가 가리킨 높이(문은 항상 바닥) — 창문 아래에 콘센트를 놓는 것처럼 높이가 다르면 겹침이 아님
-      var gd = glbDims(variantId || glbDefaultId(type)), newH = (gd && gd.h) || ({ door:2.05, window:1.1, outlet:0.075, walltv:0.7 }[type] || 0.3), newW = (gd && gd.w) || WALL_ITEM_DEFAULT_WIDTH[type];
+      var gd = glbDims(variantId || glbDefaultId(type)), newH = (gd && gd.h) || ({ door:2.05, window:1.1, outlet:0.075, walltv:0.7, walldeco:0.8, aircon:0.27, wallart:0.8 }[type] || 0.3), newW = (gd && gd.w) || WALL_ITEM_DEFAULT_WIDTH[type];
       var newY = type === 'door' ? 0 : Math.min(Math.max(hitPoint.y, newH/2), wallHeight - newH/2 - 0.02);
       var newSpan = wallItemYSpan(type, newY, newH);
       var newRange = wallAlongRange(idx, newW);
@@ -3183,8 +3245,8 @@
     var rotatePanelOffset = { x:0, y:0 }; // 팝업을 손잡이로 직접 옮긴 만큼의 화면 오프셋(가구 기준 상대 위치)
     var wallColorPanel, wallColorPicker;
     var furnitureColorPanel, furnitureColorToggleBtn;
-    var FURNITURE_TYPE_LABELS = { sofa:'소파', table:'테이블', bed:'침대', plant:'식물', door:'문', window:'창문', outlet:'콘센트', tv:'TV', floorlamp:'스탠드', tablelamp:'탁상등', ceilinglight:'천장등', walltv:'벽걸이TV' };
-    var FLOOR_TYPES = ['sofa','table','bed','plant','tv','floorlamp','tablelamp','ceilinglight'];
+    var FURNITURE_TYPE_LABELS = { sofa:'소파', table:'테이블', bed:'침대', plant:'식물', door:'문', window:'창문', outlet:'콘센트', tv:'TV', floorlamp:'스탠드', tablelamp:'탁상등', ceilinglight:'천장등', walltv:'벽걸이TV', chair:'의자', stool:'스툴·벤치', desk:'책상', nightstand:'협탁', bookcase:'책장·선반', drawer:'서랍장', couch:'소파 (패브릭)', roundtable:'작은 테이블', toilet:'변기', bathtub:'욕조·샤워', bathsink:'세면대', fridge:'냉장고', kitchen:'싱크·조리대', counter:'조리대·수납', laundry:'세탁기', smallapp:'소형 가전', rug:'러그', trash:'쓰레기통', ornament:'소품', walldeco:'벽 장식', wardrobe:'옷장', mirror:'전신거울', climate:'공기·난방', aircon:'에어컨', wallart:'액자·그림', standac:'스탠드 에어컨' };
+    var FLOOR_TYPES = ['sofa','table','bed','plant','tv','floorlamp','tablelamp','ceilinglight','chair','stool','desk','nightstand','bookcase','drawer','couch','roundtable','toilet','bathtub','bathsink','fridge','kitchen','counter','laundry','smallapp','rug','trash','ornament','wardrobe','mirror','climate','standac'];
     function syncSizePanel(){
       if (!sizePanel) return;
       var item=selectedFurniture;
@@ -3286,7 +3348,7 @@
       for (var i = furniture.length - 1; i >= 0; i--){
         var f = furniture[i];
         if (f === excludeObj || f.position.y > 0.02 || f.userData.isWallItem) continue;
-        if (allowedTargetType && f.userData.type !== allowedTargetType) continue;
+        if (allowedTargetType && (typeof allowedTargetType === 'string' ? f.userData.type !== allowedTargetType : !allowedTargetType[f.userData.type])) continue;
         var dims = f.userData.size || {w:.6,d:.6,h:.6};
         var cosR = Math.cos(f.rotation.y), sinR = Math.sin(f.rotation.y);
         var dx = px - f.position.x, dz = pz - f.position.z;
@@ -3303,8 +3365,8 @@
     function applyFurnitureStacking(obj){
       var ot = obj.userData.type;
       if (ot === 'ceilinglight'){ obj.position.y = wallHeight; return; }
-      if (ot !== 'plant' && ot !== 'tablelamp' && ot !== 'tv'){ obj.position.y = 0; return; }
-      var target = furnitureUnderPoint(obj.position.x, obj.position.z, obj, 'table');
+      if (ot !== 'plant' && ot !== 'tablelamp' && ot !== 'tv' && ot !== 'smallapp'){ obj.position.y = 0; return; }
+      var target = furnitureUnderPoint(obj.position.x, obj.position.z, obj, SURFACE_TYPES);
       obj.position.y = target ? target.position.y + target.userData.size.h : 0;
     }
     function syncRotatePanel(){
@@ -3315,6 +3377,15 @@
       var isDoor = !!(selectedFurniture && selectedFurniture.userData.type === 'door');
       rotatePanel.classList.toggle('wall-item-mode', isWall);
       rotatePanel.classList.toggle('door-mode', isDoor);
+      var isFan = !!(selectedFurniture && (selectedFurniture.userData.hasSpin || selectedFurniture.userData.hasFire));
+      rotatePanel.classList.toggle('fx-mode', isFan);
+      var fanBtn = rotatePanel.querySelector('.fx-toggle-btn');
+      if (fanBtn){
+        var fo = !!(selectedFurniture && selectedFurniture.userData.fxOn);
+        var isFire = !!(selectedFurniture && selectedFurniture.userData.hasFire);
+        fanBtn.textContent = isFire ? (fo ? '🔥 끄기' : '🔥 켜기') : (fo ? '🌀 끄기' : '🌀 켜기');
+        fanBtn.classList.toggle('on', fo);
+      }
       var upBtn = rotatePanel.querySelector('.nudge-btn[data-dir="up"]');
       var downBtn = rotatePanel.querySelector('.nudge-btn[data-dir="down"]');
       var leftBtn = rotatePanel.querySelector('.nudge-btn[data-dir="left"]');
@@ -3415,6 +3486,87 @@
       }
       updateRotatePanelPosition();
     }
+    // 선풍기 켜기/끄기 — 켜져 있으면 매 프레임 날개(spin 피벗)를 돌림(stepFans).
+    function toggleFan(){
+      if (!selectedFurniture || !(selectedFurniture.userData.hasSpin || selectedFurniture.userData.hasFire)) return;
+      selectedFurniture.userData.fxOn = !selectedFurniture.userData.fxOn;
+    }
+    function stepFans(dt, tSec){
+      for (var i = 0; i < furniture.length; i++){
+        var u = furniture[i].userData;
+        if (u.fire) OH_GLB.fireUpdate(u.fire, !!u.fxOn, tSec);
+        if (!u.fxOn || !u.spin || !u.spin.node) continue;
+        var sp = u.spin.axis === 'y' ? 7 : 16;           // rad/s — 천장 선풍기는 천천히, 탁자 선풍기는 빠르게
+        u.spin.node.rotation[u.spin.axis] += sp * dt;
+      }
+    }
+    // ===== 액자 그림 바꾸기 =====
+    // 액자 GLB 의 'picture' 재질(그림면)에만 사용자 이미지를 입힘. 이미지는 그림면 가로세로 비율로
+    // 가운데를 잘라(cover) 작게 줄인 JPEG 로 보관(게시/임시저장 때 그대로 씀).
+    function framePictureAspect(group){
+      var a = null;
+      group.traverse(function(n){
+        if (a || !n.isMesh || !n.userData.picture || !n.geometry) return;
+        if (!n.geometry.boundingBox) n.geometry.computeBoundingBox();
+        var b = n.geometry.boundingBox, w = b.max.x - b.min.x, h = b.max.y - b.min.y;
+        if (w > 0 && h > 0) a = w / h;
+      });
+      return a || 0.75;
+    }
+    function frameApplyImage(group){
+      var tex = group.userData.imgTex || null;
+      group.traverse(function(n){
+        if (!n.isMesh || !n.userData.picture || !n.material) return;
+        if (!n.userData.pictureOrig) n.userData.pictureOrig = { map: n.material.map, color: n.material.color.clone() };
+        if (tex){ n.material.map = tex; n.material.color.setRGB(1, 1, 1); }
+        else { n.material.map = n.userData.pictureOrig.map; n.material.color.copy(n.userData.pictureOrig.color); }
+        n.material.needsUpdate = true;
+      });
+    }
+    function frameMakeTexture(img){
+      var tex = new THREE.Texture(img);
+      tex.flipY = false;                 // glTF UV(왼쪽 위가 원점)에 맞춤
+      tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      tex.needsUpdate = true;
+      return tex;
+    }
+    // dataUrl(이미 잘라둔 것)을 그대로 입힘 — 임시저장 복원용. 게시용 data 는 그대로 보관.
+    function frameSetImageUrl(group, url, keepData){
+      if (!url){ group.userData.imgTex = null; group.userData.imgData = null; group.userData.imgId = null; frameApplyImage(group); return; }
+      var im = new Image();
+      if (!/^data:/i.test(url)) im.crossOrigin = 'anonymous';
+      im.onload = function(){
+        group.userData.imgTex = frameMakeTexture(im);
+        if (keepData && /^data:/i.test(url)){ group.userData.imgData = url; group.userData.imgId = 'i' + Math.random().toString(36).slice(2, 8); }
+        frameApplyImage(group);
+      };
+      im.src = /^data:/i.test(url) ? url : '/api/image-proxy?url=' + encodeURIComponent(url);
+    }
+    function frameSetImageFile(group, file){
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        var im = new Image();
+        im.onload = function(){
+          var aspect = framePictureAspect(group);
+          var W = im.naturalWidth || im.width, H = im.naturalHeight || im.height;
+          if (!W || !H) return;
+          var sw = W, sh = H;
+          if (W / H > aspect) sw = H * aspect; else sh = W / aspect;
+          var url = imageToJpegDataUrl(im, (W - sw) / 2, (H - sh) / 2, sw, sh, 720, 0.85);
+          if (!url) return;
+          frameSetImageUrl(group, url, true);
+        };
+        im.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    function syncFramePanel(){
+      if (!furnitureColorPanel) return;
+      var isArt = !!(selectedFurniture && selectedFurniture.userData.type === 'wallart');
+      furnitureColorPanel.classList.toggle('is-wallart', isArt);
+      furnitureColorPanel.classList.toggle('has-img', !!(isArt && selectedFurniture.userData.imgData));
+    }
     // 문 가구의 열림/닫힘 토글 — doorHinge(경첩 피벗 그룹)의 rotation.y를 돌려서 문짝만 열린
     // 것처럼 보이게 함(문틀은 그대로 고정).
     function toggleDoorOpen(){
@@ -3476,6 +3628,7 @@
       }
       syncSizePanel();
       syncRotatePanel();
+      syncFramePanel();
       updateRotatePanelPosition(); // 고정이 풀렸으니 지금 위치에 맞게 즉시 한 번 다시 잡아줌
       if (revAny) revOnSelect();
     }
@@ -3925,21 +4078,55 @@
           if (furnitureColorToggleBtn) furnitureColorToggleBtn.style.background = hex;
       });
 
+      var palette = document.createElement('div');
+      palette.className = 'sims-palette';
+      var tabBar = document.createElement('div');
+      tabBar.className = 'sims-tabs'; tabBar.setAttribute('role', 'tablist'); tabBar.setAttribute('aria-label', '가구 종류');
       var itemsPanel = document.createElement('div');
       itemsPanel.className = 'sims-items';
 
+      // group: 하단 팔레트 탭(가구 / 조명 / 가전 / 욕실 / 소품·장식 / 문·창문). 항목이 하나도 없는 탭은 안 보임.
       var furnitureList = [
-        { id: 'sofa', label: '소파', icon: '🛋️' },
-        { id: 'table', label: '테이블', icon: '🪑' },
-        { id: 'bed', label: '침대', icon: '🛏️' },
-        { id: 'plant', label: '식물', icon: '🪴' },
-        { id: 'door', label: '문', icon: '🚪' },
-        { id: 'window', label: '창문', icon: '🪟' },
-        { id: 'outlet', label: '콘센트', icon: '🔌' },
-        { id: 'tv', label: 'TV', icon: '📺', types: ['tv', 'walltv'] },
-        { id: 'floorlamp', label: '스탠드', icon: '🏮' },
-        { id: 'tablelamp', label: '탁상등', icon: '💡' },
-        { id: 'ceilinglight', label: '천장등', icon: '🔆' }
+        { id: 'sofa', label: '소파', icon: '🛋️', group: 'furniture' },
+        { id: 'couch', label: '소파 (패브릭)', icon: '🛋️', group: 'furniture' },
+        { id: 'bed', label: '침대', icon: '🛏️', group: 'furniture' },
+        { id: 'chair', label: '의자', icon: '💺', group: 'furniture' },
+        { id: 'stool', label: '스툴·벤치', icon: '🪵', group: 'furniture' },
+        { id: 'table', label: '테이블', icon: '🪑', group: 'furniture' },
+        { id: 'roundtable', label: '작은 테이블', icon: '🍵', group: 'furniture' },
+        { id: 'desk', label: '책상', icon: '🖥️', group: 'furniture' },
+        { id: 'nightstand', label: '협탁', icon: '🕯️', group: 'furniture' },
+        { id: 'bookcase', label: '책장·선반', icon: '📚', group: 'furniture' },
+        { id: 'drawer', label: '서랍장', icon: '🗄️', group: 'furniture' },
+        { id: 'wardrobe', label: '옷장', icon: '🧥', group: 'furniture' },
+        { id: 'mirror', label: '전신거울', icon: '🪞', group: 'furniture' },
+        { id: 'kitchen', label: '싱크·조리대', icon: '🍳', group: 'furniture' },
+        { id: 'counter', label: '조리대·수납', icon: '🧰', group: 'furniture' },
+        { id: 'ceilinglight', label: '천장등', icon: '🔆', group: 'light' },
+        { id: 'floorlamp', label: '스탠드', icon: '🏮', group: 'light' },
+        { id: 'tablelamp', label: '탁상등', icon: '💡', group: 'light' },
+        { id: 'tv', label: 'TV', icon: '📺', types: ['tv', 'walltv'], group: 'appliance' },
+        { id: 'fridge', label: '냉장고', icon: '🧊', group: 'appliance' },
+        { id: 'laundry', label: '세탁기', icon: '🧺', group: 'appliance' },
+        { id: 'aircon', label: '에어컨', icon: '❄️', types: ['aircon', 'standac'], group: 'appliance' },
+        { id: 'climate', label: '공기·난방', icon: '🌬️', group: 'appliance' },
+        { id: 'smallapp', label: '소형 가전', icon: '☕', group: 'appliance' },
+        { id: 'toilet', label: '변기', icon: '🚽', group: 'bath' },
+        { id: 'bathtub', label: '욕조·샤워', icon: '🛁', group: 'bath' },
+        { id: 'bathsink', label: '세면대', icon: '🚰', group: 'bath' },
+        { id: 'plant', label: '식물', icon: '🪴', group: 'decor' },
+        { id: 'rug', label: '러그', icon: '🟫', group: 'decor' },
+        { id: 'ornament', label: '소품', icon: '📻', group: 'decor' },
+        { id: 'trash', label: '쓰레기통', icon: '🗑️', group: 'decor' },
+        { id: 'wallart', label: '액자·그림', icon: '🖼️', group: 'decor' },
+        { id: 'walldeco', label: '벽 장식', icon: '🪞', group: 'decor' },
+        { id: 'door', label: '문', icon: '🚪', group: 'structure' },
+        { id: 'window', label: '창문', icon: '🪟', group: 'structure' },
+        { id: 'outlet', label: '콘센트', icon: '🔌', group: 'structure' }
+      ];
+      var PALETTE_TABS = [
+        { id: 'furniture', label: '가구' }, { id: 'light', label: '조명' }, { id: 'appliance', label: '가전' },
+        { id: 'decor', label: '소품·장식' }, { id: 'structure', label: '문·창문' }, { id: 'bath', label: '욕실' }
       ];
 
       // ---- 펼침 팔레트(심즈 스타일) ----
@@ -4000,7 +4187,7 @@
         var fw = fly.offsetWidth, left = br.left - cr.left + br.width / 2 - fw / 2;
         left = Math.max(8, Math.min(left, cr.width - fw - 8));
         fly.style.left = left + 'px';
-        fly.style.bottom = (bottomPanel.offsetHeight + 10) + 'px';
+        fly.style.bottom = Math.max(8, cr.bottom - br.top + 8) + 'px';   // 탭 줄이 아니라 눌린 버튼 바로 위에 붙임
         fly.style.setProperty('--nub-x', Math.max(14, Math.min(fw - 14, br.left - cr.left + br.width / 2 - left)) + 'px');
         var fromX = (br.left - cr.left + br.width / 2) - (left + fw / 2);
         fly.style.setProperty('--from-x', (fromX * 0.4) + 'px');
@@ -4035,9 +4222,52 @@
           e.dataTransfer.setData('text/plain', item.id);
           e.dataTransfer.effectAllowed = 'copy';
         });
+        btn.setAttribute('data-group', item.group || 'furniture');
         itemsPanel.appendChild(btn);
       });
-      if (!readOnly) bottomPanel.appendChild(itemsPanel);
+      // 탭: 항목이 있는 탭만 만들고, 마지막으로 보던 탭을 기억함
+      var tabBtns = {};
+      function showTab(id, remember){
+        closeFlyout(true);
+        Object.keys(tabBtns).forEach(function(k){
+          var on = (k === id);
+          tabBtns[k].classList.toggle('active', on); tabBtns[k].setAttribute('aria-selected', on ? 'true' : 'false'); tabBtns[k].tabIndex = on ? 0 : -1;
+        });
+        var shownIdx = 0;
+        [].forEach.call(itemsPanel.children, function(b){
+          var vis = (b.getAttribute('data-group') === id);
+          b.hidden = !vis;
+          b.classList.remove('tab-in');
+          if (vis && remember){ b.style.setProperty('--ti', shownIdx++); void b.offsetWidth; b.classList.add('tab-in'); }   // 탭을 눌렀을 때만 살짝 쭈르륵 나타남
+        });
+        itemsPanel.scrollLeft = 0;
+        if (tabBtns[id] && tabBtns[id].scrollIntoView) { try{ var tb0 = tabBtns[id], l0 = tb0.offsetLeft - 24, r0 = tb0.offsetLeft + tb0.offsetWidth + 24; if (l0 < tabBar.scrollLeft) tabBar.scrollLeft = l0; else if (r0 > tabBar.scrollLeft + tabBar.clientWidth) tabBar.scrollLeft = r0 - tabBar.clientWidth; }catch(e){} }
+        if (remember){ try{ localStorage.setItem('oh-pal-tab', id); }catch(e){} }
+      }
+      PALETTE_TABS.forEach(function(t){
+        if (!furnitureList.some(function(it){ return (it.group || 'furniture') === t.id; })) return;
+        var tb = document.createElement('button');
+        tb.type = 'button'; tb.className = 'sims-tab'; tb.setAttribute('role', 'tab'); tb.textContent = t.label;
+        tb.addEventListener('click', function(){ showTab(t.id, true); });
+        tb.addEventListener('keydown', function(e){
+          if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+          var ids = Object.keys(tabBtns), i = ids.indexOf(t.id), n = ids[(i + (e.key === 'ArrowRight' ? 1 : ids.length - 1)) % ids.length];
+          showTab(n, true); tabBtns[n].focus(); e.preventDefault();
+        });
+        tabBar.appendChild(tb); tabBtns[t.id] = tb;
+      });
+      function updateTabFade(){
+        var m = tabBar.scrollWidth - tabBar.clientWidth;
+        tabBar.classList.toggle('more-l', m > 2 && tabBar.scrollLeft > 2);
+        tabBar.classList.toggle('more-r', m > 2 && tabBar.scrollLeft < m - 2);
+      }
+      tabBar.addEventListener('scroll', updateTabFade);
+      if (window.ResizeObserver) new ResizeObserver(updateTabFade).observe(tabBar);
+      var firstTab = Object.keys(tabBtns)[0], savedTab = null;
+      try{ savedTab = localStorage.getItem('oh-pal-tab'); }catch(e){}
+      showTab(savedTab && tabBtns[savedTab] ? savedTab : firstTab, false);
+      palette.appendChild(tabBar); palette.appendChild(itemsPanel);
+      if (!readOnly) bottomPanel.appendChild(palette);
 
       // 맨 오른쪽 위아래 버튼: "✅ 가구 배치 완료"(게시 흐름 시작) / "전 단계로"(벽 편집으로 돌아가기).
       // 실제 동작은 페이지의 기존 버튼 핸들러(nextStepBtn, editWallsBtn)가 담당하고, 여기선 호출만 넘겨줌.
@@ -4174,7 +4404,7 @@
       //    가구의 색상 팝업(furnitureColorPanel)이 뜨고, 삭제 버튼을 누르면 바로 그 가구를 지움.
       rotatePanel = document.createElement('div');
       rotatePanel.className = 'furniture-rotate-panel';
-      rotatePanel.innerHTML = '<div class="panel-grip" title="끌어서 팝업 옮기기 (더블클릭: 원래 위치)" aria-label="팝업 옮기기"></div><div class="handle-row"><button type="button" class="handle-btn" data-rotate="-1" aria-label="왼쪽으로 15도 회전">↺</button><button type="button" class="handle-btn" data-rotate="1" aria-label="오른쪽으로 15도 회전">↻</button></div><div class="handle-lower-row"><div class="handle-left-col"><button type="button" class="furniture-color-toggle" aria-label="가구 색상 변경" title="가구 색상 변경"></button><button type="button" class="furniture-delete-btn" aria-label="가구 삭제" title="가구 삭제">🗑️</button><button type="button" class="furniture-reason-btn" aria-label="변경 이유 남기기" title="변경 이유 남기기">💬</button><button type="button" class="door-toggle-btn" aria-label="문 열기/닫기" title="문 열기/닫기">🚪 안쪽으로 열기</button></div><div class="nudge-pad"><button type="button" class="nudge-btn" data-dir="up" aria-label="위로 이동">↑</button><div class="nudge-mid"><button type="button" class="nudge-btn" data-dir="left" aria-label="왼쪽으로 이동">←</button><button type="button" class="nudge-btn" data-dir="right" aria-label="오른쪽으로 이동">→</button></div><button type="button" class="nudge-btn" data-dir="down" aria-label="아래로 이동">↓</button></div></div>';
+      rotatePanel.innerHTML = '<div class="panel-grip" title="끌어서 팝업 옮기기 (더블클릭: 원래 위치)" aria-label="팝업 옮기기"></div><div class="handle-row"><button type="button" class="handle-btn" data-rotate="-1" aria-label="왼쪽으로 15도 회전">↺</button><button type="button" class="handle-btn" data-rotate="1" aria-label="오른쪽으로 15도 회전">↻</button></div><div class="handle-lower-row"><div class="handle-left-col"><button type="button" class="furniture-color-toggle" aria-label="가구 색상 변경" title="가구 색상 변경"></button><button type="button" class="furniture-delete-btn" aria-label="가구 삭제" title="가구 삭제">🗑️</button><button type="button" class="furniture-reason-btn" aria-label="변경 이유 남기기" title="변경 이유 남기기">💬</button><button type="button" class="door-toggle-btn" aria-label="문 열기/닫기" title="문 열기/닫기">🚪 안쪽으로 열기</button><button type="button" class="fx-toggle-btn" aria-label="켜기/끄기" title="켜기/끄기">🌀 켜기</button></div><div class="nudge-pad"><button type="button" class="nudge-btn" data-dir="up" aria-label="위로 이동">↑</button><div class="nudge-mid"><button type="button" class="nudge-btn" data-dir="left" aria-label="왼쪽으로 이동">←</button><button type="button" class="nudge-btn" data-dir="right" aria-label="오른쪽으로 이동">→</button></div><button type="button" class="nudge-btn" data-dir="down" aria-label="아래로 이동">↓</button></div></div>';
       // 손잡이를 끌면 팝업이 그만큼 옮겨짐 — 위치는 가구 기준 상대값(rotatePanelOffset)이라 가구/카메라가 움직여도
       // 같은 간격으로 따라다님. 더블클릭하면 기본 위치로 복귀.
       (function(){
@@ -4239,6 +4469,11 @@
         toggleDoorOpen();
         syncRotatePanel();
       });
+      rotatePanel.querySelector('.fx-toggle-btn').addEventListener('click', function(e){
+        e.stopPropagation();
+        toggleFan();
+        syncRotatePanel();
+      });
       container.appendChild(rotatePanel);
 
       // 4-0. 가구 주변 이동 화살표 — 선택한 바닥 가구의 앞/뒤/좌/우(화면 기준)에 떠서, 누르면 5cm씩,
@@ -4288,7 +4523,36 @@
       //      평소엔 숨겨져 있다가 위 색상 원형 버튼을 누르면 그 버튼 바로 위/아래에 나타남.
       furnitureColorPanel = document.createElement('div');
       furnitureColorPanel.className = 'wall-color-panel furniture-color-panel';
-      furnitureColorPanel.innerHTML = '<div class="wall-color-head"><span class="wall-color-label">🎨 가구 색상 변경</span></div>';
+      furnitureColorPanel.innerHTML = '<div class="wall-color-head"><span class="wall-color-label">🎨 가구 색상 변경</span></div>' +
+        '<div class="frame-image-row"><button type="button" class="wall-image-btn frame-image-btn" aria-label="액자 그림 바꾸기" title="액자 그림 바꾸기">🖼️</button><span class="frame-image-label">내 이미지로 바꾸기</span><button type="button" class="frame-image-reset" aria-label="기본 그림으로" title="기본 그림으로">↺ 기본</button></div>';
+      var frameImgBtn = furnitureColorPanel.querySelector('.frame-image-btn');
+      var frameImgReset = furnitureColorPanel.querySelector('.frame-image-reset');
+      var frameImgInput = document.createElement('input');
+      frameImgInput.type = 'file'; frameImgInput.accept = 'image/*'; frameImgInput.style.display = 'none';
+      var frameImgWasFs = false;
+      frameImgBtn.addEventListener('click', function(){
+        if (revAny) return;
+        frameImgWasFs = isContainerFullscreen();
+        frameImgInput.click();
+      });
+      frameImgInput.addEventListener('change', function(e){
+        if (frameImgWasFs && !isContainerFullscreen()){
+          if (container.requestFullscreen) container.requestFullscreen().catch(function(){});
+          else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+        }
+        var file = e.target.files && e.target.files[0];
+        frameImgInput.value = '';
+        if (!file || !selectedFurniture || selectedFurniture.userData.type !== 'wallart') return;
+        var tg = selectedFurniture;
+        frameSetImageFile(tg, file);
+        setTimeout(syncFramePanel, 350); setTimeout(syncFramePanel, 1200);
+      });
+      frameImgReset.addEventListener('click', function(){
+        if (revAny || !selectedFurniture || selectedFurniture.userData.type !== 'wallart') return;
+        frameSetImageUrl(selectedFurniture, null);
+        syncFramePanel();
+      });
+      furnitureColorPanel.appendChild(frameImgInput);
       furnitureColorPanel.appendChild(furnitureColorPicker.el);
       container.appendChild(furnitureColorPanel);
 
@@ -4438,7 +4702,7 @@
           if (hx != null && hx !== wallColor.getHex()) wallColorOverrides[i] = hx;
         });
         rebuildAllWalls();
-        (rs.furniture || []).forEach(function(it){
+        (rs.furniture || []).forEach(function(it, fi){
           if (!it || !it.type) return;
           var s = revNormSnap(it), g;
           if (WALL_ITEM_TYPES[it.type] && s.wallIndex != null && wallSegments[s.wallIndex]){
@@ -4449,6 +4713,7 @@
           if (!g) return;
           if (g.userData.popAnim){ var pi = popAnims.indexOf(g); if (pi >= 0) popAnims.splice(pi, 1); finishPop(g); }
           revApplySnap(g, s);
+          if (it.type === 'wallart' && rs.frameImages && rs.frameImages[fi]) frameSetImageUrl(g, rs.frameImages[fi], true);
         });
         wallSegments.forEach(function(seg, i){
           var url = rwi[i];
@@ -5397,9 +5662,14 @@
       if (selectedFurniture){
         if (readOnly) return '💡 F를 누르면 선택한 가구로 카메라가 다가가요';
         var ht = selectedFurniture.userData.type;
+        if (selectedFurniture.userData.hasSpin) return '💡 🌀 버튼으로 선풍기를 켜고 꺼보세요';
+        if (selectedFurniture.userData.hasFire) return '💡 🔥 버튼으로 벽난로에 불을 피워보세요';
         if (ht === 'door') return '💡 문 버튼으로 안쪽·바깥쪽으로 열고 닫아보세요';
         if (ht === 'window') return '💡 창문은 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
         if (ht === 'outlet') return '💡 콘센트는 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
+        if (ht === 'walldeco') return '💡 벽 장식은 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
+        if (ht === 'aircon') return '💡 에어컨은 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
+        if (ht === 'wallart') return revise ? '💡 액자는 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요' : '💡 액자는 벽을 따라 끌어 옮기고 🎨에서 내 이미지로 바꿀 수 있어요';
         if (ht === 'walltv') return '💡 벽걸이 TV는 벽을 따라 끌어 옮기고 ↑↓로 높이를 조절해요';
         if (ht === 'plant') return '💡 화분은 테이블 위에 올릴 수 있어요 · F로 정밀하게 맞춰보세요';
         if (!hintFocusUsed) return '💡 정밀하게 조정하려면 F로 가구에 포커스해보세요';
@@ -5617,7 +5887,7 @@
     var revReasonEl = null, revReasonTA = null, revReasonTitle = null, revReasonTarget = null, revReasonAnchor = null;
     var revArrowMesh = null, revArrowInfo = null, revArrowItemId = null, revPanelOpen = false;
     var revTutEl = null, revTutIdx = 0, revTutPulse = null, revTutOpenedPanel = false;
-    var REV_ICONS = { sofa:'🛋️', table:'🪑', bed:'🛏️', plant:'🪴', door:'🚪', window:'🪟', outlet:'🔌', walltv:'📺', tv:'📺', floorlamp:'🏮', tablelamp:'💡', ceilinglight:'🔆' };
+    var REV_ICONS = { wardrobe:'🧥', standac:'❄️', mirror:'🪞', climate:'🌬️', aircon:'❄️', wallart:'🖼️', sofa:'🛋️', table:'🪑', bed:'🛏️', plant:'🪴', door:'🚪', window:'🪟', outlet:'🔌', walltv:'📺', tv:'📺', floorlamp:'🏮', tablelamp:'💡', ceilinglight:'🔆', chair:'💺', stool:'🪵', desk:'🖥️', nightstand:'🕯️', bookcase:'📚', drawer:'🗄️', couch:'🛋️', roundtable:'🍵', toilet:'🚽', bathtub:'🛁', bathsink:'🚰', fridge:'🧊', kitchen:'🍳', counter:'🧰', laundry:'🧺', smallapp:'☕', rug:'🟫', trash:'🗑️', ornament:'📻', walldeco:'🖼️' };
     var REV_TUT_KEY = 'oh_rev_view_tut_v1';
 
     function r4(v){ return Math.round((v || 0) * 10000) / 10000; }
@@ -5634,7 +5904,7 @@
       }
       var dims = f.userData.size || { w:.6, d:.6, h:.6 };
       return { x:r4(f.position.x), y:r4(f.position.y), z:r4(f.position.z), rotY:r4(f.rotation.y), w:r4(dims.w), d:r4(dims.d), h:r4(dims.h),
-        color: colorHex, doorOpen: ohDoorState(f.userData.doorOpen), variant: f.userData.variant || null,
+        color: colorHex, doorOpen: ohDoorState(f.userData.doorOpen), fxOn: f.userData.fxOn ? 1 : 0, variant: f.userData.variant || null,
         wallIndex: f.userData.wallIndex != null ? f.userData.wallIndex : null, wallAlong: f.userData.wallAlong != null ? r4(f.userData.wallAlong) : null };
     }
     function revAngDiff(a, b){ return ((a - b) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI; }
@@ -5642,7 +5912,7 @@
       if (!a || !b) return a === b;
       function n(x, y){ return Math.abs((x || 0) - (y || 0)) < 0.004; }
       return n(a.x, b.x) && n(a.y, b.y) && n(a.z, b.z) && Math.abs(revAngDiff(a.rotY, b.rotY)) < 0.003 &&
-        n(a.w, b.w) && n(a.d, b.d) && n(a.h, b.h) && (a.color || '') === (b.color || '') && ohDoorState(a.doorOpen) === ohDoorState(b.doorOpen) && (a.variant || null) === (b.variant || null);
+        n(a.w, b.w) && n(a.d, b.d) && n(a.h, b.h) && (a.color || '') === (b.color || '') && ohDoorState(a.doorOpen) === ohDoorState(b.doorOpen) && (a.fxOn ? 1 : 0) === (b.fxOn ? 1 : 0) && (a.variant || null) === (b.variant || null);
     }
     function revApplySnap(g, s){
       if (s.variant && s.variant !== g.userData.variant && glbDims(s.variant)){      // 모양이 다른 상태로 되돌릴 때
@@ -5660,6 +5930,7 @@
         g.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(hx); });
         if (g.userData.variant) g.userData.glbColor = hx;
       }
+      g.userData.fxOn = !!s.fxOn;
       if (type === 'door'){
         g.userData.doorOpen = ohDoorState(s.doorOpen);
         if (g.userData.doorHinge) g.userData.doorHinge.rotation.y = ohDoorAngle(s.doorOpen);
@@ -5707,11 +5978,11 @@
     function revNormSnap(it){
       var d = THREE_DEF_SIZE(it.type);
       return { x:revNum(it.x), y:revNum(it.y), z:revNum(it.z), rotY:revNum(it.rotY), w:(it.w > 0 ? it.w : d.w), d:(it.d > 0 ? it.d : d.d), h:(it.h > 0 ? it.h : d.h),
-        color: it.color || null, doorOpen: ohDoorState(it.doorOpen), variant: (typeof it.variant === 'string' && it.variant) ? it.variant : null, wallIndex: it.wallIndex != null ? it.wallIndex : null, wallAlong: it.wallAlong != null ? it.wallAlong : null };
+        color: it.color || null, doorOpen: ohDoorState(it.doorOpen), fxOn: (it.fxOn || it.fanOn) ? 1 : 0, variant: (typeof it.variant === 'string' && it.variant) ? it.variant : null, wallIndex: it.wallIndex != null ? it.wallIndex : null, wallAlong: it.wallAlong != null ? it.wallAlong : null };
     }
     function THREE_DEF_SIZE(type){
       return type === 'sofa' ? {w:1.55,d:.72,h:.94} : type === 'table' ? {w:1.04,d:1.04,h:.66} : type === 'bed' ? {w:1.5,d:2.0,h:.88} :
-        type === 'door' ? {w:.9,d:.16,h:2.05} : type === 'window' ? {w:1.2,d:.11,h:1.1} : type === 'outlet' ? {w:.11,d:.02,h:.075} : type === 'walltv' ? {w:1.2,d:.06,h:.7} :
+        type === 'door' ? {w:.9,d:.16,h:2.05} : type === 'window' ? {w:1.2,d:.11,h:1.1} : type === 'outlet' ? {w:.11,d:.02,h:.075} : type === 'walltv' ? {w:1.2,d:.06,h:.7} : type === 'walldeco' || type === 'wallart' ? {w:.6,d:.06,h:.8} : type === 'aircon' ? {w:.85,d:.2,h:.27} :
         type === 'tv' ? {w:1.1,d:.2,h:.7} : type === 'floorlamp' ? {w:.36,d:.36,h:1.45} : type === 'tablelamp' ? {w:.24,d:.24,h:.45} : type === 'ceilinglight' ? {w:.3,d:.3,h:.5} : {w:.68,d:.68,h:.94};
     }
 
@@ -6066,6 +6337,7 @@
       if ((a.color || '') !== (b.color || '')) parts.push('색 변경');
       if (Math.abs(a.w - b.w) > 0.01 || Math.abs(a.d - b.d) > 0.01 || Math.abs(a.h - b.h) > 0.01) parts.push('크기 변경');
       if (ohDoorState(a.doorOpen) !== ohDoorState(b.doorOpen)) parts.push(ohDoorLabel(b.doorOpen));
+      if ((a.fxOn ? 1 : 0) !== (b.fxOn ? 1 : 0)) parts.push(c.type === 'ornament' ? (b.fxOn ? '벽난로 불 켜기' : '벽난로 불 끄기') : (b.fxOn ? '선풍기 켜기' : '선풍기 끄기'));
       return parts.join(' · ') || '변경';
     }
     function revHex6(n){ return '#' + ('000000' + (n >>> 0).toString(16)).slice(-6); }
@@ -6463,6 +6735,7 @@
         if (!it || !it.type) return;
         var key = 'b' + i;
         var g = revSpawn(it.type, revNormSnap(it), key);
+        if (g && it.type === 'wallart' && typeof it.img === 'string' && it.img) frameSetImageUrl(g, it.img, false);
         if (g) revBase[key] = revSnapOf(g);
       });
       var ch = revNormChanges(rd.changes);
@@ -6578,6 +6851,7 @@
       var dtT = Math.min((nowT - lastTickT) / 1000, 0.1);
       lastTickT = nowT;
       if (focusAnim) stepFocusAnim(nowT);
+      stepFans(dtT, nowT / 1000);
       if (noclipMode){
         stepNoclipMove(dtT);
       } else if (spinning && !reducedMotion){
@@ -6644,7 +6918,7 @@
             }
           });
           var dims = f.userData.size || { w:.6, d:.6, h:.6 };
-          return { type: f.userData.type, variant: f.userData.variant || null, x: f.position.x, y: f.position.y, z: f.position.z, rotY: f.rotation.y, w: dims.w, d: dims.d, h: dims.h, color: colorHex, doorOpen: ohDoorState(f.userData.doorOpen), wallIndex: (f.userData.wallIndex != null ? f.userData.wallIndex : null), wallAlong: (f.userData.wallAlong != null ? f.userData.wallAlong : null) };
+          return { type: f.userData.type, variant: f.userData.variant || null, x: f.position.x, y: f.position.y, z: f.position.z, rotY: f.rotation.y, w: dims.w, d: dims.d, h: dims.h, color: colorHex, doorOpen: ohDoorState(f.userData.doorOpen), fxOn: f.userData.fxOn ? 1 : 0, wallIndex: (f.userData.wallIndex != null ? f.userData.wallIndex : null), wallAlong: (f.userData.wallAlong != null ? f.userData.wallAlong : null) };
         });
       },
       getBounds: function(){ return { w: b.w, d: b.d }; },
@@ -6676,7 +6950,14 @@
       // 임시저장용: 바뀌었는지 가볍게 비교하려는 서명 문자열(벽지 이미지는 텍스처 id 로만 비교)
       getDraftSig: function(){
         var ids = wallSegments.map(function(seg, i){ var t = wallImageOverrides[i]; return (t && t.image) ? t.uuid : null; });
-        return JSON.stringify([this.getFurnitureData(), this.getWallColors(), ids]);
+        return JSON.stringify([this.getFurnitureData(), this.getWallColors(), ids, this.getFrameImageIds()]);
+      },
+      // 액자 그림: getFurnitureData()와 같은 순서로, 사용자가 넣은 그림(JPEG data URL)이 있는 액자만 값이 있고 나머진 null.
+      getFrameImages: function(){
+        return furniture.map(function(f){ return (f.userData.type === 'wallart' && f.userData.imgData) ? f.userData.imgData : null; });
+      },
+      getFrameImageIds: function(){
+        return furniture.map(function(f){ return (f.userData.type === 'wallart' && f.userData.imgData) ? (f.userData.imgId || 'x') : null; });
       },
       getWallImageIds: function(){
         return wallSegments.map(function(seg, i){ var t = wallImageOverrides[i]; return (t && t.image) ? t.uuid : null; });
@@ -7295,7 +7576,8 @@
     var map = { state: {
       v: 1, savedAt: Date.now(),
       furniture: scene.getFurnitureData(), wallColors: scene.getWallColors(),
-      wallImages: ids.map(function(id){ return id ? (draftImgCache[id] || null) : null; })
+      wallImages: ids.map(function(id){ return id ? (draftImgCache[id] || null) : null; }),
+      frameImages: scene.getFrameImages ? scene.getFrameImages() : []
     } };
     var newMeta = draftMetaFor !== furniturePlan;
     if (newMeta){
@@ -7414,7 +7696,8 @@
       var defaultTitle = "내 배치 · " + new Date().toLocaleDateString((window.OH_I18N && OH_I18N.lang === "en") ? "en-US" : "ko-KR", { month:"long", day:"numeric" });
       // 도면 사진이나 벽에 붙인 이미지가 하나라도 있을 때만 "함께 게시할까요?" 체크박스를 보여줌
       var hasPhoto = !!(resultScene.hasFloorPhoto && resultScene.hasFloorPhoto()) ||
-        !!(resultScene.getWallImages && resultScene.getWallImages().some(function(x){ return !!x; }));
+        !!(resultScene.getWallImages && resultScene.getWallImages().some(function(x){ return !!x; })) ||
+        !!(resultScene.getFrameImages && resultScene.getFrameImages().some(function(x){ return !!x; }));
       var title, includePlan = false;
       var authOn = !!(window.OHAuth && OHAuth.configured);
 
@@ -7447,12 +7730,12 @@
         // 프라이버시: 도면 사진과 벽에 붙인 이미지는 기본은 같이 게시하지만, 체크를 풀면 둘 다 갤러리에 안 올림
         var titleRes = await ohDialog({ message: "게시물 제목을 입력해주세요.", showCancel: true, showInput: true, inputValue: defaultTitle,
           okText: nextLabel, cancelText: "취소", split: true,
-          checkbox: { label: "도면과 벽 이미지도 함께 게시할까요?", checked: true } });
+          checkbox: { label: "도면과 벽·액자 이미지도 함께 게시할까요?", checked: true } });
         if (titleRes === null) return; // 취소하면 아무 것도 안 하고 계속 편집 가능
         title = titleRes.value; includePlan = titleRes.checked;
       } else {
         // 사진이 없거나(체크박스 불필요), 비로그인으로 진행(도면·벽 이미지는 빼고 게시)
-        var guestNote = (hasPhoto && authOn && !loggedIn) ? "도면 이미지와 벽지 이미지는 빼고 게시돼요." : "";
+        var guestNote = (hasPhoto && authOn && !loggedIn) ? "도면 이미지와 벽지·액자 이미지는 빼고 게시돼요." : "";
         title = await ohDialog({ message: "게시물 제목을 입력해주세요.", sub: guestNote, showCancel: true, showInput: true, inputValue: defaultTitle,
           okText: nextLabel, cancelText: "취소", split: true });
         if (title === null) return;
@@ -7491,6 +7774,8 @@
       var floorPhotoUrl = (includePlan && resultScene.getFloorPhoto) ? resultScene.getFloorPhoto(1100) : null;
       var wallImagesData = resultScene.getWallImages ? resultScene.getWallImages() : [];
       var hasWallImages = includePlan && wallImagesData.some(function(x){ return !!x; });
+      var frameImagesData = (includePlan && resultScene.getFrameImages) ? resultScene.getFrameImages() : [];
+      var hasFrameImages = frameImagesData.some(function(x){ return !!x; });
 
       // 벽 좌표(outer/inner)까지 같이 저장해둬서, 게시물 상세 페이지(post.html)에서 인터랙티브 3D를 다시 그림.
       // wallColors 는 가구 배치 화면에서 바꾼 벽 색(outer 먼저, inner 순서)을 그대로 재현하기 위함.
@@ -7511,7 +7796,7 @@
           try{
             savedId = await ohSavePostToServer({
               title: title, author: author, guestPw: guestPw, bounds: bounds, wallData: wallDataBase, furniture: furnitureData,
-              thumb: thumbDataUrl, floorPhoto: floorPhotoUrl, wallImages: hasWallImages ? wallImagesData : null
+              thumb: thumbDataUrl, floorPhoto: floorPhotoUrl, wallImages: hasWallImages ? wallImagesData : null, frameImages: hasFrameImages ? frameImagesData : null
             });
           } catch(err){
             if (err && err.code === "guest_unavailable"){
@@ -7539,15 +7824,15 @@
           title: title, author: author, createdAt: new Date().toISOString(), badge: "새 글",
           roomSize: { w: bounds.w, d: bounds.d },
           wallData: Object.assign({}, wallDataBase, { floorPhoto: floorPhotoUrl || null, wallImages: hasWallImages ? wallImagesData : null }),
-          furniture: furnitureData,
+          furniture: hasFrameImages ? furnitureData.map(function(f, i){ return frameImagesData[i] ? Object.assign({}, f, { img: frameImagesData[i] }) : f; }) : furnitureData,
           thumb: thumbDataUrl ? { dataUrl: thumbDataUrl } : { variant: 1, icon: "house" },
           likes: 0, comments: []
         };
         var posts = ohLoadPosts();
         posts.unshift(post);
         var saved = ohSavePosts(posts);
-        if (!saved && (post.wallData.floorPhoto || post.wallData.wallImages)){
-          post.wallData.floorPhoto = null; post.wallData.wallImages = null;
+        if (!saved && (post.wallData.floorPhoto || post.wallData.wallImages || hasFrameImages)){
+          post.wallData.floorPhoto = null; post.wallData.wallImages = null; post.furniture = furnitureData;
           saved = ohSavePosts(posts);
           if (saved) ohAlert("저장 공간이 부족해서 도면/벽 이미지는 빼고 게시했어요.");
         }

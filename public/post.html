@@ -1143,6 +1143,16 @@
       m.position.set(x, y, z);
       return m;
     }
+    var fireList = [];
+    var fanSpinList = [];   // 켜져 있는 선풍기 날개 피벗들 — tick 에서 돌림
+    function applyFramePicture(root, url){
+      // 액자 그림면('picture' 재질)에 게시자가 넣은 이미지를 입힘
+      ohTexLoader().load(url, function(tex){
+        tex.flipY = false; tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); tex.needsUpdate = true;
+        root.traverse(function(n){ if (n.isMesh && n.userData.picture && n.material){ n.material.map = tex; n.material.color.setRGB(1,1,1); n.material.needsUpdate = true; } });
+      });
+    }
     (furnitureList || []).forEach(function(f){
       var type = f.type || "sofa";
       var c = f.color ? parseInt(f.color.replace("#",""), 16) : (OH_FURN_COLORS_NUM[type] || OH_FURN_COLORS_NUM.sofa);
@@ -1152,13 +1162,16 @@
       var glbD = (f.variant && window.OH_GLB && OH_GLB.dims) ? OH_GLB.dims(f.variant) : null;
       if (glbD){
         baseSize = { w:glbD.w, d:glbD.d, h:glbD.h };
-        (function(grp, fv, col, hasCol, isDoor, doorOpen, bs, isWallCenter){
+        (function(grp, fv, col, hasCol, isDoor, doorOpen, bs, isWallCenter, ff){
           OH_GLB.load(fv).then(function(r){
             if (hasCol) r.root.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(col); });
             if (isDoor && r.hinge && doorOpen) r.hinge.rotation.y = ohDoorAngle(doorOpen);
+            if (r.spin && (ff.fxOn || ff.fanOn)) fanSpinList.push(r.spin);
+            if (r.fire) fireList.push({ fire: r.fire, on: !!(ff.fxOn || ff.fanOn) });
+            if (ff.img) applyFramePicture(r.root, ff.img);
             grp.add(r.root);
           }).catch(function(){ grp.add(buildPart(new THREE.BoxGeometry(bs.w, bs.h, bs.d), 0xc9c2b4, 0, (isWallCenter ? 0 : bs.h/2), 0)); });   // 불러오기 실패 시 상자로 대체
-        })(group, f.variant, c, !!f.color, type === "door", ohDoorState(f.doorOpen), baseSize, type === "window" || type === "outlet" || type === "walltv");
+        })(group, f.variant, c, !!f.color, type === "door", ohDoorState(f.doorOpen), baseSize, type === "window" || type === "outlet" || type === "walltv" || type === "walldeco" || type === "aircon" || type === "wallart", f);
       } else if (type === "sofa"){
         group.add(buildPart(new THREE.BoxGeometry(1.55,.38,.72), c, 0,.28,0));
         group.add(buildPart(new THREE.BoxGeometry(1.55,.52,.16), c, 0,.68,.28));
@@ -1977,6 +1990,8 @@
       var dtT = Math.min((nowT - lastTickT) / 1000, 0.1);
       lastTickT = nowT;
       if (stepNoclip) stepNoclip(dtT);
+      for (var fj = 0; fj < fireList.length; fj++) OH_GLB.fireUpdate(fireList[fj].fire, fireList[fj].on, nowT / 1000);
+      for (var fi = 0; fi < fanSpinList.length; fi++){ var fs = fanSpinList[fi]; fs.node.rotation[fs.axis] += (fs.axis === 'y' ? 7 : 16) * dtT; }
       if (spinning){ theta += 0.0022; updateCamera(); }
       if (night) night.update();
       renderer.render(scene, camera);
@@ -2187,7 +2202,7 @@
       id: row.id, userId: row.user_id, title: row.title,
       author: guest ? row.author_name : (prof.nickname || "회원"), role: guest ? "user" : (prof.role || "user"), guest: guest,
       createdAt: row.created_at, roomSize: { w: Number(row.room_w) || 0, d: Number(row.room_d) || 0 },
-      wallData: wd, furniture: row.furniture || [], thumbUrl: imageUrl(row.thumb_path),
+      wallData: wd, furniture: (row.furniture || []).map(function(f){ return (f && f.imgPath) ? Object.assign({}, f, { img: imageUrl(f.imgPath) }) : f; }), thumbUrl: imageUrl(row.thumb_path),
       likes: row.like_count || 0, ip: row.ip_prefix || ""
     };
   }
