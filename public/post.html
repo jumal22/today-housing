@@ -1167,7 +1167,7 @@
             if (hasCol) r.root.traverse(function(ch){ if (ch.isMesh && ch.userData.colorable !== false && ch.material && ch.material.color) ch.material.color.setHex(col); });
             if (isDoor && r.hinge && doorOpen) r.hinge.rotation.y = ohDoorAngle(doorOpen);
             if (r.spin && (ff.fxOn || ff.fanOn)) fanSpinList.push(r.spin);
-            if (r.fire) fireList.push({ fire: r.fire, on: !!(ff.fxOn || ff.fanOn) });
+            if (r.fire){ fireList.push({ fire: r.fire, on: !!(ff.fxOn || ff.fanOn) }); grp.userData.fire = r.fire; grp.userData.fxOn = !!(ff.fxOn || ff.fanOn); }
             if (ff.img) applyFramePicture(r.root, ff.img);
             grp.add(r.root);
           }).catch(function(){ grp.add(buildPart(new THREE.BoxGeometry(bs.w, bs.h, bs.d), 0xc9c2b4, 0, (isWallCenter ? 0 : bs.h/2), 0)); });   // 불러오기 실패 시 상자로 대체

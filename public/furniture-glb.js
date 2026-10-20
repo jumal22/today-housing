@@ -310,7 +310,9 @@
       sp.userData = { ph: i * 1.7, bx: fxp, h: 0.4 - Math.abs(i - 3) * 0.05 };
       fx.add(noRay(sp)); flames.push(sp);
     }
-    var light = new THREE.PointLight(0xff7a2a, 0, 4, 1.6); light.position.set(0, 0.22, -0.5); group.add(light);
+    // 광원은 화실 입구 바로 앞(불꽃 높이)에 둠 — 벽난로 몸통 앞면(z≈-0.08)보다 살짝 앞이라 몸통에 가려지지 않고, 그림자 켠 밤 모드에선 불꽃에서 퍼지는 방향으로 그림자가 생김
+    var light = new THREE.PointLight(0xff7a2a, 0, 4.5, 1.6); light.position.set(0, 0.24, -0.17); group.add(light);
+    light.shadow.mapSize.set(512, 512); light.shadow.camera.near = 0.1; light.shadow.camera.far = 8; light.shadow.camera.updateProjectionMatrix(); light.shadow.bias = -0.003;
     return { group: group, fx: fx, flames: flames, glow: glow, light: light, on: false };
   }
   // 매 프레임 호출: on 이면 불꽃을 일렁이게, 아니면 숨기고 광원 0

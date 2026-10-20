@@ -290,6 +290,15 @@
           L.intensity = 0; L.visible = false; L.castShadow = false;
         }
       }
+      // 벽난로 불 광원: 그림자 모드면 켜진 벽난로 광원도 그림자를 드리움(조명 가구 그림자 슬롯이 남을 때만)
+      var shadowLeft = shadowCap - Math.min(lamps.length, MAX_LIGHTS);
+      (o.getFurniture() || []).forEach(function (g){
+        var fu = g.userData && g.userData.fire;
+        if (!fu || !fu.light) return;
+        var want = shadowOn && !!g.userData.fxOn && shadowLeft > 0;
+        if (want) shadowLeft--;
+        if (fu.light.castShadow !== want) fu.light.castShadow = want;
+      });
       var wt = Math.min(1, lamps.length / 3);
       warmK += (wt - warmK) * Math.min(1, dt * 3);
       applyBlend(ek);
